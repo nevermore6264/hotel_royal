@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Pencil, Save, Trash2, Upload, X } from "lucide-react";
 import api from "../../api/client";
 import AlertDialog from "../../components/AlertDialog";
 import ConfirmDialog from "../../components/ConfirmDialog";
@@ -227,6 +228,7 @@ export default function AdminRooms() {
                 aria-label="Tải ảnh phòng từ máy tính"
                 onClick={() => fileInputRef.current?.click()}
               >
+                <Upload className="btn-ico" aria-hidden />
                 {uploading ? "Đang tải…" : "Tải ảnh từ máy"}
               </button>
             </div>
@@ -242,6 +244,7 @@ export default function AdminRooms() {
             />
           </div>
           <button type="submit" className="btn">
+            <Save className="btn-ico" aria-hidden />
             Lưu
           </button>
           {editing && (
@@ -250,6 +253,7 @@ export default function AdminRooms() {
               className="btn btn-secondary"
               onClick={() => setEditing(null)}
             >
+              <X className="btn-ico" aria-hidden />
               Hủy
             </button>
           )}
@@ -334,6 +338,7 @@ export default function AdminRooms() {
                       });
                     }}
                   >
+                    <Pencil className="btn-ico" aria-hidden />
                     Sửa
                   </button>
                   <button
@@ -341,6 +346,7 @@ export default function AdminRooms() {
                     className="btn btn-danger btn-sm"
                     onClick={() => setPendingDeleteId(r.id)}
                   >
+                    <Trash2 className="btn-ico" aria-hidden />
                     Xóa
                   </button>
                 </td>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Plus, Trash2 } from "lucide-react";
 import api from "../../api/client";
 import AlertDialog from "../../components/AlertDialog";
 import ConfirmDialog from "../../components/ConfirmDialog";
@@ -156,6 +157,7 @@ export default function AdminPolicies() {
           </div>
           <div className="inline-actions mt-4">
           <button type="submit" className="btn">
+            <Plus className="btn-ico" aria-hidden />
             Thêm
           </button>
           </div>
@@ -215,6 +217,7 @@ export default function AdminPolicies() {
                     className="btn btn-danger btn-sm"
                     onClick={() => setPendingDeleteId(p.id)}
                   >
+                    <Trash2 className="btn-ico" aria-hidden />
                     Xóa
                   </button>
                 </td>

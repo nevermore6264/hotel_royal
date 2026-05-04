@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Pencil, Save, Trash2, X } from "lucide-react";
 import api from "../../api/client";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import PaginationBar from "../../components/PaginationBar";
@@ -131,6 +132,7 @@ export default function AdminDichVu() {
           </div>
           <div className="inline-actions mt-4">
             <button type="submit" className="btn">
+              <Save className="btn-ico" aria-hidden />
               Lưu
             </button>
             {editing && (
@@ -142,6 +144,7 @@ export default function AdminDichVu() {
                   setForm({ ten: "", gia: 0, moTa: "" });
                 }}
               >
+                <X className="btn-ico" aria-hidden />
                 Hủy
               </button>
             )}
@@ -195,6 +198,7 @@ export default function AdminDichVu() {
                         });
                       }}
                     >
+                      <Pencil className="btn-ico" aria-hidden />
                       Sửa
                     </button>
                     <button
@@ -202,6 +206,7 @@ export default function AdminDichVu() {
                       className="btn btn-danger btn-sm"
                       onClick={() => setPendingDeleteId(d.id)}
                     >
+                      <Trash2 className="btn-ico" aria-hidden />
                       Xóa
                     </button>
                   </td>

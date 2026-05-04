@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Pencil, Save, Trash2, X } from "lucide-react";
 import api from "../../api/client";
 import AlertDialog from "../../components/AlertDialog";
 import ConfirmDialog from "../../components/ConfirmDialog";
@@ -252,6 +253,7 @@ export default function AdminRoomPricing() {
 
           <div className="inline-actions mt-4">
             <button type="submit" className="btn">
+              <Save className="btn-ico" aria-hidden />
               Lưu bảng giá
             </button>
             {editing && (
@@ -263,6 +265,7 @@ export default function AdminRoomPricing() {
                   setForm(emptyForm);
                 }}
               >
+                <X className="btn-ico" aria-hidden />
                 Hủy
               </button>
             )}
@@ -352,6 +355,7 @@ export default function AdminRoomPricing() {
                         });
                       }}
                     >
+                      <Pencil className="btn-ico" aria-hidden />
                       Sửa
                     </button>
                     <button
@@ -359,6 +363,7 @@ export default function AdminRoomPricing() {
                       className="btn btn-danger btn-sm"
                       onClick={() => setPendingDeleteId(item.id)}
                     >
+                      <Trash2 className="btn-ico" aria-hidden />
                       Xóa
                     </button>
                   </td>
