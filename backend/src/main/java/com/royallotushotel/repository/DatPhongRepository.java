@@ -1,0 +1,47 @@
+package com.royallotushotel.repository;
+
+import com.royallotushotel.entity.DatPhong;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Repository
+public interface DatPhongRepository extends JpaRepository<DatPhong, Long> {
+    List<DatPhong> findByKhachHang_IdOrderByThoiGianTaoDesc(Long idKhachHang);
+
+    Page<DatPhong> findAllByOrderByThoiGianTaoDesc(Pageable pageable);
+
+    @Query("SELECT d FROM DatPhong d JOIN d.khachHang k WHERE (:trangThai IS NULL OR d.trangThai = :trangThai) " +
+            "AND (:tu IS NULL OR d.ngayNhanPhong >= :tu) AND (:den IS NULL OR d.ngayNhanPhong <= :den) " +
+            "AND (:q IS NULL OR :q = '' OR LOWER(k.hoTen) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "k.soDienThoai LIKE CONCAT('%', :q, '%') OR LOWER(COALESCE(k.email,'')) LIKE LOWER(CONCAT('%', :q, '%'))) " +
+            "ORDER BY d.thoiGianTao DESC")
+    Page<DatPhong> timLoc(
+            @Param("trangThai") String trangThai,
+            @Param("tu") LocalDate tu,
+            @Param("den") LocalDate den,
+            @Param("q") String q,
+            Pageable pageable);
+
+    @Query("SELECT b FROM DatPhong b WHERE b.khachHang.id = :idKhachHang ORDER BY b.thoiGianTao DESC")
+    List<DatPhong> timLichSuTheoKhach(@Param("idKhachHang") Long idKhachHang);
+
+    @Query("SELECT b FROM DatPhong b WHERE b.ngayNhanPhong <= :ngay AND b.ngayTraPhong >= :ngay AND b.trangThai = 'DA_NHAN_PHONG'")
+    List<DatPhong> timLuuTruDangHoatDongVaoNgay(@Param("ngay") LocalDate ngay);
+
+    @Query("SELECT COALESCE(SUM(tt.tongDaThu), 0) FROM DatPhong b " +
+           "LEFT JOIN b.thanhToan tt " +
+           "WHERE b.trangThai IN ('DA_XAC_NHAN','DA_NHAN_PHONG','DA_TRA_PHONG') " +
+           "AND b.ngayNhanPhong >= :tu AND b.ngayNhanPhong <= :den")
+    java.math.BigDecimal tongDoanhThuTheoKhoangNgay(@Param("tu") LocalDate tu, @Param("den") LocalDate den);
+
+    @Query("SELECT COUNT(b) FROM DatPhong b WHERE b.trangThai IN ('DA_XAC_NHAN','DA_NHAN_PHONG','DA_TRA_PHONG') " +
+           "AND b.ngayNhanPhong >= :tu AND b.ngayNhanPhong <= :den")
+    Long demDatPhongTheoKhoangNgay(@Param("tu") LocalDate tu, @Param("den") LocalDate den);
+}

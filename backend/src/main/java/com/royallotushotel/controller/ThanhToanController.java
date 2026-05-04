@@ -1,0 +1,44 @@
+package com.royallotushotel.controller;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.royallotushotel.service.ThanhToanService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/thanh-toan")
+@RequiredArgsConstructor
+public class ThanhToanController {
+
+    private final ThanhToanService thanhToanService;
+    private final ObjectMapper objectMapper;
+
+    @PostMapping("/tao-url")
+    public ResponseEntity<Map<String, String>> taoUrl(@RequestBody Map<String, Object> body) {
+        Long idDatPhong = Long.valueOf(body.get("idDatPhong").toString());
+        String urlTroVe = body.getOrDefault("urlTroVe", "http://localhost:5173/dat-phong/thanh-cong").toString();
+        String urlHuy = body.getOrDefault("urlHuy", "http://localhost:5173/dat-phong").toString();
+        String url = thanhToanService.taoUrlThanhToanPayOs(idDatPhong, urlTroVe, urlHuy);
+        return ResponseEntity.ok(Map.of("duongThanhToan", url));
+    }
+
+    @PostMapping("/webhook-payos")
+    public ResponseEntity<Map<String, String>> webhookPayOs(@RequestBody String rawBody) throws Exception {
+        JsonNode body = objectMapper.readTree(rawBody);
+        thanhToanService.xuLyWebhookPayOs(body);
+        return ResponseEntity.ok(Map.of("message", "OK"));
+    }
+
+    @GetMapping("/goi-lai")
+    public ResponseEntity<Map<String, String>> goiLai(@RequestParam Map<String, String> params) {
+        return ResponseEntity.ok(Map.of(
+                "trangThai", "ok",
+                "thongDiep", "Luồng xác nhận qua payOS dùng webhook POST /thanh-toan/webhook-payos",
+                "query", params.isEmpty() ? "{}" : params.toString()
+        ));
+    }
+}

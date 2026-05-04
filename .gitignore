@@ -1,0 +1,30 @@
+# Backend
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/*.iml
+backend/.idea/
+backend/*.log
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/*.log
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+*.env
+
+# PlantUML 
+usecase_royal_lotus_detailed.puml
+
+docs/

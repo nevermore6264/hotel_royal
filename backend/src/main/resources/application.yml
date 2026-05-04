@@ -1,0 +1,61 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 40MB
+  application:
+    name: hotel-royal-api
+  datasource:
+    url: jdbc:mysql://localhost:3306/hotel_royal?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Ho_Chi_Minh
+    username: root
+    password: 12345678
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: ${SERVER_PORT:8090}
+  servlet:
+    context-path: /api
+
+jwt:
+  secret: ${JWT_SECRET:RoyalLotusHotelSecretKeyForJWTTokenGeneration2024MustBeLongEnough}
+  expiration-ms: 86400000
+  refresh-expiration-ms: 604800000
+
+payment:
+  payos:
+    client-id: ${PAYOS_CLIENT_ID:}
+    api-key: ${PAYOS_API_KEY:}
+    checksum-key: ${PAYOS_CHECKSUM_KEY:}
+    api-url: ${PAYOS_API_URL:https://api-merchant.payos.vn}
+    che-do-thu: ${PAYOS_DEV_MODE:false}
+
+app:
+  upload:
+    root: ${APP_UPLOAD_DIR:uploads}
+
+logging:
+  level:
+    com.royallotushotel: DEBUG
+    org.springframework.security: INFO
