@@ -307,6 +307,16 @@ textarea:focus-visible {
   height: 1.12em;
 }
 
+@keyframes btn-ico-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-ico--spin {
+  animation: btn-ico-spin 0.85s linear infinite;
+}
+
 .btn-lg {
   padding: 0.8rem 1.5rem;
   font-size: 1rem;

@@ -432,4 +432,10 @@ export default function RoomList() {
                 <RotateCcw className="btn-ico" aria-hidden />
                 Đặt lại bộ lọc
               </button>
-            
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

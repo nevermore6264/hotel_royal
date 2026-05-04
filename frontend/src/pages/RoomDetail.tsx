@@ -1,4 +1,12 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import {
+  ArrowLeft,
+  Ban,
+  CalendarPlus,
+  Layers,
+  LayoutGrid,
+  List,
+} from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -223,6 +231,7 @@ export default function RoomDetail() {
       <div className="container page-shell">
         <p className="form-error">{err}</p>
         <Link to="/phong" className="btn btn-secondary mt-4">
+          <ArrowLeft className="btn-ico" aria-hidden />
           Quay lại danh sách
         </Link>
       </div>
@@ -341,12 +350,14 @@ export default function RoomDetail() {
                 to={`/loai-phong/chi-tiet/${phong.idLoaiPhong}`}
                 className="btn btn-lg btn-secondary"
               >
+                <Layers className="btn-ico" aria-hidden />
                 Trang loại phòng
               </Link>
               <Link
                 to={`/phong?idLoaiPhong=${phong.idLoaiPhong}`}
                 className="btn btn-lg btn-secondary"
               >
+                <LayoutGrid className="btn-ico" aria-hidden />
                 Phòng trống cùng loại
               </Link>
               {coTheDat ? (
@@ -354,6 +365,7 @@ export default function RoomDetail() {
                   to={`/dat-phong?idPhong=${phong.id}`}
                   className="btn btn-lg"
                 >
+                  <CalendarPlus className="btn-ico" aria-hidden />
                   Đặt phòng ngay
                 </Link>
               ) : isKhachHang ? (
@@ -508,6 +520,7 @@ export default function RoomDetail() {
                   className="btn btn-lg"
                   style={{ width: "100%", justifyContent: "center" }}
                 >
+                  <CalendarPlus className="btn-ico" aria-hidden />
                   Đặt phòng
                 </Link>
               ) : (
@@ -517,6 +530,7 @@ export default function RoomDetail() {
                   style={{ width: "100%" }}
                   disabled
                 >
+                  <Ban className="btn-ico" aria-hidden />
                   Không mở đặt
                 </button>
               )}
@@ -525,7 +539,8 @@ export default function RoomDetail() {
                 className="btn btn-secondary"
                 style={{ width: "100%", justifyContent: "center" }}
               >
-                ← Danh sách phòng
+                <List className="btn-ico" aria-hidden />
+                Danh sách phòng
               </Link>
             </div>
           </aside>

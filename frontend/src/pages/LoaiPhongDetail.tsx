@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BedDouble, LayoutGrid, Send } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -210,9 +211,11 @@ export default function LoaiPhongDetail() {
                 to={`/phong?idLoaiPhong=${loai.id}`}
                 className="btn btn-lg loai-detail-cta"
               >
+                <BedDouble className="btn-ico" aria-hidden />
                 Xem phòng trống loại này
               </Link>
               <Link to="/phong" className="btn btn-lg btn-secondary">
+                <LayoutGrid className="btn-ico" aria-hidden />
                 Tất cả phòng
               </Link>
             </div>
@@ -327,6 +330,7 @@ export default function LoaiPhongDetail() {
                 />
               </div>
               <button type="submit" className="btn btn-lg loai-detail-submit">
+                <Send className="btn-ico" aria-hidden />
                 Gửi đánh giá
               </button>
             </form>

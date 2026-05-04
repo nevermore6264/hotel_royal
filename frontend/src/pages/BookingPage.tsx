@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { CreditCard, Loader2 } from "lucide-react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
@@ -384,7 +385,17 @@ export default function BookingPage() {
               className="btn booking-pay-btn"
               disabled={loading || !datesOk || selectedIds.length === 0}
             >
-              {loading ? "Đang xử lý…" : "Thanh toán PayOS"}
+              {loading ? (
+                <>
+                  <Loader2 className="btn-ico btn-ico--spin" aria-hidden />
+                  Đang xử lý…
+                </>
+              ) : (
+                <>
+                  <CreditCard className="btn-ico" aria-hidden />
+                  Thanh toán PayOS
+                </>
+              )}
             </button>
             <p className="booking-summary-footnote text-muted text-sm">
               Bạn sẽ được chuyển tới cổng thanh toán an toàn. Đăng nhập tài khoản

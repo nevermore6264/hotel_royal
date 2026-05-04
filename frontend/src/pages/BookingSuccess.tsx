@@ -1,3 +1,4 @@
+import { ClipboardList } from "lucide-react";
 import { useSearchParams, Link } from "react-router-dom";
 
 export default function BookingSuccess() {
@@ -24,6 +25,7 @@ export default function BookingSuccess() {
           Email xác nhận đã được gửi đến hộp thư của bạn.
         </p>
         <Link to="/don-cua-toi" className="btn btn-lg btn-block mt-4">
+          <ClipboardList className="btn-ico" aria-hidden />
           Xem đơn của tôi
         </Link>
         <p className="auth-footer" style={{ marginBottom: 0 }}>
