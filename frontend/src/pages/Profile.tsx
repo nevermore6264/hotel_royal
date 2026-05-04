@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { KeyRound, Save } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -277,6 +278,7 @@ export default function Profile() {
                   </div>
                 </div>
                 <button type="submit" className="btn btn-lg profile-save">
+                  <Save className="btn-ico" aria-hidden />
                   Lưu thông tin
                 </button>
               </form>
@@ -319,6 +321,7 @@ export default function Profile() {
                   />
                 </div>
                 <button type="submit" className="btn btn-lg btn-secondary profile-save">
+                  <KeyRound className="btn-ico" aria-hidden />
                   Đổi mật khẩu
                 </button>
               </form>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { UserPlus } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AuthSplitLayout from "../components/AuthSplitLayout";
@@ -124,6 +125,7 @@ export default function Register() {
           </div>
           {error && <p className="form-error">{error}</p>}
           <button type="submit" className="btn btn-block btn-lg">
+            <UserPlus className="btn-ico" aria-hidden />
             Đăng ký
           </button>
         </form>

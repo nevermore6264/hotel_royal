@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../../api/client";
 import {
@@ -132,6 +133,7 @@ export default function AdminBookings() {
               disabled={page <= 0}
               onClick={() => setPage((p) => p - 1)}
             >
+              <ChevronLeft className="btn-ico" aria-hidden />
               Trước
             </button>
             <span className="text-muted text-sm mx-2">
@@ -144,6 +146,7 @@ export default function AdminBookings() {
               onClick={() => setPage((p) => p + 1)}
             >
               Sau
+              <ChevronRight className="btn-ico" aria-hidden />
             </button>
           </div>
         </div>

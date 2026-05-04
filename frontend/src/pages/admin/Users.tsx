@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Pencil, Save, X } from "lucide-react";
 import api from "../../api/client";
 import PaginationBar from "../../components/PaginationBar";
 import { useToast } from "../../context/ToastContext";
@@ -215,6 +216,7 @@ export default function AdminUsers() {
             </div>
           </div>
           <button type="submit" className="btn" style={{ marginTop: "1rem" }}>
+            <Save className="btn-ico" aria-hidden />
             Lưu
           </button>
           {editing && (
@@ -224,6 +226,7 @@ export default function AdminUsers() {
               style={{ marginLeft: "0.5rem", marginTop: "1rem" }}
               onClick={() => setEditing(null)}
             >
+              <X className="btn-ico" aria-hidden />
               Hủy
             </button>
           )}
@@ -318,6 +321,7 @@ export default function AdminUsers() {
                       });
                     }}
                   >
+                    <Pencil className="btn-ico" aria-hidden />
                     Sửa
                   </button>
                 </td>

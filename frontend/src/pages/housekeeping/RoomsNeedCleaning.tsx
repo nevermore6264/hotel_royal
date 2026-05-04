@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ClipboardCheck, RefreshCw, Sparkles } from "lucide-react";
 import api from "../../api/client";
 
 type Phong = {
@@ -151,6 +152,7 @@ export default function HousekeeperNeedsCleaning() {
                         disabled={!r.idDatPhong || !laundryServiceId}
                         onClick={() => addLaundry(r.id)}
                       >
+                        <ClipboardCheck className="btn-ico" aria-hidden />
                         Ghi nhận
                       </button>
                     </div>
@@ -161,6 +163,7 @@ export default function HousekeeperNeedsCleaning() {
                       className="btn btn-sm"
                       onClick={() => updateCleanliness(r.id)}
                     >
+                      <Sparkles className="btn-ico" aria-hidden />
                       Đã dọn xong
                     </button>
                   </td>
@@ -178,6 +181,7 @@ export default function HousekeeperNeedsCleaning() {
           </div>
           <div className="mt-4">
             <button type="button" className="btn btn-secondary" onClick={load}>
+              <RefreshCw className="btn-ico" aria-hidden />
               Làm mới
             </button>
           </div>

@@ -1,3 +1,11 @@
+import {
+  BedDouble,
+  CalendarPlus,
+  LogIn,
+  MapPin,
+  MessageCircle,
+  UserPlus,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -171,6 +179,7 @@ export default function Info() {
               target="_blank"
               rel="noopener noreferrer"
             >
+              <MapPin className="btn-ico" aria-hidden />
               Mở chỉ đường trên Google Maps
             </a>
           </article>
@@ -304,24 +313,29 @@ export default function Info() {
           </div>
           <div className="info-cta__actions">
             <Link to="/phong" className="btn btn-lg">
+              <BedDouble className="btn-ico" aria-hidden />
               Xem danh sách phòng
             </Link>
             {isKhachHang ? (
               <>
                 <Link to="/dat-phong" className="btn btn-lg btn-secondary">
+                  <CalendarPlus className="btn-ico" aria-hidden />
                   Đặt phòng
                 </Link>
                 <Link to="/chat" className="btn btn-lg btn-secondary">
+                  <MessageCircle className="btn-ico" aria-hidden />
                   Chat hỗ trợ
                 </Link>
               </>
             ) : (
               <>
                 <Link to="/dang-nhap" className="btn btn-lg btn-secondary">
+                  <LogIn className="btn-ico" aria-hidden />
                   Đăng nhập khách
                 </Link>
                 {!user && (
                   <Link to="/dang-ky" className="btn btn-lg btn-secondary">
+                    <UserPlus className="btn-ico" aria-hidden />
                     Đăng ký
                   </Link>
                 )}

@@ -5,6 +5,7 @@ import {
   useCallback,
   type CSSProperties,
 } from "react";
+import { BedDouble, Eye, FilterX, RotateCcw } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -236,6 +237,7 @@ export default function RoomList() {
                 className="btn btn-ghost rooms-filter-clear"
                 onClick={clearFilters}
               >
+                <FilterX className="btn-ico" aria-hidden />
                 Xóa bộ lọc
               </button>
             )}
@@ -391,12 +393,14 @@ export default function RoomList() {
                           opacity: isKhachHang ? 1 : 0.55,
                         }}
                       >
+                        <BedDouble className="btn-ico" aria-hidden />
                         Chọn phòng này
                       </Link>
                       <Link
                         to={`/phong/chi-tiet/${r.id}`}
                         className="btn btn-secondary room-card__detail"
                       >
+                        <Eye className="btn-ico" aria-hidden />
                         Chi tiết phòng
                       </Link>
                     </div>
@@ -425,12 +429,7 @@ export default function RoomList() {
             </p>
             {hasFilters && (
               <button type="button" className="btn btn-secondary" onClick={clearFilters}>
+                <RotateCcw className="btn-ico" aria-hidden />
                 Đặt lại bộ lọc
               </button>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+            

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { LogIn, LogOut, UserPlus } from "lucide-react";
 import { Outlet, Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { AdminSubNav, ReceptionSubNav } from "./RoleSubNav";
@@ -382,6 +383,7 @@ export default function Layout() {
                   }}
                   className="btn btn-secondary layout-btn-logout"
                 >
+                  <LogOut className="btn-ico" aria-hidden />
                   Đăng xuất
                 </button>
               </>
@@ -392,6 +394,7 @@ export default function Layout() {
                   className="btn btn-login"
                   onClick={closeMenu}
                 >
+                  <LogIn className="btn-ico" aria-hidden />
                   Đăng nhập
                 </Link>
                 <Link
@@ -399,6 +402,7 @@ export default function Layout() {
                   className="btn btn-secondary"
                   onClick={closeMenu}
                 >
+                  <UserPlus className="btn-ico" aria-hidden />
                   Đăng ký
                 </Link>
               </>

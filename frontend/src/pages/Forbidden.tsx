@@ -1,3 +1,4 @@
+import { Home } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Forbidden() {
@@ -14,6 +15,7 @@ export default function Forbidden() {
           Bạn không được phép xem trang này với tài khoản hiện tại.
         </p>
         <Link to="/" className="btn mt-4">
+          <Home className="btn-ico" aria-hidden />
           Về trang chủ
         </Link>
       </div>

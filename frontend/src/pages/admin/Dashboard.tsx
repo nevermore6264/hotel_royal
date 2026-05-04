@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Download } from "lucide-react";
 import api from "../../api/client";
 
 export default function AdminDashboard() {
@@ -148,6 +149,7 @@ export default function AdminDashboard() {
                 URL.revokeObjectURL(a.href);
               }}
             >
+              <Download className="btn-ico" aria-hidden />
               Tải CSV khoảng đã chọn
             </button>
           </>

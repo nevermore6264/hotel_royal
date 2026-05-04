@@ -1,4 +1,14 @@
 import { useState, useEffect } from "react";
+import {
+  BadgeCheck,
+  FileText,
+  KeyRound,
+  ListPlus,
+  LogOut,
+  PackagePlus,
+  UserPlus,
+  X,
+} from "lucide-react";
 import api from "../../api/client";
 import AlertDialog from "../../components/AlertDialog";
 import PaginationBar from "../../components/PaginationBar";
@@ -336,7 +346,17 @@ export default function ReceptionistBookings() {
                 className="btn btn-secondary"
                 onClick={() => setCreateOpen((v) => !v)}
               >
-                {createOpen ? "Đóng" : "Mở form tạo đặt phòng"}
+                {createOpen ? (
+                  <>
+                    <X className="btn-ico" aria-hidden />
+                    Đóng
+                  </>
+                ) : (
+                  <>
+                    <ListPlus className="btn-ico" aria-hidden />
+                    Mở form tạo đặt phòng
+                  </>
+                )}
               </button>
             </div>
 
@@ -459,6 +479,7 @@ export default function ReceptionistBookings() {
                       }
                     }}
                   >
+                    <UserPlus className="btn-ico" aria-hidden />
                     Tạo đặt phòng
                   </button>
                 </div>
@@ -560,6 +581,7 @@ export default function ReceptionistBookings() {
                                 className="btn btn-danger btn-sm"
                                 onClick={() => cancelRoom(b.id, d.id)}
                               >
+                                <LogOut className="btn-ico" aria-hidden />
                                 Hủy phòng
                               </button>
                             )}
@@ -612,6 +634,7 @@ export default function ReceptionistBookings() {
                         style={{ marginRight: "0.5rem" }}
                         onClick={() => confirmBooking(b.id)}
                       >
+                        <BadgeCheck className="btn-ico" aria-hidden />
                         Xác nhận
                       </button>
                     )}
@@ -622,6 +645,7 @@ export default function ReceptionistBookings() {
                         style={{ marginRight: "0.5rem" }}
                         onClick={() => checkIn(b.id)}
                       >
+                        <KeyRound className="btn-ico" aria-hidden />
                         Nhận phòng
                       </button>
                     )}
@@ -633,6 +657,7 @@ export default function ReceptionistBookings() {
                           style={{ marginRight: "0.5rem" }}
                           onClick={() => checkOut(b.id)}
                         >
+                          <LogOut className="btn-ico" aria-hidden />
                           Trả phòng
                         </button>
                         <div className="inline-actions inline-actions--stack">
@@ -674,6 +699,7 @@ export default function ReceptionistBookings() {
                             className="btn btn-secondary btn-sm"
                             onClick={() => addService(b.id)}
                           >
+                            <PackagePlus className="btn-ico" aria-hidden />
                             Thêm dịch vụ
                           </button>
                         </div>
@@ -686,6 +712,7 @@ export default function ReceptionistBookings() {
                       style={{ marginTop: "0.5rem", display: "block" }}
                       onClick={() => issueInvoice(b.id)}
                     >
+                      <FileText className="btn-ico" aria-hidden />
                       Xuất hóa đơn
                     </button>
                   </td>
@@ -722,6 +749,7 @@ export default function ReceptionistBookings() {
                 type="button"
                 onClick={() => setInvoiceModal({ open: false, data: null })}
               >
+                <X className="btn-ico" aria-hidden />
                 Đóng
               </button>
             </div>

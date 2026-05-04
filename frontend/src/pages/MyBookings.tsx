@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Ban, BedDouble, FileText, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../api/client";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -117,6 +118,7 @@ export default function MyBookings() {
             Chưa có đơn nào. Khám phá phòng trống và đặt ngay khi bạn sẵn sàng.
           </p>
           <Link to="/phong" className="btn mt-4">
+            <BedDouble className="btn-ico" aria-hidden />
             Xem danh sách phòng
           </Link>
         </div>
@@ -183,6 +185,7 @@ export default function MyBookings() {
                                     })
                                   }
                                 >
+                                  <LogOut className="btn-ico" aria-hidden />
                                   Hủy phòng
                                 </button>
                               )}
@@ -242,6 +245,7 @@ export default function MyBookings() {
                           target="_blank"
                           rel="noreferrer"
                         >
+                          <FileText className="btn-ico" aria-hidden />
                           Hóa đơn
                         </Link>
                         {(b.trangThai === "CHO_DUYET" ||
@@ -253,6 +257,7 @@ export default function MyBookings() {
                               setPendingCancel({ kind: "whole", bookingId: b.id })
                             }
                           >
+                            <Ban className="btn-ico" aria-hidden />
                             Hủy
                           </button>
                         )}

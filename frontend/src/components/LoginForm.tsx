@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LogIn } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -74,6 +75,7 @@ export default function LoginForm({ variant = "full", onSuccess }: Props) {
         type="submit"
         className={`btn btn-block ${compact ? "btn-lg btn-landing-main" : "btn-lg"}`}
       >
+        <LogIn className="btn-ico" aria-hidden />
         Đăng nhập
       </button>
       <p className={compact ? "home-login-form__footer" : "auth-footer"}>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ArrowLeft, Printer, X } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import api from "../api/client";
 
@@ -43,6 +44,7 @@ export default function InvoicePrint() {
       <div className="container page-shell">
         <p className="form-error">{err}</p>
         <Link to="/don-cua-toi" className="btn mt-4">
+          <ArrowLeft className="btn-ico" aria-hidden />
           Quay lại đơn của tôi
         </Link>
       </div>
@@ -61,9 +63,11 @@ export default function InvoicePrint() {
     <div className="container page-shell invoice-print-wrap">
       <div className="no-print" style={{ marginBottom: "1rem" }}>
         <button type="button" className="btn btn-secondary" onClick={() => window.print()}>
+          <Printer className="btn-ico" aria-hidden />
           In / Lưu PDF
         </button>
         <Link to="/don-cua-toi" className="btn" style={{ marginLeft: "0.5rem" }}>
+          <X className="btn-ico" aria-hidden />
           Đóng
         </Link>
       </div>

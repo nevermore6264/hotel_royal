@@ -1,3 +1,4 @@
+import { BedDouble, CalendarPlus, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import LoginForm from "../components/LoginForm";
@@ -206,14 +207,17 @@ export default function Home() {
 
             <div className="landing-actions">
               <Link to="/phong" className="btn btn-lg btn-landing-main">
+                <BedDouble className="btn-ico" aria-hidden />
                 Xem phòng &amp; giá
               </Link>
               {isKhachHang ? (
                 <Link to="/dat-phong" className="btn btn-lg btn-landing-ghost">
+                  <CalendarPlus className="btn-ico" aria-hidden />
                   Đặt phòng ngay
                 </Link>
               ) : (
                 <Link to="/dang-ky" className="btn btn-lg btn-landing-ghost">
+                  <UserPlus className="btn-ico" aria-hidden />
                   Tạo tài khoản
                 </Link>
               )}
