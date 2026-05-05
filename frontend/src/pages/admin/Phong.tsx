@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Pencil, Plus, Save, Trash2, Upload, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Image, Pencil, Plus, Save, Trash2, Upload, X } from "lucide-react";
 import api from "../../api/client";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import PaginationBar from "../../components/PaginationBar";
@@ -39,6 +39,8 @@ export default function AdminPhong() {
   const [danhSachLoaiPhong, setDanhSachLoaiPhong] = useState<LoaiPhong[]>([]);
   const [dangMoForm, setDangMoForm] = useState(false);
   const [phongDangSua, setPhongDangSua] = useState<Phong | null>(null);
+  const [phongDangXemAnh, setPhongDangXemAnh] = useState<Phong | null>(null);
+  const [chiSoAnhDangXemTo, setChiSoAnhDangXemTo] = useState<number | null>(null);
   const [dangLuu, setDangLuu] = useState(false);
   const [idChoXoa, setIdChoXoa] = useState<number | null>(null);
   const [dangXoa, setDangXoa] = useState(false);
@@ -185,6 +187,12 @@ export default function AdminPhong() {
 
   const xacNhanXoa = async () => {
     if (idChoXoa == null) return;
+    const phongCanXoa = danhSachPhong.content.find((p) => p.id === idChoXoa);
+    if (phongCanXoa && phongCanXoa.trangThai !== "PHONG_TRONG") {
+      setIdChoXoa(null);
+      toast("Chỉ được xóa phòng đang ở trạng thái Trống.", "error");
+      return;
+    }
     setDangXoa(true);
     try {
       await api.delete(`/phong/${idChoXoa}`);
@@ -198,6 +206,12 @@ export default function AdminPhong() {
       setDangXoa(false);
     }
   };
+
+  const danhSachAnhDangXem = phongDangXemAnh?.duongDanAnh || [];
+  const dangMoXemAnhTo =
+    chiSoAnhDangXemTo != null &&
+    chiSoAnhDangXemTo >= 0 &&
+    chiSoAnhDangXemTo < danhSachAnhDangXem.length;
 
   return (
     <div className="container page-shell">
@@ -289,6 +303,15 @@ export default function AdminPhong() {
                     type="button"
                     className="btn btn-secondary btn-sm"
                     style={{ marginRight: "0.5rem" }}
+                    onClick={() => setPhongDangXemAnh(r)}
+                  >
+                    <Image className="btn-ico" aria-hidden />
+                    Xem ảnh phòng
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    style={{ marginRight: "0.5rem" }}
                     onClick={() => moModalSua(r)}
                   >
                     <Pencil className="btn-ico" aria-hidden />
@@ -297,6 +320,12 @@ export default function AdminPhong() {
                   <button
                     type="button"
                     className="btn btn-danger btn-sm"
+                    disabled={r.trangThai !== "PHONG_TRONG"}
+                    title={
+                      r.trangThai !== "PHONG_TRONG"
+                        ? "Chỉ xóa được phòng đang ở trạng thái Trống"
+                        : undefined
+                    }
                     onClick={() => setIdChoXoa(r.id)}
                   >
                     <Trash2 className="btn-ico" aria-hidden />
@@ -424,39 +453,70 @@ export default function AdminPhong() {
                   </button>
                 </div>
                 {formPhong.anhUrls.length > 0 ? (
-                  <ul
-                    className="text-sm"
+                  <div
                     style={{
-                      margin: "0.75rem 0 0",
-                      paddingLeft: "1.25rem",
-                      listStyle: "disc",
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                      gap: "0.75rem",
+                      marginTop: "0.75rem",
                     }}
                   >
                     {formPhong.anhUrls.map((url, i) => (
-                      <li key={`${url}-${i}`} style={{ marginBottom: "0.35rem" }}>
-                        <span className="cell-wrap-text" style={{ verticalAlign: "middle" }}>
-                          {url}
-                        </span>{" "}
+                      <div
+                        key={`${url}-${i}`}
+                        style={{
+                          position: "relative",
+                          border: "1px solid var(--border)",
+                          borderRadius: "0.65rem",
+                          overflow: "hidden",
+                          background: "rgba(255,255,255,0.03)",
+                        }}
+                      >
+                        <img
+                          src={url}
+                          alt={`Ảnh phòng ${i + 1}`}
+                          loading="lazy"
+                          style={{
+                            display: "block",
+                            width: "100%",
+                            height: "110px",
+                            objectFit: "cover",
+                          }}
+                        />
                         <button
                           type="button"
                           className="btn btn-secondary btn-sm"
-                          style={{ marginLeft: "0.35rem", verticalAlign: "middle" }}
+                          style={{
+                            position: "absolute",
+                            top: "0.35rem",
+                            right: "0.35rem",
+                            padding: "0.2rem 0.45rem",
+                            minHeight: "unset",
+                          }}
                           disabled={dangLuu}
                           onClick={() => xoaAnhTaiViTri(i)}
                           aria-label={`Xóa ảnh ${i + 1}`}
                         >
                           <X className="btn-ico" aria-hidden />
                         </button>
-                      </li>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 ) : (
                   <p className="text-muted text-sm" style={{ margin: "0.5rem 0 0" }}>
                     Chưa có ảnh. Chọn một hoặc nhiều file để tải lên.
                   </p>
                 )}
               </div>
-              <div className="inline-actions" style={{ gridColumn: "1 / -1" }}>
+              <div
+                className="inline-actions"
+                style={{
+                  width: "100%",
+                  justifyContent: "flex-end",
+                  marginTop: "0.85rem",
+                  paddingTop: "0.25rem",
+                }}
+              >
                 <button type="submit" className="btn" disabled={dangLuu || dangTaiAnh}>
                   <Save className="btn-ico" aria-hidden />
                   {dangLuu ? "Đang lưu…" : "Lưu"}
@@ -472,6 +532,179 @@ export default function AdminPhong() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {phongDangXemAnh ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setPhongDangXemAnh(null)}
+        >
+          <div
+            className="card modal-panel"
+            style={{ maxWidth: "min(980px, calc(100vw - 2rem))", width: "100%" }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="phong-gallery-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="form-row form-row--between"
+              style={{ alignItems: "flex-start", gap: "1rem" }}
+            >
+              <div>
+                <h2 id="phong-gallery-title" className="card-title" style={{ margin: 0 }}>
+                  Ảnh phòng {phongDangXemAnh.soPhong}
+                </h2>
+                <p className="text-muted text-sm" style={{ margin: "0.35rem 0 0" }}>
+                  {phongDangXemAnh.duongDanAnh?.length || 0} ảnh
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setPhongDangXemAnh(null)}
+                aria-label="Đóng"
+              >
+                <X className="btn-ico" aria-hidden />
+                Đóng
+              </button>
+            </div>
+            {(phongDangXemAnh.duongDanAnh || []).length > 0 ? (
+              <div
+                style={{
+                  marginTop: "1rem",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                  gap: "0.9rem",
+                }}
+              >
+                {(phongDangXemAnh.duongDanAnh || []).map((url, i) => (
+                  <figure
+                    key={`${url}-${i}`}
+                    style={{
+                      margin: 0,
+                      borderRadius: "0.75rem",
+                      overflow: "hidden",
+                      border: "1px solid var(--border)",
+                      background: "rgba(255, 255, 255, 0.03)",
+                      cursor: "zoom-in",
+                    }}
+                    onClick={() => setChiSoAnhDangXemTo(i)}
+                  >
+                    <img
+                      src={url}
+                      alt={`Phòng ${phongDangXemAnh.soPhong} - ảnh ${i + 1}`}
+                      loading="lazy"
+                      style={{
+                        width: "100%",
+                        height: "180px",
+                        objectFit: "cover",
+                        display: "block",
+                      }}
+                    />
+                  </figure>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted" style={{ margin: "1rem 0 0" }}>
+                Phòng này chưa có ảnh.
+              </p>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {dangMoXemAnhTo ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setChiSoAnhDangXemTo(null)}
+          style={{ zIndex: 1100, background: "rgba(3, 8, 18, 0.9)" }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Xem ảnh phòng cỡ lớn"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "min(96vw, 1200px)",
+              maxHeight: "92vh",
+              display: "grid",
+              gridTemplateRows: "1fr auto",
+              gap: "0.75rem",
+            }}
+          >
+            <div
+              style={{
+                position: "relative",
+                minHeight: "320px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <img
+                src={danhSachAnhDangXem[chiSoAnhDangXemTo!]}
+                alt={`Ảnh phòng ${phongDangXemAnh?.soPhong} - ${chiSoAnhDangXemTo! + 1}`}
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "82vh",
+                  objectFit: "contain",
+                  borderRadius: "0.75rem",
+                  border: "1px solid rgba(148,163,184,0.28)",
+                }}
+              />
+
+              {danhSachAnhDangXem.length > 1 ? (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)" }}
+                    onClick={() =>
+                      setChiSoAnhDangXemTo((prev) =>
+                        prev == null
+                          ? 0
+                          : (prev - 1 + danhSachAnhDangXem.length) % danhSachAnhDangXem.length,
+                      )
+                    }
+                    aria-label="Ảnh trước"
+                  >
+                    <ChevronLeft className="btn-ico" aria-hidden />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)" }}
+                    onClick={() =>
+                      setChiSoAnhDangXemTo((prev) =>
+                        prev == null ? 0 : (prev + 1) % danhSachAnhDangXem.length,
+                      )
+                    }
+                    aria-label="Ảnh sau"
+                  >
+                    <ChevronRight className="btn-ico" aria-hidden />
+                  </button>
+                </>
+              ) : null}
+
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ position: "absolute", top: "0.75rem", right: "0.75rem" }}
+                onClick={() => setChiSoAnhDangXemTo(null)}
+              >
+                <X className="btn-ico" aria-hidden />
+                Đóng
+              </button>
+            </div>
+
+            <div className="text-sm text-muted" style={{ textAlign: "center" }}>
+              Ảnh {chiSoAnhDangXemTo! + 1} / {danhSachAnhDangXem.length}
+            </div>
           </div>
         </div>
       ) : null}
