@@ -18,12 +18,21 @@ type Phong = {
   duongDanAnh?: string[];
 };
 
+type FormPhongErrors = {
+  soPhong?: string;
+  idLoaiPhong?: string;
+};
+
 const PHONG_FORM_MAC_DINH = {
   soPhong: "",
   trangThai: "PHONG_TRONG",
   idLoaiPhong: 0,
   anhUrls: [] as string[],
 };
+
+function chuanHoaSoPhong(v: string): string {
+  return v.trim().replace(/\s+/g, " ").toLocaleLowerCase("vi-VN");
+}
 
 export default function AdminPhong() {
   const { toast } = useToast();
@@ -47,6 +56,7 @@ export default function AdminPhong() {
   const [idChoXoa, setIdChoXoa] = useState<number | null>(null);
   const [dangXoa, setDangXoa] = useState(false);
   const [formPhong, setFormPhong] = useState({ ...PHONG_FORM_MAC_DINH });
+  const [formErrors, setFormErrors] = useState<FormPhongErrors>({});
 
   const taiDanhSachPhong = () => {
     const params: Record<string, string | number> = { page, size: 12 };
@@ -132,6 +142,7 @@ export default function AdminPhong() {
     if (dangLuu || dangTaiAnh) return;
     setDangMoForm(false);
     setPhongDangSua(null);
+    setFormErrors({});
     setFormPhong({
       ...PHONG_FORM_MAC_DINH,
       idLoaiPhong: danhSachLoaiPhong[0]?.id || 0,
@@ -150,6 +161,7 @@ export default function AdminPhong() {
 
   const moModalThem = () => {
     setPhongDangSua(null);
+    setFormErrors({});
     setFormPhong({
       ...PHONG_FORM_MAC_DINH,
       idLoaiPhong: danhSachLoaiPhong[0]?.id || 0,
@@ -159,6 +171,7 @@ export default function AdminPhong() {
 
   const moModalSua = (r: Phong) => {
     setPhongDangSua(r);
+    setFormErrors({});
     setFormPhong({
       soPhong: r.soPhong,
       trangThai: r.trangThai,
@@ -170,10 +183,39 @@ export default function AdminPhong() {
 
   const luuPhong = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const soPhongTrim = formPhong.soPhong.trim();
+    const loi: FormPhongErrors = {};
+    if (!soPhongTrim) loi.soPhong = "Vui lòng nhập số phòng.";
+    if (!formPhong.idLoaiPhong) loi.idLoaiPhong = "Vui lòng chọn loại phòng.";
+    setFormErrors(loi);
+    if (Object.keys(loi).length > 0) return;
+
+    try {
+      const { data } = await api.get("/phong", {
+        params: { q: soPhongTrim, page: 0, size: 100 },
+      });
+      const ds = (data?.content || []) as Phong[];
+      const biTrung = ds.some(
+        (p) =>
+          chuanHoaSoPhong(p.soPhong) === chuanHoaSoPhong(soPhongTrim) &&
+          (!phongDangSua || p.id !== phongDangSua.id),
+      );
+      if (biTrung) {
+        setFormErrors((prev) => ({
+          ...prev,
+          soPhong: "Số phòng đã tồn tại. Vui lòng nhập số khác.",
+        }));
+        return;
+      }
+    } catch {
+      // Không chặn lưu nếu lỗi mạng ở bước kiểm tra trùng.
+    }
+
     setDangLuu(true);
     try {
       const payload = {
-        soPhong: formPhong.soPhong,
+        soPhong: soPhongTrim,
         trangThai: formPhong.trangThai,
         idLoaiPhong:
           formPhong.idLoaiPhong ||
@@ -394,18 +436,32 @@ export default function AdminPhong() {
                 Đóng
               </button>
             </div>
-            <form onSubmit={luuPhong} className="form-inline mt-4">
+            <form onSubmit={luuPhong} noValidate className="form-inline mt-4">
               <div className="form-group">
                 <label>Số phòng</label>
                 <input
                   value={formPhong.soPhong}
                   disabled={dangLuu}
-                  onChange={(e) =>
-                    setFormPhong({ ...formPhong, soPhong: e.target.value })
-                  }
+                  aria-invalid={Boolean(formErrors.soPhong)}
+                  aria-describedby={formErrors.soPhong ? "phong-so-phong-err" : undefined}
+                  onChange={(e) => {
+                    setFormPhong({ ...formPhong, soPhong: e.target.value });
+                    setFormErrors((prev) => ({ ...prev, soPhong: undefined }));
+                  }}
                   placeholder="Ví dụ: 101"
                   required
                 />
+                <p
+                  id="phong-so-phong-err"
+                  className={formErrors.soPhong ? "form-error" : "text-muted text-sm"}
+                  style={{
+                    margin: "0.35rem 0 0",
+                    minHeight: "2.6rem",
+                    visibility: formErrors.soPhong ? "visible" : "hidden",
+                  }}
+                >
+                  {formErrors.soPhong || "placeholder"}
+                </p>
               </div>
               <div className="form-group">
                 <label>Trạng thái</label>
@@ -421,15 +477,28 @@ export default function AdminPhong() {
                   <option value="BAO_TRI">Bảo trì</option>
                   <option value="DA_GIU">Đã giữ</option>
                 </select>
+                <p
+                  className="text-muted text-sm"
+                  style={{
+                    margin: "0.35rem 0 0",
+                    minHeight: "2.6rem",
+                    visibility: "hidden",
+                  }}
+                >
+                  placeholder
+                </p>
               </div>
               <div className="form-group">
                 <label>Loại phòng</label>
                 <select
                   value={formPhong.idLoaiPhong}
                   disabled={dangLuu}
-                  onChange={(e) =>
-                    setFormPhong({ ...formPhong, idLoaiPhong: Number(e.target.value) })
-                  }
+                  aria-invalid={Boolean(formErrors.idLoaiPhong)}
+                  aria-describedby={formErrors.idLoaiPhong ? "phong-loai-err" : undefined}
+                  onChange={(e) => {
+                    setFormPhong({ ...formPhong, idLoaiPhong: Number(e.target.value) });
+                    setFormErrors((prev) => ({ ...prev, idLoaiPhong: undefined }));
+                  }}
                 >
                   {danhSachLoaiPhong.map((rt) => (
                     <option key={rt.id} value={rt.id}>
@@ -437,6 +506,17 @@ export default function AdminPhong() {
                     </option>
                   ))}
                 </select>
+                <p
+                  id="phong-loai-err"
+                  className={formErrors.idLoaiPhong ? "form-error" : "text-muted text-sm"}
+                  style={{
+                    margin: "0.35rem 0 0",
+                    minHeight: "2.6rem",
+                    visibility: formErrors.idLoaiPhong ? "visible" : "hidden",
+                  }}
+                >
+                  {formErrors.idLoaiPhong || "placeholder"}
+                </p>
               </div>
               <div className="form-group" style={{ gridColumn: "1 / -1" }}>
                 <label>Ảnh phòng</label>

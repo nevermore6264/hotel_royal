@@ -89,9 +89,9 @@ export default function AdminLoaiPhong() {
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [form, setForm] = useState({ ...LOAI_PHONG_FORM_INITIAL });
   const [fieldErrors, setFieldErrors] = useState<FormFieldErrors>({});
-  const [tongPhongTheoLoai, setTongPhongTheoLoai] = useState<Record<number, number>>(
-    {},
-  );
+  const [tongPhongTheoLoai, setTongPhongTheoLoai] = useState<
+    Record<number, number>
+  >({});
 
   const load = () => {
     const params: Record<string, string | number> = { page, size: 12 };
@@ -271,7 +271,10 @@ export default function AdminLoaiPhong() {
         </div>
       </div>
       <div className="card">
-        <div className="form-row form-row--between" style={{ alignItems: "center", marginBottom: "0.75rem" }}>
+        <div
+          className="form-row form-row--between"
+          style={{ alignItems: "center", marginBottom: "0.75rem" }}
+        >
           <h3 className="card-title" style={{ margin: 0 }}>
             Danh sách loại phòng
           </h3>
@@ -281,69 +284,69 @@ export default function AdminLoaiPhong() {
           </button>
         </div>
         <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Tên</th>
-              <th>Mô tả</th>
-              <th>Giá</th>
-              <th>Người</th>
-              <th>Tổng phòng</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.content.map((r) => (
-              <tr key={r.id}>
-                <td>{r.id}</td>
-                <td>{r.ten}</td>
-                <td
-                  style={{ maxWidth: "18rem", wordBreak: "break-word" }}
-                  title={r.moTa?.trim() || undefined}
-                >
-                  {r.moTa?.trim() ? r.moTa : "—"}
-                </td>
-                <td>{Number(r.gia).toLocaleString("vi-VN")} VND</td>
-                <td>{r.sucChuaToiDa ?? "-"}</td>
-                <td>{tongPhongTheoLoai[r.id] ?? 0}</td>
-                <td>
-                  <Link
-                    to={`/quan-tri/phong?idLoaiPhong=${r.id}`}
-                    className="btn btn-secondary btn-sm"
-                    style={{ marginRight: "0.5rem" }}
-                  >
-                    <ArrowRight className="btn-ico" aria-hidden />
-                    Đi tới phòng
-                  </Link>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    style={{ marginRight: "0.5rem" }}
-                    onClick={() => openEditModal(r)}
-                  >
-                    <Pencil className="btn-ico" aria-hidden />
-                    Sửa
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-danger btn-sm"
-                    disabled={(tongPhongTheoLoai[r.id] ?? 0) > 0}
-                    title={
-                      (tongPhongTheoLoai[r.id] ?? 0) > 0
-                        ? "Không thể xóa vì loại phòng này đang có phòng"
-                        : undefined
-                    }
-                    onClick={() => setPendingDeleteId(r.id)}
-                  >
-                    <Trash2 className="btn-ico" aria-hidden />
-                    Xóa
-                  </button>
-                </td>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Tên</th>
+                <th>Mô tả</th>
+                <th>Giá</th>
+                <th>Người</th>
+                <th>Tổng phòng</th>
+                <th></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {list.content.map((r) => (
+                <tr key={r.id}>
+                  <td>{r.id}</td>
+                  <td>{r.ten}</td>
+                  <td
+                    style={{ maxWidth: "18rem", wordBreak: "break-word" }}
+                    title={r.moTa?.trim() || undefined}
+                  >
+                    {r.moTa?.trim() ? r.moTa : "—"}
+                  </td>
+                  <td>{Number(r.gia).toLocaleString("vi-VN")} VND</td>
+                  <td>{r.sucChuaToiDa ?? "-"}</td>
+                  <td>{tongPhongTheoLoai[r.id] ?? 0}</td>
+                  <td>
+                    <Link
+                      to={`/quan-tri/phong?idLoaiPhong=${r.id}`}
+                      className="btn btn-secondary btn-sm"
+                      style={{ marginRight: "0.5rem" }}
+                    >
+                      <ArrowRight className="btn-ico" aria-hidden />
+                      Đi tới Quản lý phòng
+                    </Link>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      style={{ marginRight: "0.5rem" }}
+                      onClick={() => openEditModal(r)}
+                    >
+                      <Pencil className="btn-ico" aria-hidden />
+                      Sửa
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm"
+                      disabled={(tongPhongTheoLoai[r.id] ?? 0) > 0}
+                      title={
+                        (tongPhongTheoLoai[r.id] ?? 0) > 0
+                          ? "Không thể xóa vì loại phòng này đang có phòng"
+                          : undefined
+                      }
+                      onClick={() => setPendingDeleteId(r.id)}
+                    >
+                      <Trash2 className="btn-ico" aria-hidden />
+                      Xóa
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
         <PaginationBar
           page={page}
@@ -363,14 +366,24 @@ export default function AdminLoaiPhong() {
         >
           <div
             className="card modal-panel"
-            style={{ maxWidth: "min(560px, calc(100vw - 2rem))", width: "100%" }}
+            style={{
+              maxWidth: "min(560px, calc(100vw - 2rem))",
+              width: "100%",
+            }}
             role="dialog"
             aria-modal="true"
             aria-labelledby="loai-phong-modal-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="form-row form-row--between" style={{ alignItems: "flex-start", gap: "1rem" }}>
-              <h2 id="loai-phong-modal-title" className="card-title" style={{ margin: 0 }}>
+            <div
+              className="form-row form-row--between"
+              style={{ alignItems: "flex-start", gap: "1rem" }}
+            >
+              <h2
+                id="loai-phong-modal-title"
+                className="card-title"
+                style={{ margin: 0 }}
+              >
                 {editing ? "Sửa loại phòng" : "Thêm loại phòng"}
               </h2>
               <button
@@ -393,7 +406,9 @@ export default function AdminLoaiPhong() {
                   maxLength={TEN_MAX}
                   disabled={saveBusy}
                   aria-invalid={Boolean(fieldErrors.ten)}
-                  aria-describedby={fieldErrors.ten ? "loai-phong-ten-err" : undefined}
+                  aria-describedby={
+                    fieldErrors.ten ? "loai-phong-ten-err" : undefined
+                  }
                   onChange={(e) => {
                     setForm({ ...form, ten: e.target.value });
                     setFieldErrors((prev) => ({ ...prev, ten: undefined }));
@@ -401,7 +416,11 @@ export default function AdminLoaiPhong() {
                   placeholder="Ví dụ: Deluxe, Suite…"
                 />
                 {fieldErrors.ten ? (
-                  <p id="loai-phong-ten-err" className="form-error" style={{ margin: "0.35rem 0 0" }}>
+                  <p
+                    id="loai-phong-ten-err"
+                    className="form-error"
+                    style={{ margin: "0.35rem 0 0" }}
+                  >
                     {fieldErrors.ten}
                   </p>
                 ) : null}
@@ -416,17 +435,27 @@ export default function AdminLoaiPhong() {
                   value={form.giaStr}
                   disabled={saveBusy}
                   aria-invalid={Boolean(fieldErrors.giaStr)}
-                  aria-describedby={fieldErrors.giaStr ? "loai-phong-gia-err" : undefined}
+                  aria-describedby={
+                    fieldErrors.giaStr ? "loai-phong-gia-err" : undefined
+                  }
                   onChange={(e) => {
                     const d = digitsOnlyMoney(e.target.value);
                     if (!d) setForm({ ...form, giaStr: "" });
-                    else setForm({ ...form, giaStr: formatVndIntegerForInput(Number(d)) });
+                    else
+                      setForm({
+                        ...form,
+                        giaStr: formatVndIntegerForInput(Number(d)),
+                      });
                     setFieldErrors((prev) => ({ ...prev, giaStr: undefined }));
                   }}
                   placeholder="Ví dụ: 1.850.000"
                 />
                 {fieldErrors.giaStr ? (
-                  <p id="loai-phong-gia-err" className="form-error" style={{ margin: "0.35rem 0 0" }}>
+                  <p
+                    id="loai-phong-gia-err"
+                    className="form-error"
+                    style={{ margin: "0.35rem 0 0" }}
+                  >
                     {fieldErrors.giaStr}
                   </p>
                 ) : null}
@@ -442,15 +471,22 @@ export default function AdminLoaiPhong() {
                   disabled={saveBusy}
                   aria-invalid={Boolean(fieldErrors.sucChuaToiDa)}
                   aria-describedby={
-                    fieldErrors.sucChuaToiDa ? "loai-phong-suc-chua-err" : undefined
+                    fieldErrors.sucChuaToiDa
+                      ? "loai-phong-suc-chua-err"
+                      : undefined
                   }
                   onChange={(e) => {
                     const n = Number(e.target.value);
                     setForm({
                       ...form,
-                      sucChuaToiDa: Number.isFinite(n) ? Math.trunc(n) : SUC_CHUA_MIN,
+                      sucChuaToiDa: Number.isFinite(n)
+                        ? Math.trunc(n)
+                        : SUC_CHUA_MIN,
                     });
-                    setFieldErrors((prev) => ({ ...prev, sucChuaToiDa: undefined }));
+                    setFieldErrors((prev) => ({
+                      ...prev,
+                      sucChuaToiDa: undefined,
+                    }));
                   }}
                   placeholder="Số người"
                 />
@@ -473,7 +509,9 @@ export default function AdminLoaiPhong() {
                   maxLength={MO_TA_MAX}
                   disabled={saveBusy}
                   aria-invalid={Boolean(fieldErrors.moTa)}
-                  aria-describedby={fieldErrors.moTa ? "loai-phong-mo-ta-err" : undefined}
+                  aria-describedby={
+                    fieldErrors.moTa ? "loai-phong-mo-ta-err" : undefined
+                  }
                   onChange={(e) => {
                     setForm({ ...form, moTa: e.target.value });
                     setFieldErrors((prev) => ({ ...prev, moTa: undefined }));
@@ -481,16 +519,23 @@ export default function AdminLoaiPhong() {
                   placeholder="Ghi chú hiển thị cho khách (tuỳ chọn)"
                 />
                 {fieldErrors.moTa ? (
-                  <p id="loai-phong-mo-ta-err" className="form-error" style={{ margin: "0.35rem 0 0" }}>
+                  <p
+                    id="loai-phong-mo-ta-err"
+                    className="form-error"
+                    style={{ margin: "0.35rem 0 0" }}
+                  >
                     {fieldErrors.moTa}
                   </p>
                 ) : (
-                  <p className="text-muted text-sm" style={{ margin: "0.35rem 0 0" }}>
+                  <p
+                    className="text-muted text-sm"
+                    style={{ margin: "0.35rem 0 0" }}
+                  >
                     {form.moTa.length}/{MO_TA_MAX} ký tự
                   </p>
                 )}
               </div>
-              <div className="inline-actions mt-4">
+              <div className="inline-actions mt-4" style={{ justifyContent: "flex-end" }}>
                 <button type="submit" className="btn" disabled={saveBusy}>
                   <Save className="btn-ico" aria-hidden />
                   {saveBusy ? "Đang lưu…" : "Lưu"}
@@ -523,7 +568,6 @@ export default function AdminLoaiPhong() {
         }}
         onConfirm={confirmDelete}
       />
-
     </div>
   );
 }
