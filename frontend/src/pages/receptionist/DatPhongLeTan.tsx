@@ -13,6 +13,7 @@ import api from "../../api/client";
 import AlertDialog from "../../components/AlertDialog";
 import PaginationBar from "../../components/PaginationBar";
 import { apiErrorMessage } from "../../lib/apiError";
+import { formatNgayVN } from "../../lib/ngayGio";
 import {
   classBadgeDatPhong,
   classBadgeThanhToan,
@@ -547,7 +548,7 @@ export default function DatPhongLeTan() {
                   <td>#{b.id}</td>
                   <td>{b.tenKhachHang || b.tenKhach || "-"}</td>
                   <td>
-                    {b.ngayNhanPhong} → {b.ngayTraPhong}
+                    {formatNgayVN(b.ngayNhanPhong)} → {formatNgayVN(b.ngayTraPhong)}
                   </td>
                   <td>
                     <div

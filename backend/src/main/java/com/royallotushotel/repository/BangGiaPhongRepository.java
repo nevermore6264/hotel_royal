@@ -20,7 +20,7 @@ public interface BangGiaPhongRepository extends JpaRepository<BangGiaPhong, Long
             "AND b.kichHoat = true " +
             "AND b.ngayBatDau <= :ngay " +
             "AND b.ngayKetThuc >= :ngay " +
-            "ORDER BY COALESCE(b.uuTien, 0) DESC, b.giaApDung DESC")
+            "ORDER BY b.giaApDung DESC")
     List<BangGiaPhong> timGiaApDungTheoNgay(@Param("idLoaiPhong") Long idLoaiPhong, @Param("ngay") LocalDate ngay);
 
     @Query("SELECT b FROM BangGiaPhong b JOIN b.loaiPhong lp WHERE " +

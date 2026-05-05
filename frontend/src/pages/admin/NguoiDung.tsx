@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import { Pencil, Plus, Save, X } from "lucide-react";
 import api from "../../api/client";
 import PaginationBar from "../../components/PaginationBar";
@@ -41,8 +41,32 @@ const USER_FORM_INITIAL = {
   email: "",
   hoTen: "",
   trangThai: "HOAT_DONG",
-  vaiTro: ["ROLE_LE_TAN"] as string[],
+  vaiTro: "ROLE_LE_TAN" as string,
 };
+
+const TEN_DANG_NHAP_MAX = 80;
+const HO_TEN_MAX = 120;
+const MAT_KHAU_MIN = 6;
+
+const EMAIL_RE =
+  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
+type FormErrors = Partial<
+  Record<"tenDangNhap" | "matKhau" | "email" | "hoTen" | "vaiTro", string>
+>;
+
+function normalizeEmail(v: string): string {
+  return v.trim().toLowerCase();
+}
+
+function errorSlotStyle(): CSSProperties {
+  return {
+    minHeight: "2.6rem",
+    marginTop: "0.35rem",
+    display: "flex",
+    alignItems: "flex-start",
+  };
+}
 
 export default function AdminNguoiDung() {
   const { toast } = useToast();
@@ -58,6 +82,7 @@ export default function AdminNguoiDung() {
   const [editing, setEditing] = useState<NguoiDung | null>(null);
   const [saveBusy, setSaveBusy] = useState(false);
   const [form, setForm] = useState({ ...USER_FORM_INITIAL });
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
 
   const load = () => {
     const params: Record<string, string | number> = {
@@ -82,6 +107,7 @@ export default function AdminNguoiDung() {
     setFormOpen(false);
     setEditing(null);
     setForm({ ...USER_FORM_INITIAL });
+    setFieldErrors({});
   };
 
   useEffect(() => {
@@ -97,50 +123,123 @@ export default function AdminNguoiDung() {
   const openCreateModal = () => {
     setEditing(null);
     setForm({ ...USER_FORM_INITIAL });
+    setFieldErrors({});
     setFormOpen(true);
   };
 
   const openEditModal = (u: NguoiDung) => {
     setEditing(u);
+    const roles = u.vaiTro || [];
+    const vaiMacDinh =
+      roles.find((r) =>
+        (VAI_TRO_OPTIONS as readonly string[]).includes(r),
+      ) || "ROLE_LE_TAN";
     setForm({
       tenDangNhap: u.tenDangNhap,
       matKhau: "",
       email: u.email,
       hoTen: u.hoTen || "",
       trangThai: u.trangThai || "HOAT_DONG",
-      vaiTro: u.vaiTro || [],
+      vaiTro: vaiMacDinh,
     });
+    setFieldErrors({});
     setFormOpen(true);
   };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.vaiTro.length === 0) {
-      toast("Chọn ít nhất một vai trò.", "error");
-      return;
+    const tenDangNhap = form.tenDangNhap.trim();
+    const emailTrim = form.email.trim();
+    const hoTen = form.hoTen.trim();
+    const matKhau = form.matKhau.trim();
+
+    const errs: FormErrors = {};
+
+    if (!tenDangNhap) errs.tenDangNhap = "Vui lòng nhập tên đăng nhập.";
+    else if (tenDangNhap.length > TEN_DANG_NHAP_MAX)
+      errs.tenDangNhap = `Tên đăng nhập tối đa ${TEN_DANG_NHAP_MAX} ký tự.`;
+
+    if (!editing) {
+      if (!matKhau) errs.matKhau = "Vui lòng nhập mật khẩu.";
+      else if (matKhau.length < MAT_KHAU_MIN)
+        errs.matKhau = `Mật khẩu ít nhất ${MAT_KHAU_MIN} ký tự.`;
+    } else if (matKhau && matKhau.length < MAT_KHAU_MIN) {
+      errs.matKhau = `Mật khẩu mới ít nhất ${MAT_KHAU_MIN} ký tự.`;
     }
+
+    if (!emailTrim) errs.email = "Vui lòng nhập email.";
+    else if (!EMAIL_RE.test(emailTrim))
+      errs.email = "Email không hợp lệ.";
+
+    if (hoTen.length > HO_TEN_MAX)
+      errs.hoTen = `Họ tên tối đa ${HO_TEN_MAX} ký tự.`;
+
+    if (!form.vaiTro) errs.vaiTro = "Vui lòng chọn vai trò.";
+
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    const vaiTroPayload = [form.vaiTro];
+
+    try {
+      if (!editing) {
+        const { data } = await api.get("/nguoi-dung", {
+          params: { q: tenDangNhap, page: 0, size: 200 },
+        });
+        const ds = (data?.content || []) as NguoiDung[];
+        const trungTen = ds.some((item) => item.tenDangNhap.trim() === tenDangNhap);
+        if (trungTen) {
+          setFieldErrors((prev) => ({
+            ...prev,
+            tenDangNhap: "Tên đăng nhập đã tồn tại.",
+          }));
+          return;
+        }
+      }
+
+      const { data } = await api.get("/nguoi-dung", {
+        params: { q: emailTrim, page: 0, size: 200 },
+      });
+      const ds = (data?.content || []) as NguoiDung[];
+      const ne = normalizeEmail(emailTrim);
+      const trungEmail = ds.some(
+        (item) =>
+          normalizeEmail(item.email || "") === ne &&
+          (!editing || item.id !== editing.id),
+      );
+      if (trungEmail) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          email: "Email đã được sử dụng cho tài khoản khác.",
+        }));
+        return;
+      }
+    } catch {
+      // Không chặn lưu nếu lỗi mạng khi kiểm tra trùng; backend vẫn kiểm tra.
+    }
+
     setSaveBusy(true);
     try {
       if (editing) {
         const capNhat: Record<string, unknown> = {
-          email: form.email,
-          hoTen: form.hoTen,
+          email: emailTrim,
+          hoTen: hoTen || undefined,
           soDienThoai: "",
           trangThai: form.trangThai,
-          vaiTro: form.vaiTro,
+          vaiTro: vaiTroPayload,
         };
-        if (form.matKhau) capNhat.matKhau = form.matKhau;
+        if (matKhau) capNhat.matKhau = matKhau;
         await api.put(`/nguoi-dung/${editing.id}`, capNhat);
         toast("Đã cập nhật người dùng.", "success");
       } else {
         await api.post("/nguoi-dung", {
-          tenDangNhap: form.tenDangNhap,
-          matKhau: form.matKhau || "changeme123",
-          email: form.email,
-          hoTen: form.hoTen,
+          tenDangNhap,
+          matKhau,
+          email: emailTrim,
+          hoTen: hoTen || undefined,
           soDienThoai: "",
           trangThai: form.trangThai,
-          vaiTro: form.vaiTro,
+          vaiTro: vaiTroPayload,
         });
         toast("Đã thêm người dùng.", "success");
       }
@@ -279,11 +378,7 @@ export default function AdminNguoiDung() {
           }}
         >
           <div
-            className="card modal-panel"
-            style={{
-              maxWidth: "min(640px, calc(100vw - 2rem))",
-              width: "100%",
-            }}
+            className="card modal-panel nd-modal-nguoi-dung"
             role="dialog"
             aria-modal="true"
             aria-labelledby="user-modal-title"
@@ -307,12 +402,13 @@ export default function AdminNguoiDung() {
                 Đóng
               </button>
             </div>
-            <form onSubmit={save} className="mt-4">
+            <form onSubmit={save} noValidate className="mt-4">
               <div
+                className="nd-modal-nguoi-dung__grid"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "1rem",
+                  gridTemplateColumns: "1fr",
+                  gap: "0.65rem",
                 }}
               >
                 <div className="form-group">
@@ -320,12 +416,37 @@ export default function AdminNguoiDung() {
                   <input
                     value={form.tenDangNhap}
                     disabled={saveBusy || !!editing}
-                    onChange={(e) =>
-                      setForm({ ...form, tenDangNhap: e.target.value })
+                    aria-invalid={Boolean(fieldErrors.tenDangNhap)}
+                    aria-describedby={
+                      fieldErrors.tenDangNhap ? "nd-ten-err" : undefined
                     }
+                    onChange={(e) => {
+                      setForm({ ...form, tenDangNhap: e.target.value });
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        tenDangNhap: undefined,
+                      }));
+                    }}
                     placeholder="Tên đăng nhập nhân viên"
-                    required
+                    autoComplete="username"
                   />
+                  <div style={errorSlotStyle()}>
+                    {fieldErrors.tenDangNhap ? (
+                      <p
+                        id="nd-ten-err"
+                        className="form-error"
+                        style={{
+                          margin: 0,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {fieldErrors.tenDangNhap}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="form-group">
                   <label>Mật khẩu {editing && "(để trống nếu không đổi)"}</label>
@@ -333,11 +454,26 @@ export default function AdminNguoiDung() {
                     type="password"
                     value={form.matKhau}
                     disabled={saveBusy}
-                    onChange={(e) => setForm({ ...form, matKhau: e.target.value })}
+                    aria-invalid={Boolean(fieldErrors.matKhau)}
+                    aria-describedby={
+                      fieldErrors.matKhau ? "nd-mk-err" : undefined
+                    }
+                    onChange={(e) => {
+                      setForm({ ...form, matKhau: e.target.value });
+                      setFieldErrors((prev) => ({ ...prev, matKhau: undefined }));
+                    }}
                     placeholder={
                       editing ? "Để trống nếu không đổi" : "Mật khẩu ban đầu"
                     }
+                    autoComplete="new-password"
                   />
+                  <div style={errorSlotStyle()}>
+                    {fieldErrors.matKhau ? (
+                      <p id="nd-mk-err" className="form-error" style={{ margin: 0 }}>
+                        {fieldErrors.matKhau}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="form-group">
                   <label>Email</label>
@@ -345,19 +481,58 @@ export default function AdminNguoiDung() {
                     type="email"
                     value={form.email}
                     disabled={saveBusy}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    aria-invalid={Boolean(fieldErrors.email)}
+                    aria-describedby={
+                      fieldErrors.email ? "nd-email-err" : undefined
+                    }
+                    onChange={(e) => {
+                      setForm({ ...form, email: e.target.value });
+                      setFieldErrors((prev) => ({ ...prev, email: undefined }));
+                    }}
                     placeholder="email@khachsan.vn"
-                    required
+                    autoComplete="email"
                   />
+                  <div style={errorSlotStyle()}>
+                    {fieldErrors.email ? (
+                      <p
+                        id="nd-email-err"
+                        className="form-error"
+                        style={{
+                          margin: 0,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {fieldErrors.email}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="form-group">
                   <label>Họ tên</label>
                   <input
                     value={form.hoTen}
                     disabled={saveBusy}
-                    onChange={(e) => setForm({ ...form, hoTen: e.target.value })}
+                    aria-invalid={Boolean(fieldErrors.hoTen)}
+                    aria-describedby={
+                      fieldErrors.hoTen ? "nd-hoten-err" : undefined
+                    }
+                    onChange={(e) => {
+                      setForm({ ...form, hoTen: e.target.value });
+                      setFieldErrors((prev) => ({ ...prev, hoTen: undefined }));
+                    }}
                     placeholder="Họ và tên"
+                    autoComplete="name"
                   />
+                  <div style={errorSlotStyle()}>
+                    {fieldErrors.hoTen ? (
+                      <p id="nd-hoten-err" className="form-error" style={{ margin: 0 }}>
+                        {fieldErrors.hoTen}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="form-group">
                   <label>Trạng thái tài khoản</label>
@@ -370,25 +545,21 @@ export default function AdminNguoiDung() {
                     <option value="VO_HIEU">{TEN_TRANG_THAI.VO_HIEU}</option>
                     <option value="KHOA">{TEN_TRANG_THAI.KHOA}</option>
                   </select>
+                  <div style={{ ...errorSlotStyle(), minHeight: 0 }} />
                 </div>
-                <div className="form-group form-group--full">
-                  <label htmlFor="vai-tro-multi-modal">Vai trò</label>
-                  <p className="text-muted text-sm" style={{ margin: "0 0 0.35rem" }}>
-                    Giữ Ctrl (Windows) hoặc ⌘ (Mac) và bấm để chọn nhiều vai trò.
-                  </p>
+                <div className="form-group">
+                  <label htmlFor="vai-tro-modal">Vai trò</label>
                   <select
-                    id="vai-tro-multi-modal"
-                    multiple
-                    size={5}
-                    className="select-multiple"
+                    id="vai-tro-modal"
                     disabled={saveBusy}
+                    aria-invalid={Boolean(fieldErrors.vaiTro)}
+                    aria-describedby={
+                      fieldErrors.vaiTro ? "nd-vt-err" : undefined
+                    }
                     value={form.vaiTro}
                     onChange={(e) => {
-                      const selected = Array.from(
-                        e.target.selectedOptions,
-                        (o) => o.value,
-                      );
-                      setForm({ ...form, vaiTro: selected });
+                      setForm({ ...form, vaiTro: e.target.value });
+                      setFieldErrors((prev) => ({ ...prev, vaiTro: undefined }));
                     }}
                   >
                     {VAI_TRO_OPTIONS.map((r) => (
@@ -397,9 +568,19 @@ export default function AdminNguoiDung() {
                       </option>
                     ))}
                   </select>
+                  <div style={errorSlotStyle()}>
+                    {fieldErrors.vaiTro ? (
+                      <p id="nd-vt-err" className="form-error" style={{ margin: 0 }}>
+                        {fieldErrors.vaiTro}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               </div>
-              <div className="inline-actions mt-4">
+              <div
+                className="inline-actions mt-4"
+                style={{ justifyContent: "flex-end" }}
+              >
                 <button type="submit" className="btn" disabled={saveBusy}>
                   <Save className="btn-ico" aria-hidden />
                   {saveBusy ? "Đang lưu…" : "Lưu"}

@@ -5,6 +5,7 @@ import api from "../api/client";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../context/ToastContext";
 import { apiErrorMessage } from "../lib/apiError";
+import { formatNgayVN } from "../lib/ngayGio";
 import {
   classBadgeDatPhong,
   classBadgeThanhToan,
@@ -145,7 +146,7 @@ export default function DonCuaToi() {
                   <tr key={b.id}>
                     <td>#{b.id}</td>
                     <td>
-                      {b.ngayNhanPhong} → {b.ngayTraPhong}
+                      {formatNgayVN(b.ngayNhanPhong)} → {formatNgayVN(b.ngayTraPhong)}
                     </td>
                     <td>
                       <div

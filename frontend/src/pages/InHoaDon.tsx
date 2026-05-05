@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Printer, X } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import api from "../api/client";
+import { formatNgayVN } from "../lib/ngayGio";
 
 type DatPhong = {
   id: number;
@@ -78,7 +79,7 @@ export default function InHoaDon() {
         <p className="text-muted text-sm">Mã đơn: #{dp.id}</p>
         <p>Khách: {dp.tenKhach || "—"}</p>
         <p>
-          Nhận phòng: {dp.ngayNhanPhong} — Trả phòng: {dp.ngayTraPhong}
+          Nhận phòng: {formatNgayVN(dp.ngayNhanPhong)} — Trả phòng: {formatNgayVN(dp.ngayTraPhong)}
         </p>
         <p>Trạng thái đơn: {dp.trangThai}</p>
         <table className="invoice-table mt-4">

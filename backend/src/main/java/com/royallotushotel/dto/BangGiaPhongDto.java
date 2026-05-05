@@ -14,7 +14,6 @@ public class BangGiaPhongDto {
     private LocalDate ngayBatDau;
     private LocalDate ngayKetThuc;
     private BigDecimal giaApDung;
-    private Integer uuTien;
     private Boolean kichHoat;
     private String moTa;
 }

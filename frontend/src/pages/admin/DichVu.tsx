@@ -4,6 +4,11 @@ import api from "../../api/client";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import PaginationBar from "../../components/PaginationBar";
 import { useToast } from "../../context/ToastContext";
+import {
+  digitsOnlyMoney,
+  formatVndIntegerForInput,
+  parseVndIntegerInput,
+} from "../../lib/vndInput";
 
 type DichVu = {
   id: number;
@@ -12,7 +17,17 @@ type DichVu = {
   moTa?: string;
 };
 
-const FORM_INITIAL = { ten: "", gia: 0, moTa: "" };
+type FormErrors = Partial<Record<"ten" | "giaStr" | "moTa", string>>;
+
+const TEN_MAX = 120;
+const MO_TA_MAX = 2000;
+const GIA_MAX = 999_999_999_999;
+
+const FORM_INITIAL = { ten: "", giaStr: "", moTa: "" };
+
+function normalizeTenDichVu(v: string): string {
+  return v.trim().replace(/\s+/g, " ").toLocaleLowerCase("vi-VN");
+}
 
 export default function AdminDichVu() {
   const { toast } = useToast();
@@ -28,6 +43,7 @@ export default function AdminDichVu() {
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [form, setForm] = useState({ ...FORM_INITIAL });
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
 
   const load = () => {
     const params: Record<string, string | number> = { page, size: 12 };
@@ -48,6 +64,7 @@ export default function AdminDichVu() {
     setFormOpen(false);
     setEditing(null);
     setForm({ ...FORM_INITIAL });
+    setFieldErrors({});
   };
 
   useEffect(() => {
@@ -63,6 +80,7 @@ export default function AdminDichVu() {
   const openCreateModal = () => {
     setEditing(null);
     setForm({ ...FORM_INITIAL });
+    setFieldErrors({});
     setFormOpen(true);
   };
 
@@ -70,20 +88,59 @@ export default function AdminDichVu() {
     setEditing(d);
     setForm({
       ten: d.ten,
-      gia: Number(d.gia),
+      giaStr: formatVndIntegerForInput(Number(d.gia)),
       moTa: d.moTa || "",
     });
+    setFieldErrors({});
     setFormOpen(true);
   };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
+    const ten = form.ten.trim();
+    const gia = parseVndIntegerInput(form.giaStr);
+    const moTa = form.moTa.trim();
+    const errs: FormErrors = {};
+    if (!ten) errs.ten = "Vui lòng nhập tên dịch vụ.";
+    else if (ten.length > TEN_MAX)
+      errs.ten = `Tên dịch vụ tối đa ${TEN_MAX} ký tự.`;
+    if (!form.giaStr.trim()) errs.giaStr = "Vui lòng nhập giá dịch vụ.";
+    else if (!Number.isFinite(gia) || gia <= 0)
+      errs.giaStr = "Giá phải là số nguyên dương.";
+    else if (gia > GIA_MAX)
+      errs.giaStr = `Giá không vượt quá ${formatVndIntegerForInput(GIA_MAX)} VND.`;
+    if (moTa.length > MO_TA_MAX) errs.moTa = `Mô tả tối đa ${MO_TA_MAX} ký tự.`;
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    // Check trùng tên cho cả thêm và sửa (bỏ qua chính bản ghi đang sửa).
+    try {
+      const { data } = await api.get("/dich-vu", {
+        params: { q: ten, page: 0, size: 200 },
+      });
+      const ds = (data?.content || []) as DichVu[];
+      const biTrung = ds.some(
+        (item) =>
+          normalizeTenDichVu(item.ten) === normalizeTenDichVu(ten) &&
+          (!editing || item.id !== editing.id),
+      );
+      if (biTrung) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          ten: "Tên dịch vụ đã tồn tại. Vui lòng nhập tên khác.",
+        }));
+        return;
+      }
+    } catch {
+      // Không chặn lưu nếu lỗi mạng trong bước check trùng.
+    }
+
     setSaveBusy(true);
     try {
       const payload = {
-        ten: form.ten,
-        gia: form.gia,
-        moTa: form.moTa || undefined,
+        ten,
+        gia,
+        moTa: moTa || undefined,
       };
       if (editing) {
         await api.put(`/dich-vu/${editing.id}`, payload);
@@ -129,7 +186,7 @@ export default function AdminDichVu() {
     <div className="container page-shell">
       <h1 className="page-title">Dịch vụ</h1>
       <p className="page-subtitle page-subtitle--tight">
-        Thêm dịch vụ kèm phòng (giặt ủi, đưa đón…); nhân viên gán vào đặt phòng.
+        Thêm dịch vụ kèm phòng (giặt ủi, đưa đón…)
       </p>
       <div className="card mb-section">
         <h3 className="card-title" style={{ marginTop: 0 }}>
@@ -217,7 +274,10 @@ export default function AdminDichVu() {
         >
           <div
             className="card modal-panel"
-            style={{ maxWidth: "min(520px, calc(100vw - 2rem))", width: "100%" }}
+            style={{
+              maxWidth: "min(520px, calc(100vw - 2rem))",
+              width: "100%",
+            }}
             role="dialog"
             aria-modal="true"
             aria-labelledby="dich-vu-modal-title"
@@ -227,7 +287,11 @@ export default function AdminDichVu() {
               className="form-row form-row--between"
               style={{ alignItems: "flex-start", gap: "1rem" }}
             >
-              <h2 id="dich-vu-modal-title" className="card-title" style={{ margin: 0 }}>
+              <h2
+                id="dich-vu-modal-title"
+                className="card-title"
+                style={{ margin: 0 }}
+              >
                 {editing ? "Sửa dịch vụ" : "Thêm dịch vụ"}
               </h2>
               <button
@@ -241,44 +305,109 @@ export default function AdminDichVu() {
                 Đóng
               </button>
             </div>
-            <form onSubmit={save} className="mt-4">
-              <div className="form-inline" style={{ flexDirection: "column", alignItems: "stretch" }}>
-                <div className="form-group">
+            <form onSubmit={save} noValidate className="mt-4">
+              <div style={{ display: "grid", gap: "0.75rem" }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Tên dịch vụ</label>
                   <input
                     value={form.ten}
                     disabled={saveBusy}
-                    onChange={(e) => setForm({ ...form, ten: e.target.value })}
+                    aria-invalid={Boolean(fieldErrors.ten)}
+                    aria-describedby={
+                      fieldErrors.ten ? "dich-vu-ten-err" : undefined
+                    }
+                    onChange={(e) => {
+                      setForm({ ...form, ten: e.target.value });
+                      setFieldErrors((prev) => ({ ...prev, ten: undefined }));
+                    }}
                     placeholder="Ví dụ: Giặt ủi trong ngày"
                     required
                   />
+                  {fieldErrors.ten ? (
+                    <p
+                      id="dich-vu-ten-err"
+                      className="form-error"
+                      style={{ margin: "0.35rem 0 0" }}
+                    >
+                      {fieldErrors.ten}
+                    </p>
+                  ) : null}
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Giá (VND)</label>
                   <input
-                    type="number"
-                    min={0}
-                    step={1000}
-                    value={form.gia || ""}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={form.giaStr}
                     disabled={saveBusy}
-                    onChange={(e) =>
-                      setForm({ ...form, gia: Number(e.target.value) || 0 })
+                    aria-invalid={Boolean(fieldErrors.giaStr)}
+                    aria-describedby={
+                      fieldErrors.giaStr ? "dich-vu-gia-err" : undefined
                     }
+                    onChange={(e) => {
+                      const d = digitsOnlyMoney(e.target.value);
+                      setForm({
+                        ...form,
+                        giaStr: d ? formatVndIntegerForInput(Number(d)) : "",
+                      });
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        giaStr: undefined,
+                      }));
+                    }}
+                    placeholder="Ví dụ: 250.000"
                     required
                   />
+                  {fieldErrors.giaStr ? (
+                    <p
+                      id="dich-vu-gia-err"
+                      className="form-error"
+                      style={{ margin: "0.35rem 0 0" }}
+                    >
+                      {fieldErrors.giaStr}
+                    </p>
+                  ) : null}
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Mô tả</label>
                   <textarea
                     rows={3}
                     value={form.moTa}
                     disabled={saveBusy}
-                    onChange={(e) => setForm({ ...form, moTa: e.target.value })}
+                    maxLength={MO_TA_MAX}
+                    aria-invalid={Boolean(fieldErrors.moTa)}
+                    aria-describedby={
+                      fieldErrors.moTa ? "dich-vu-mo-ta-err" : undefined
+                    }
+                    onChange={(e) => {
+                      setForm({ ...form, moTa: e.target.value });
+                      setFieldErrors((prev) => ({ ...prev, moTa: undefined }));
+                    }}
                     placeholder="Mô tả ngắn (tuỳ chọn)"
                   />
+                  {fieldErrors.moTa ? (
+                    <p
+                      id="dich-vu-mo-ta-err"
+                      className="form-error"
+                      style={{ margin: "0.35rem 0 0" }}
+                    >
+                      {fieldErrors.moTa}
+                    </p>
+                  ) : (
+                    <p
+                      className="text-muted text-sm"
+                      style={{ margin: "0.35rem 0 0" }}
+                    >
+                      {form.moTa.length}/{MO_TA_MAX} ký tự
+                    </p>
+                  )}
                 </div>
               </div>
-              <div className="inline-actions mt-4">
+              <div
+                className="inline-actions mt-4"
+                style={{ justifyContent: "flex-end" }}
+              >
                 <button type="submit" className="btn" disabled={saveBusy}>
                   <Save className="btn-ico" aria-hidden />
                   {saveBusy ? "Đang lưu…" : "Lưu"}

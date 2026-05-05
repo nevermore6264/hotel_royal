@@ -35,10 +35,6 @@ public class BangGiaPhong {
     @Column(name = "gia_ap_dung", nullable = false, precision = 15, scale = 2)
     private BigDecimal giaApDung;
 
-    @Column(name = "uu_tien")
-    @Builder.Default
-    private Integer uuTien = 0;
-
     @Column(name = "kich_hoat", nullable = false)
     @Builder.Default
     private Boolean kichHoat = true;

@@ -47,7 +47,6 @@ public class BangGiaPhongService {
                 .ngayBatDau(dto.getNgayBatDau())
                 .ngayKetThuc(dto.getNgayKetThuc())
                 .giaApDung(dto.getGiaApDung())
-                .uuTien(dto.getUuTien() != null ? dto.getUuTien() : 0)
                 .kichHoat(dto.getKichHoat() != null ? dto.getKichHoat() : true)
                 .moTa(dto.getMoTa())
                 .build();
@@ -67,7 +66,6 @@ public class BangGiaPhongService {
         bangGia.setNgayBatDau(dto.getNgayBatDau());
         bangGia.setNgayKetThuc(dto.getNgayKetThuc());
         bangGia.setGiaApDung(dto.getGiaApDung());
-        bangGia.setUuTien(dto.getUuTien() != null ? dto.getUuTien() : 0);
         bangGia.setKichHoat(dto.getKichHoat() != null ? dto.getKichHoat() : true);
         bangGia.setMoTa(dto.getMoTa());
         return sangDto(bangGiaPhongRepository.save(bangGia));
@@ -109,7 +107,6 @@ public class BangGiaPhongService {
         dto.setNgayBatDau(bangGia.getNgayBatDau());
         dto.setNgayKetThuc(bangGia.getNgayKetThuc());
         dto.setGiaApDung(bangGia.getGiaApDung());
-        dto.setUuTien(bangGia.getUuTien());
         dto.setKichHoat(bangGia.getKichHoat());
         dto.setMoTa(bangGia.getMoTa());
         return dto;

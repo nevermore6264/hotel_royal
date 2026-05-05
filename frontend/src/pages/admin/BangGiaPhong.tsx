@@ -5,6 +5,7 @@ import ConfirmDialog from "../../components/ConfirmDialog";
 import PaginationBar from "../../components/PaginationBar";
 import { useToast } from "../../context/ToastContext";
 import { apiErrorMessage } from "../../lib/apiError";
+import { formatNgayVN } from "../../lib/ngayGio";
 import {
   digitsOnlyMoney,
   formatVndIntegerForInput,
@@ -24,7 +25,6 @@ type BangGiaPhong = {
   ngayBatDau: string;
   ngayKetThuc: string;
   giaApDung: number;
-  uuTien: number;
   kichHoat: boolean;
   moTa?: string;
 };
@@ -36,7 +36,6 @@ type FormBangGiaErrors = Partial<
     | "giaApDungStr"
     | "ngayBatDau"
     | "ngayKetThuc"
-    | "uuTien"
     | "moTa",
     string
   >
@@ -52,7 +51,6 @@ const emptyForm = {
   ngayBatDau: "",
   ngayKetThuc: "",
   giaApDungStr: "",
-  uuTien: 0,
   kichHoat: true,
   moTa: "",
 };
@@ -76,7 +74,12 @@ export default function AdminBangGiaPhong() {
   const [fieldErrors, setFieldErrors] = useState<FormBangGiaErrors>({});
   const errorSlotStyle: React.CSSProperties = {
     margin: "0.35rem 0 0",
-    minHeight: "1.1rem",
+    minHeight: "1.5rem",
+    display: "-webkit-box",
+    WebkitBoxOrient: "vertical" as any,
+    WebkitLineClamp: 3 as any,
+    overflow: "hidden",
+    lineHeight: "1.25rem",
   };
 
   const loadList = () => {
@@ -141,7 +144,6 @@ export default function AdminBangGiaPhong() {
       ngayBatDau: item.ngayBatDau,
       ngayKetThuc: item.ngayKetThuc,
       giaApDungStr: formatVndIntegerForInput(Number(item.giaApDung)),
-      uuTien: item.uuTien ?? 0,
       kichHoat: Boolean(item.kichHoat),
       moTa: item.moTa || "",
     });
@@ -160,19 +162,23 @@ export default function AdminBangGiaPhong() {
     else if (ten.length > TEN_CHINH_SACH_MAX)
       nextErrors.tenChinhSach = `Tên chính sách tối đa ${TEN_CHINH_SACH_MAX} ký tự.`;
 
-    if (!form.giaApDungStr.trim()) nextErrors.giaApDungStr = "Vui lòng nhập giá áp dụng.";
+    if (!form.giaApDungStr.trim())
+      nextErrors.giaApDungStr = "Vui lòng nhập giá áp dụng.";
     else if (!Number.isFinite(gia) || gia <= 0)
       nextErrors.giaApDungStr = "Giá áp dụng phải là số nguyên dương.";
     else if (gia > GIA_MAX)
       nextErrors.giaApDungStr = `Giá áp dụng không được vượt quá ${formatVndIntegerForInput(GIA_MAX)} VND/đêm.`;
 
     if (!form.ngayBatDau) nextErrors.ngayBatDau = "Vui lòng chọn ngày bắt đầu.";
-    if (!form.ngayKetThuc) nextErrors.ngayKetThuc = "Vui lòng chọn ngày kết thúc.";
-    if (form.ngayBatDau && form.ngayKetThuc && form.ngayBatDau > form.ngayKetThuc) {
-      nextErrors.ngayKetThuc = "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.";
-    }
-    if (!Number.isInteger(form.uuTien)) {
-      nextErrors.uuTien = "Ưu tiên phải là số nguyên.";
+    if (!form.ngayKetThuc)
+      nextErrors.ngayKetThuc = "Vui lòng chọn ngày kết thúc.";
+    if (
+      form.ngayBatDau &&
+      form.ngayKetThuc &&
+      form.ngayBatDau > form.ngayKetThuc
+    ) {
+      nextErrors.ngayKetThuc =
+        "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.";
     }
     if (moTa.length > MO_TA_MAX) {
       nextErrors.moTa = `Mô tả tối đa ${MO_TA_MAX} ký tự.`;
@@ -215,7 +221,6 @@ export default function AdminBangGiaPhong() {
       moTa: moTa || undefined,
       ngayBatDau: form.ngayBatDau,
       ngayKetThuc: form.ngayKetThuc,
-      uuTien: form.uuTien,
       kichHoat: form.kichHoat,
       idLoaiPhong: Number(form.idLoaiPhong),
     };
@@ -313,7 +318,6 @@ export default function AdminBangGiaPhong() {
                 <th>Chính sách</th>
                 <th>Thời gian</th>
                 <th>Giá</th>
-                <th>Ưu tiên</th>
                 <th>Trạng thái</th>
                 <th></th>
               </tr>
@@ -327,12 +331,12 @@ export default function AdminBangGiaPhong() {
                     <div className="text-muted text-sm">{item.moTa || "—"}</div>
                   </td>
                   <td>
-                    {item.ngayBatDau} → {item.ngayKetThuc}
+                    {formatNgayVN(item.ngayBatDau)} →{" "}
+                    {formatNgayVN(item.ngayKetThuc)}
                   </td>
                   <td>
                     {Number(item.giaApDung).toLocaleString("vi-VN")} VND/đêm
                   </td>
-                  <td>{item.uuTien ?? 0}</td>
                   <td>{item.kichHoat ? "Áp dụng" : "Tắt"}</td>
                   <td>
                     <button
@@ -357,7 +361,7 @@ export default function AdminBangGiaPhong() {
               ))}
               {list.content.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-muted">
+                  <td colSpan={6} className="text-muted">
                     Chưa có bảng giá theo mùa nào.
                   </td>
                 </tr>
@@ -396,7 +400,11 @@ export default function AdminBangGiaPhong() {
               className="form-row form-row--between"
               style={{ alignItems: "flex-start", gap: "1rem" }}
             >
-              <h2 id="bang-gia-modal-title" className="card-title" style={{ margin: 0 }}>
+              <h2
+                id="bang-gia-modal-title"
+                className="card-title"
+                style={{ margin: 0 }}
+              >
                 {editing ? "Sửa bảng giá" : "Thêm bảng giá"}
               </h2>
               <button
@@ -419,10 +427,15 @@ export default function AdminBangGiaPhong() {
                     disabled={saveBusy}
                     aria-invalid={Boolean(fieldErrors.idLoaiPhong)}
                     aria-describedby={
-                      fieldErrors.idLoaiPhong ? "bang-gia-id-loai-err" : undefined
+                      fieldErrors.idLoaiPhong
+                        ? "bang-gia-id-loai-err"
+                        : undefined
                     }
                     onChange={(e) =>
-                      setForm((prev) => ({ ...prev, idLoaiPhong: e.target.value }))
+                      setForm((prev) => ({
+                        ...prev,
+                        idLoaiPhong: e.target.value,
+                      }))
                     }
                     required
                   >
@@ -435,10 +448,16 @@ export default function AdminBangGiaPhong() {
                   </select>
                   <p
                     id="bang-gia-id-loai-err"
-                    className={fieldErrors.idLoaiPhong ? "form-error" : "text-muted text-sm"}
+                    className={
+                      fieldErrors.idLoaiPhong
+                        ? "form-error"
+                        : "text-muted text-sm"
+                    }
                     style={{
                       ...errorSlotStyle,
-                      visibility: fieldErrors.idLoaiPhong ? "visible" : "hidden",
+                      visibility: fieldErrors.idLoaiPhong
+                        ? "visible"
+                        : "hidden",
                     }}
                   >
                     {fieldErrors.idLoaiPhong || "placeholder"}
@@ -465,10 +484,16 @@ export default function AdminBangGiaPhong() {
                   />
                   <p
                     id="bang-gia-ten-err"
-                    className={fieldErrors.tenChinhSach ? "form-error" : "text-muted text-sm"}
+                    className={
+                      fieldErrors.tenChinhSach
+                        ? "form-error"
+                        : "text-muted text-sm"
+                    }
                     style={{
                       ...errorSlotStyle,
-                      visibility: fieldErrors.tenChinhSach ? "visible" : "hidden",
+                      visibility: fieldErrors.tenChinhSach
+                        ? "visible"
+                        : "hidden",
                     }}
                   >
                     {fieldErrors.tenChinhSach || "placeholder"}
@@ -491,7 +516,9 @@ export default function AdminBangGiaPhong() {
                         const d = digitsOnlyMoney(e.target.value);
                         return {
                           ...prev,
-                          giaApDungStr: d ? formatVndIntegerForInput(Number(d)) : "",
+                          giaApDungStr: d
+                            ? formatVndIntegerForInput(Number(d))
+                            : "",
                         };
                       })
                     }
@@ -500,40 +527,19 @@ export default function AdminBangGiaPhong() {
                   />
                   <p
                     id="bang-gia-gia-err"
-                    className={fieldErrors.giaApDungStr ? "form-error" : "text-muted text-sm"}
+                    className={
+                      fieldErrors.giaApDungStr
+                        ? "form-error"
+                        : "text-muted text-sm"
+                    }
                     style={{
                       ...errorSlotStyle,
-                      visibility: fieldErrors.giaApDungStr ? "visible" : "hidden",
+                      visibility: fieldErrors.giaApDungStr
+                        ? "visible"
+                        : "hidden",
                     }}
                   >
                     {fieldErrors.giaApDungStr || "placeholder"}
-                  </p>
-                </div>
-                <div className="form-group">
-                  <label>Ưu tiên</label>
-                  <input
-                    type="number"
-                    value={form.uuTien}
-                    disabled={saveBusy}
-                    aria-invalid={Boolean(fieldErrors.uuTien)}
-                    aria-describedby={fieldErrors.uuTien ? "bang-gia-uu-tien-err" : undefined}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        uuTien: Number(e.target.value) || 0,
-                      }))
-                    }
-                    placeholder="Số càng lớn càng ưu tiên"
-                  />
-                  <p
-                    id="bang-gia-uu-tien-err"
-                    className={fieldErrors.uuTien ? "form-error" : "text-muted text-sm"}
-                    style={{
-                      ...errorSlotStyle,
-                      visibility: fieldErrors.uuTien ? "visible" : "hidden",
-                    }}
-                  >
-                    {fieldErrors.uuTien || "placeholder"}
                   </p>
                 </div>
                 <div className="form-group">
@@ -544,17 +550,26 @@ export default function AdminBangGiaPhong() {
                     disabled={saveBusy}
                     aria-invalid={Boolean(fieldErrors.ngayBatDau)}
                     aria-describedby={
-                      fieldErrors.ngayBatDau ? "bang-gia-bat-dau-err" : undefined
+                      fieldErrors.ngayBatDau
+                        ? "bang-gia-bat-dau-err"
+                        : undefined
                     }
                     onChange={(e) =>
-                      setForm((prev) => ({ ...prev, ngayBatDau: e.target.value }))
+                      setForm((prev) => ({
+                        ...prev,
+                        ngayBatDau: e.target.value,
+                      }))
                     }
                     placeholder="Bắt đầu áp dụng"
                     required
                   />
                   <p
                     id="bang-gia-bat-dau-err"
-                    className={fieldErrors.ngayBatDau ? "form-error" : "text-muted text-sm"}
+                    className={
+                      fieldErrors.ngayBatDau
+                        ? "form-error"
+                        : "text-muted text-sm"
+                    }
                     style={{
                       ...errorSlotStyle,
                       visibility: fieldErrors.ngayBatDau ? "visible" : "hidden",
@@ -571,26 +586,40 @@ export default function AdminBangGiaPhong() {
                     disabled={saveBusy}
                     aria-invalid={Boolean(fieldErrors.ngayKetThuc)}
                     aria-describedby={
-                      fieldErrors.ngayKetThuc ? "bang-gia-ket-thuc-err" : undefined
+                      fieldErrors.ngayKetThuc
+                        ? "bang-gia-ket-thuc-err"
+                        : undefined
                     }
                     onChange={(e) =>
-                      setForm((prev) => ({ ...prev, ngayKetThuc: e.target.value }))
+                      setForm((prev) => ({
+                        ...prev,
+                        ngayKetThuc: e.target.value,
+                      }))
                     }
                     placeholder="Kết thúc áp dụng"
                     required
                   />
                   <p
                     id="bang-gia-ket-thuc-err"
-                    className={fieldErrors.ngayKetThuc ? "form-error" : "text-muted text-sm"}
+                    className={
+                      fieldErrors.ngayKetThuc
+                        ? "form-error"
+                        : "text-muted text-sm"
+                    }
                     style={{
                       ...errorSlotStyle,
-                      visibility: fieldErrors.ngayKetThuc ? "visible" : "hidden",
+                      visibility: fieldErrors.ngayKetThuc
+                        ? "visible"
+                        : "hidden",
                     }}
                   >
                     {fieldErrors.ngayKetThuc || "placeholder"}
                   </p>
                 </div>
-                <div className="form-group" style={{ flex: "2 1 240px" }}>
+                <div
+                  className="form-group"
+                  style={{ flex: "1 1 100%", minWidth: "100%" }}
+                >
                   <label>Mô tả</label>
                   <textarea
                     rows={3}
@@ -598,18 +627,27 @@ export default function AdminBangGiaPhong() {
                     disabled={saveBusy}
                     maxLength={MO_TA_MAX}
                     aria-invalid={Boolean(fieldErrors.moTa)}
-                    aria-describedby={fieldErrors.moTa ? "bang-gia-mo-ta-err" : undefined}
+                    aria-describedby={
+                      fieldErrors.moTa ? "bang-gia-mo-ta-err" : undefined
+                    }
                     onChange={(e) =>
                       setForm((prev) => ({ ...prev, moTa: e.target.value }))
                     }
                     placeholder="Ghi chú cho lễ tân hoặc quản trị"
                   />
                   {fieldErrors.moTa ? (
-                    <p id="bang-gia-mo-ta-err" className="form-error" style={{ margin: "0.35rem 0 0" }}>
+                    <p
+                      id="bang-gia-mo-ta-err"
+                      className="form-error"
+                      style={{ margin: "0.35rem 0 0" }}
+                    >
                       {fieldErrors.moTa}
                     </p>
                   ) : (
-                    <p className="text-muted text-sm" style={{ margin: "0.35rem 0 0" }}>
+                    <p
+                      className="text-muted text-sm"
+                      style={{ margin: "0.35rem 0 0" }}
+                    >
                       {form.moTa.length}/{MO_TA_MAX} ký tự
                     </p>
                   )}
@@ -637,7 +675,10 @@ export default function AdminBangGiaPhong() {
                 Đang áp dụng
               </label>
 
-              <div className="inline-actions mt-4" style={{ justifyContent: "flex-end" }}>
+              <div
+                className="inline-actions mt-4"
+                style={{ justifyContent: "flex-end" }}
+              >
                 <button type="submit" className="btn" disabled={saveBusy}>
                   <Save className="btn-ico" aria-hidden />
                   {saveBusy ? "Đang lưu…" : "Lưu bảng giá"}

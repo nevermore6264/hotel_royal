@@ -68,6 +68,13 @@ public class NguoiDungService {
     @Transactional
     public NguoiDungDto capNhat(Long id, NguoiDungDto dto) {
         NguoiDung nd = nguoiDungRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay nguoi dung"));
+        if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+            String emailMoi = dto.getEmail().trim();
+            if (!emailMoi.equals(nd.getEmail())
+                    && nguoiDungRepository.existsByEmailAndIdNot(emailMoi, id))
+                throw new RuntimeException("Email da duoc su dung");
+            nd.setEmail(emailMoi);
+        }
         nd.setHoTen(dto.getHoTen());
         nd.setSoDienThoai(dto.getSoDienThoai());
         nd.setTrangThai(dto.getTrangThai() != null ? dto.getTrangThai() : nd.getTrangThai());

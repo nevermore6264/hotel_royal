@@ -6,6 +6,7 @@ import {
   classBadgeDatPhong,
   tenTrangThaiDatPhong,
 } from "../../lib/trangThai";
+import { formatNgayVN } from "../../lib/ngayGio";
 
 type DatPhong = {
   id: number;
@@ -108,8 +109,8 @@ export default function AdminDatPhong() {
                   <tr key={d.id}>
                     <td>{d.id}</td>
                     <td>{d.tenKhach || "—"}</td>
-                    <td>{d.ngayNhanPhong}</td>
-                    <td>{d.ngayTraPhong}</td>
+                    <td>{formatNgayVN(d.ngayNhanPhong)}</td>
+                    <td>{formatNgayVN(d.ngayTraPhong)}</td>
                     <td>
                       <span className={`badge ${classBadgeDatPhong(d.trangThai)}`}>
                         {tenTrangThaiDatPhong(d.trangThai)}

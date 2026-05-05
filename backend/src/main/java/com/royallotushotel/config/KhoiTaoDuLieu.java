@@ -169,7 +169,6 @@ public class KhoiTaoDuLieu implements CommandLineRunner {
                 .ngayBatDau(LocalDate.of(2026, 6, 1))
                 .ngayKetThuc(LocalDate.of(2026, 8, 31))
                 .giaApDung(new BigDecimal("2250000"))
-                .uuTien(10)
                 .kichHoat(true)
                 .moTa("Phụ phí mùa cao — ưu tiên áp dụng cho khoảng ngày trùng lịch.")
                 .build());
@@ -183,7 +182,6 @@ public class KhoiTaoDuLieu implements CommandLineRunner {
                         .ngayBatDau(LocalDate.of(2026, 1, 15))
                         .ngayKetThuc(LocalDate.of(2026, 2, 5))
                         .giaApDung(new BigDecimal("4200000"))
-                        .uuTien(20)
                         .kichHoat(true)
                         .moTa("Giá lễ Tết — đặt sớm được ưu tiên giữ phòng.")
                         .build()));

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../api/client";
 import PaginationBar from "../../components/PaginationBar";
+import { formatNgayGioVN } from "../../lib/ngayGio";
 
 type Row = {
   id: number;
@@ -91,7 +92,7 @@ export default function AdminNhatKyHeThong() {
               <tbody>
                 {rows.content.map((r) => (
                   <tr key={r.id}>
-                    <td>{new Date(r.thoiDiem).toLocaleString("vi-VN")}</td>
+                    <td>{formatNgayGioVN(r.thoiDiem)}</td>
                     <td>{r.hanhDong}</td>
                     <td className="cell-wrap-text">{r.chiTiet}</td>
                     <td>{r.tenDangNhapNguoiThucHien || "—"}</td>
