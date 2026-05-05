@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { ArrowRight, Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import api from "../../api/client";
 import PaginationBar from "../../components/PaginationBar";
 import ConfirmDialog from "../../components/ConfirmDialog";
@@ -27,6 +28,10 @@ const SUC_CHUA_MAX = 50;
 
 type FormFieldKey = "ten" | "giaStr" | "moTa" | "sucChuaToiDa";
 type FormFieldErrors = Partial<Record<FormFieldKey, string>>;
+
+function normalizeTenLoaiPhong(v: string): string {
+  return v.trim().replace(/\s+/g, " ").toLocaleLowerCase("vi-VN");
+}
 
 function validateLoaiPhongForm(form: {
   ten: string;
@@ -84,6 +89,9 @@ export default function AdminLoaiPhong() {
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [form, setForm] = useState({ ...LOAI_PHONG_FORM_INITIAL });
   const [fieldErrors, setFieldErrors] = useState<FormFieldErrors>({});
+  const [tongPhongTheoLoai, setTongPhongTheoLoai] = useState<Record<number, number>>(
+    {},
+  );
 
   const load = () => {
     const params: Record<string, string | number> = { page, size: 12 };
@@ -97,6 +105,34 @@ export default function AdminLoaiPhong() {
   useEffect(() => {
     setPage(0);
   }, [q]);
+
+  useEffect(() => {
+    const dsLoai = list.content;
+    if (dsLoai.length === 0) {
+      setTongPhongTheoLoai({});
+      return;
+    }
+    Promise.all(
+      dsLoai.map(async (lp) => {
+        const { data } = await api.get("/phong", {
+          params: { idLoaiPhong: lp.id, page: 0, size: 1 },
+        });
+        const tong =
+          Number(data?.totalElements) ||
+          Number(data?.totalPages) ||
+          (Array.isArray(data?.content) ? data.content.length : 0);
+        return [lp.id, tong] as const;
+      }),
+    )
+      .then((pairs) => {
+        const next: Record<number, number> = {};
+        pairs.forEach(([id, tong]) => {
+          next[id] = tong;
+        });
+        setTongPhongTheoLoai(next);
+      })
+      .catch(() => setTongPhongTheoLoai({}));
+  }, [list.content]);
 
   const closeFormModal = () => {
     if (saveBusy) return;
@@ -144,6 +180,28 @@ export default function AdminLoaiPhong() {
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
+    const tenCanKiemTra = normalizeTenLoaiPhong(form.ten);
+    try {
+      const { data } = await api.get("/loai-phong", {
+        params: { q: form.ten.trim(), page: 0, size: 100 },
+      });
+      const danhSach = (data?.content || []) as LoaiPhong[];
+      const biTrung = danhSach.some(
+        (lp) =>
+          normalizeTenLoaiPhong(lp.ten) === tenCanKiemTra &&
+          (!editing || lp.id !== editing.id),
+      );
+      if (biTrung) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          ten: "Tên loại phòng đã tồn tại. Vui lòng nhập tên khác.",
+        }));
+        return;
+      }
+    } catch {
+      // Bỏ qua lỗi kiểm tra trùng để không chặn thao tác lưu.
+    }
+
     const gia = parseVndIntegerInput(form.giaStr);
     const payload = {
       ten: form.ten.trim(),
@@ -174,6 +232,11 @@ export default function AdminLoaiPhong() {
 
   const confirmDelete = async () => {
     if (pendingDeleteId == null) return;
+    if ((tongPhongTheoLoai[pendingDeleteId] ?? 0) > 0) {
+      setPendingDeleteId(null);
+      toast("Chỉ được xóa loại phòng chưa có phòng nào.", "error");
+      return;
+    }
     setDeleteBusy(true);
     try {
       await api.delete(`/loai-phong/${pendingDeleteId}`);
@@ -226,6 +289,7 @@ export default function AdminLoaiPhong() {
               <th>Mô tả</th>
               <th>Giá</th>
               <th>Người</th>
+              <th>Tổng phòng</th>
               <th></th>
             </tr>
           </thead>
@@ -242,7 +306,16 @@ export default function AdminLoaiPhong() {
                 </td>
                 <td>{Number(r.gia).toLocaleString("vi-VN")} VND</td>
                 <td>{r.sucChuaToiDa ?? "-"}</td>
+                <td>{tongPhongTheoLoai[r.id] ?? 0}</td>
                 <td>
+                  <Link
+                    to={`/quan-tri/phong?idLoaiPhong=${r.id}`}
+                    className="btn btn-secondary btn-sm"
+                    style={{ marginRight: "0.5rem" }}
+                  >
+                    <ArrowRight className="btn-ico" aria-hidden />
+                    Đi tới phòng
+                  </Link>
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
@@ -255,6 +328,12 @@ export default function AdminLoaiPhong() {
                   <button
                     type="button"
                     className="btn btn-danger btn-sm"
+                    disabled={(tongPhongTheoLoai[r.id] ?? 0) > 0}
+                    title={
+                      (tongPhongTheoLoai[r.id] ?? 0) > 0
+                        ? "Không thể xóa vì loại phòng này đang có phòng"
+                        : undefined
+                    }
                     onClick={() => setPendingDeleteId(r.id)}
                   >
                     <Trash2 className="btn-ico" aria-hidden />

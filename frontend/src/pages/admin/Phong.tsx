@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Image, Pencil, Plus, Save, Trash2, Upload, X } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import api from "../../api/client";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import PaginationBar from "../../components/PaginationBar";
@@ -26,6 +27,7 @@ const PHONG_FORM_MAC_DINH = {
 
 export default function AdminPhong() {
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dangTaiAnh, setDangTaiAnh] = useState(false);
   const [page, setPage] = useState(0);
@@ -69,6 +71,16 @@ export default function AdminPhong() {
   useEffect(() => {
     setPage(0);
   }, [q, trangThaiLoc, idLoaiLoc]);
+
+  useEffect(() => {
+    const raw = searchParams.get("idLoaiPhong");
+    if (!raw) {
+      setIdLoaiLoc("");
+      return;
+    }
+    const id = Number(raw);
+    setIdLoaiLoc(Number.isFinite(id) ? id : "");
+  }, [searchParams]);
 
   const taiDuLieu = () => {
     taiDanhSachPhong();

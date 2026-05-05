@@ -26,7 +26,7 @@ export default function PaginationBar({
         <ChevronLeft className="btn-ico" aria-hidden />
         Trước
       </button>
-      <span className="text-muted text-sm mx-2">
+      <span className="pagination-bar__label text-muted text-sm">
         Trang {page + 1} / {tp}
       </span>
       <button
