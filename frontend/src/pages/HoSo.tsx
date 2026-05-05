@@ -81,7 +81,7 @@ function IconSpark() {
   );
 }
 
-export default function Profile() {
+export default function HoSo() {
   const { refreshSession, user, isKhachHang } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);

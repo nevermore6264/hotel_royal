@@ -121,7 +121,7 @@ function RoomCardImage({ phong }: { phong: Phong }) {
   );
 }
 
-export default function RoomList() {
+export default function DanhSachPhong() {
   const [searchParams] = useSearchParams();
   const [roomTypes, setRoomTypes] = useState<LoaiPhong[]>([]);
   const [rooms, setRooms] = useState<Phong[]>([]);

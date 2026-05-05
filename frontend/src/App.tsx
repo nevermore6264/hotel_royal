@@ -1,34 +1,34 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Home from "./pages/Home";
-import RoomList from "./pages/RoomList";
-import BookingPage from "./pages/BookingPage";
-import MyBookings from "./pages/MyBookings";
-import BookingSuccess from "./pages/BookingSuccess";
-import AdminDashboard from "./pages/admin/Dashboard";
-import AdminRooms from "./pages/admin/Rooms";
-import AdminRoomTypes from "./pages/admin/RoomTypes";
-import AdminRoomPricing from "./pages/admin/RoomPricing";
-import AdminUsers from "./pages/admin/Users";
-import AdminPolicies from "./pages/admin/CancellationPolicies";
+import DangNhap from "./pages/DangNhap";
+import DangKy from "./pages/DangKy";
+import TrangChu from "./pages/TrangChu";
+import DanhSachPhong from "./pages/DanhSachPhong";
+import DatPhong from "./pages/DatPhong";
+import DonCuaToi from "./pages/DonCuaToi";
+import DatPhongThanhCong from "./pages/DatPhongThanhCong";
+import AdminTongQuan from "./pages/admin/TongQuan";
+import AdminPhong from "./pages/admin/Phong";
+import AdminLoaiPhong from "./pages/admin/LoaiPhong";
+import AdminBangGiaPhong from "./pages/admin/BangGiaPhong";
+import AdminNguoiDung from "./pages/admin/NguoiDung";
+import AdminChinhSachHuyPhong from "./pages/admin/ChinhSachHuyPhong";
 import AdminDichVu from "./pages/admin/DichVu";
-import ChatPage from "./pages/Chat";
-import ReceptionistBookings from "./pages/receptionist/Bookings";
-import ReceptionistCustomers from "./pages/receptionist/Customers";
-import HousekeeperNeedsCleaning from "./pages/housekeeping/RoomsNeedCleaning";
-import HousekeeperRoomStatus from "./pages/housekeeping/RoomStatus";
-import NotFound from "./pages/NotFound";
-import Forbidden from "./pages/Forbidden";
-import Info from "./pages/Info";
-import Profile from "./pages/Profile";
-import RoomDetail from "./pages/RoomDetail";
+import TroChuyen from "./pages/TroChuyen";
+import DatPhongLeTan from "./pages/receptionist/DatPhongLeTan";
+import KhachHangLeTan from "./pages/receptionist/KhachHangLeTan";
+import PhongCanDonDep from "./pages/housekeeping/PhongCanDonDep";
+import TrangThaiPhongBuongPhong from "./pages/housekeeping/TrangThaiPhong";
+import KhongTimThay from "./pages/KhongTimThay";
+import KhongCoQuyen from "./pages/KhongCoQuyen";
+import ThongTin from "./pages/ThongTin";
+import HoSo from "./pages/HoSo";
+import ChiTietPhong from "./pages/ChiTietPhong";
 import LoaiPhongDetail from "./pages/LoaiPhongDetail";
-import InvoicePrint from "./pages/InvoicePrint";
-import AdminBookings from "./pages/admin/Bookings";
-import AdminAuditLog from "./pages/admin/AuditLog";
+import InHoaDon from "./pages/InHoaDon";
+import AdminDatPhong from "./pages/admin/DatPhong";
+import AdminNhatKyHeThong from "./pages/admin/NhatKyHeThong";
 
 const ROLE_ANY_AUTH = [
   "ROLE_VANG_LAI",
@@ -55,28 +55,28 @@ function PrivateRoute({
 export default function App() {
   return (
     <Routes>
-      <Route path="/dang-nhap" element={<Login />} />
-      <Route path="/dang-ky" element={<Register />} />
+      <Route path="/dang-nhap" element={<DangNhap />} />
+      <Route path="/dang-ky" element={<DangKy />} />
       <Route path="/" element={<Layout />}>
-        <Route index element={<Home />} />
-        <Route path="thong-tin" element={<Info />} />
-        <Route path="khong-co-quyen" element={<Forbidden />} />
+        <Route index element={<TrangChu />} />
+        <Route path="thong-tin" element={<ThongTin />} />
+        <Route path="khong-co-quyen" element={<KhongCoQuyen />} />
         <Route
           path="ho-so"
           element={
             <PrivateRoute roles={[...ROLE_ANY_AUTH]}>
-              <Profile />
+              <HoSo />
             </PrivateRoute>
           }
         />
-        <Route path="phong" element={<RoomList />} />
-        <Route path="phong/chi-tiet/:id" element={<RoomDetail />} />
+        <Route path="phong" element={<DanhSachPhong />} />
+        <Route path="phong/chi-tiet/:id" element={<ChiTietPhong />} />
         <Route path="loai-phong/chi-tiet/:id" element={<LoaiPhongDetail />} />
         <Route
           path="dat-phong"
           element={
             <PrivateRoute roles={["ROLE_KHACH_HANG"]}>
-              <BookingPage />
+              <DatPhong />
             </PrivateRoute>
           }
         />
@@ -84,7 +84,7 @@ export default function App() {
           path="don-cua-toi"
           element={
             <PrivateRoute roles={["ROLE_KHACH_HANG"]}>
-              <MyBookings />
+              <DonCuaToi />
             </PrivateRoute>
           }
         />
@@ -92,17 +92,17 @@ export default function App() {
           path="hoa-don/:id"
           element={
             <PrivateRoute roles={["ROLE_KHACH_HANG"]}>
-              <InvoicePrint />
+              <InHoaDon />
             </PrivateRoute>
           }
         />
-        <Route path="dat-phong/thanh-cong" element={<BookingSuccess />} />
+        <Route path="dat-phong/thanh-cong" element={<DatPhongThanhCong />} />
         <Route path="quan-tri">
           <Route
             path="bang-dieu-khien"
             element={
               <PrivateRoute roles={["ROLE_QUAN_TRI"]}>
-                <AdminDashboard />
+                <AdminTongQuan />
               </PrivateRoute>
             }
           />
@@ -110,7 +110,7 @@ export default function App() {
             path="phong"
             element={
               <PrivateRoute roles={["ROLE_QUAN_TRI"]}>
-                <AdminRooms />
+                <AdminPhong />
               </PrivateRoute>
             }
           />
@@ -118,7 +118,7 @@ export default function App() {
             path="loai-phong"
             element={
               <PrivateRoute roles={["ROLE_QUAN_TRI"]}>
-                <AdminRoomTypes />
+                <AdminLoaiPhong />
               </PrivateRoute>
             }
           />
@@ -126,7 +126,7 @@ export default function App() {
             path="bang-gia-phong"
             element={
               <PrivateRoute roles={["ROLE_QUAN_TRI"]}>
-                <AdminRoomPricing />
+                <AdminBangGiaPhong />
               </PrivateRoute>
             }
           />
@@ -134,7 +134,7 @@ export default function App() {
             path="nguoi-dung"
             element={
               <PrivateRoute roles={["ROLE_QUAN_TRI"]}>
-                <AdminUsers />
+                <AdminNguoiDung />
               </PrivateRoute>
             }
           />
@@ -142,7 +142,7 @@ export default function App() {
             path="chinh-sach-huy-phong"
             element={
               <PrivateRoute roles={["ROLE_QUAN_TRI"]}>
-                <AdminPolicies />
+                <AdminChinhSachHuyPhong />
               </PrivateRoute>
             }
           />
@@ -158,7 +158,7 @@ export default function App() {
             path="dat-phong"
             element={
               <PrivateRoute roles={["ROLE_QUAN_TRI"]}>
-                <AdminBookings />
+                <AdminDatPhong />
               </PrivateRoute>
             }
           />
@@ -166,7 +166,7 @@ export default function App() {
             path="nhat-ky"
             element={
               <PrivateRoute roles={["ROLE_QUAN_TRI"]}>
-                <AdminAuditLog />
+                <AdminNhatKyHeThong />
               </PrivateRoute>
             }
           />
@@ -176,7 +176,7 @@ export default function App() {
             path="dat-phong"
             element={
               <PrivateRoute roles={["ROLE_QUAN_TRI", "ROLE_LE_TAN"]}>
-                <ReceptionistBookings />
+                <DatPhongLeTan />
               </PrivateRoute>
             }
           />
@@ -184,7 +184,7 @@ export default function App() {
             path="khach-hang"
             element={
               <PrivateRoute roles={["ROLE_QUAN_TRI", "ROLE_LE_TAN"]}>
-                <ReceptionistCustomers />
+                <KhachHangLeTan />
               </PrivateRoute>
             }
           />
@@ -195,7 +195,7 @@ export default function App() {
             <PrivateRoute
               roles={["ROLE_BUONG_PHONG", "ROLE_QUAN_TRI", "ROLE_LE_TAN"]}
             >
-              <HousekeeperNeedsCleaning />
+              <PhongCanDonDep />
             </PrivateRoute>
           }
         />
@@ -205,7 +205,7 @@ export default function App() {
             <PrivateRoute
               roles={["ROLE_BUONG_PHONG", "ROLE_QUAN_TRI", "ROLE_LE_TAN"]}
             >
-              <HousekeeperRoomStatus />
+              <TrangThaiPhongBuongPhong />
             </PrivateRoute>
           }
         />
@@ -215,11 +215,11 @@ export default function App() {
             <PrivateRoute
               roles={["ROLE_KHACH_HANG", "ROLE_LE_TAN", "ROLE_QUAN_TRI"]}
             >
-              <ChatPage />
+              <TroChuyen />
             </PrivateRoute>
           }
         />
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<KhongTimThay />} />
       </Route>
     </Routes>
   );

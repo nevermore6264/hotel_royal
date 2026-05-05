@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Download } from "lucide-react";
 import api from "../../api/client";
 
-export default function AdminDashboard() {
+export default function AdminTongQuan() {
   const [stats, setStats] = useState<Record<string, unknown> | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [from, setFrom] = useState("");

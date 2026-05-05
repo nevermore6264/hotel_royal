@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AuthSplitLayout from "../components/AuthSplitLayout";
 
-export default function Register() {
+export default function DangKy() {
   const [form, setForm] = useState({
     tenDangNhap: "",
     matKhau: "",

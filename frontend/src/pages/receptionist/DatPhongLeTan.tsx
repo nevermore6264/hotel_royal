@@ -60,7 +60,7 @@ type DichVu = {
   gia: number;
 };
 
-export default function ReceptionistBookings() {
+export default function DatPhongLeTan() {
   const [list, setList] = useState<{
     content: DatPhong[];
     totalPages: number;

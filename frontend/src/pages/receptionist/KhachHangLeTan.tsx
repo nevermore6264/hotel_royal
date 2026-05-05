@@ -10,7 +10,7 @@ type KhachHang = {
   soCanCuoc?: string;
 };
 
-export default function ReceptionistCustomers() {
+export default function KhachHangLeTan() {
   const [page, setPage] = useState(0);
   const [list, setList] = useState<{
     content: KhachHang[];

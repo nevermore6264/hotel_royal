@@ -69,7 +69,7 @@ const LOAI_PHONG_FORM_INITIAL = {
   sucChuaToiDa: 2,
 };
 
-export default function AdminRoomTypes() {
+export default function AdminLoaiPhong() {
   const { toast } = useToast();
   const [page, setPage] = useState(0);
   const [q, setQ] = useState("");

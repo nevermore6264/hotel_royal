@@ -65,3 +65,29 @@ export function classBadgeThanhToan(ma?: string): string {
       return "badge badge--state-info";
   }
 }
+
+/** Trạng thái vật lý phòng (bảng phòng quản trị). */
+export function tenTrangThaiPhong(ma?: string): string {
+  const m: Record<string, string> = {
+    PHONG_TRONG: "Trống",
+    DANG_SU_DUNG: "Đang dùng",
+    BAO_TRI: "Bảo trì",
+    DA_GIU: "Đã giữ",
+  };
+  return ma ? m[ma] ?? ma : "—";
+}
+
+export function classBadgePhong(ma?: string): string {
+  switch (ma) {
+    case "PHONG_TRONG":
+      return "badge badge--state-ok";
+    case "DANG_SU_DUNG":
+      return "badge badge--state-info";
+    case "BAO_TRI":
+      return "badge badge--state-bad";
+    case "DA_GIU":
+      return "badge badge--state-warn";
+    default:
+      return "badge badge--state-muted";
+  }
+}

@@ -176,7 +176,7 @@ const QUOTES = [
   },
 ];
 
-export default function Home() {
+export default function TrangChu() {
   const { isKhachHang, user } = useAuth();
 
   return (

@@ -1,18 +1,18 @@
 import { Home } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export default function NotFound() {
+export default function KhongCoQuyen() {
   return (
     <div className="container page-shell">
       <div className="card empty-state-card animate-fade-in" style={{ textAlign: "center", padding: "2.5rem" }}>
         <div className="empty-state-card__icon" aria-hidden>
-          404
+          403
         </div>
         <h1 className="page-title" style={{ marginTop: "1rem" }}>
-          Không tìm thấy trang
+          Không có quyền truy cập
         </h1>
         <p className="text-muted">
-          Đường dẫn không tồn tại hoặc đã được đổi. Quay về trang chủ để tiếp tục.
+          Bạn không được phép xem trang này với tài khoản hiện tại.
         </p>
         <Link to="/" className="btn mt-4">
           <Home className="btn-ico" aria-hidden />

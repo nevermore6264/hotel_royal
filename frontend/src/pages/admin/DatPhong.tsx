@@ -16,7 +16,7 @@ type DatPhong = {
   tongTien: number;
 };
 
-export default function AdminBookings() {
+export default function AdminDatPhong() {
   const [page, setPage] = useState(0);
   const [q, setQ] = useState("");
   const [trangThai, setTrangThai] = useState("");

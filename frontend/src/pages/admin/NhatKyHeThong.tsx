@@ -10,7 +10,7 @@ type Row = {
   tenDangNhapNguoiThucHien?: string;
 };
 
-export default function AuditLog() {
+export default function AdminNhatKyHeThong() {
   const [page, setPage] = useState(0);
   const [q, setQ] = useState("");
   const [tuNgay, setTuNgay] = useState("");

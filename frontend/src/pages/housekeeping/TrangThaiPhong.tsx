@@ -9,7 +9,7 @@ type Phong = {
   tenLoaiPhong: string;
 };
 
-export default function RoomStatus() {
+export default function TrangThaiPhong() {
   const [rooms, setRooms] = useState<Phong[]>([]);
   const [loading, setLoading] = useState(true);
 

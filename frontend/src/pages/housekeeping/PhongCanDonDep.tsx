@@ -11,7 +11,7 @@ type Phong = {
   idDatPhong?: number;
 };
 
-export default function HousekeeperNeedsCleaning() {
+export default function PhongCanDonDep() {
   const [rooms, setRooms] = useState<Phong[]>([]);
   const [loading, setLoading] = useState(true);
   const [targetStatus] = useState<"SACH">("SACH");

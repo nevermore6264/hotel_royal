@@ -147,7 +147,7 @@ function StarsRow({ value }: { value: number }) {
   );
 }
 
-export default function RoomDetail() {
+export default function ChiTietPhong() {
   const { id } = useParams();
   const { isKhachHang } = useAuth();
   const [phong, setPhong] = useState<Phong | null>(null);

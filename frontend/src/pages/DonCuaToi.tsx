@@ -48,7 +48,7 @@ type DatPhong = {
   };
 };
 
-export default function MyBookings() {
+export default function DonCuaToi() {
   const { toast } = useToast();
   const [list, setList] = useState<DatPhong[]>([]);
   const [loading, setLoading] = useState(true);

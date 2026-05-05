@@ -267,7 +267,7 @@ function MessengerComposer({
   );
 }
 
-export default function ChatPage() {
+export default function TroChuyen() {
   const { user, isKhachHang, isQuanTri, isLeTan } = useAuth();
   const isStaff = !!(isQuanTri || isLeTan);
   const isGuest = !!(isKhachHang && !isStaff);

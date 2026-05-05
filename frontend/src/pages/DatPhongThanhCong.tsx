@@ -1,7 +1,7 @@
 import { ClipboardList } from "lucide-react";
 import { useSearchParams, Link } from "react-router-dom";
 
-export default function BookingSuccess() {
+export default function DatPhongThanhCong() {
   const [params] = useSearchParams();
   const idDatPhong = params.get("idDatPhong");
 

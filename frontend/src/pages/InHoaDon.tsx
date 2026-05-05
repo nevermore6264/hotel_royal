@@ -19,7 +19,7 @@ type DatPhong = {
   };
 };
 
-export default function InvoicePrint() {
+export default function InHoaDon() {
   const { id } = useParams();
   const [dp, setDp] = useState<DatPhong | null>(null);
   const [err, setErr] = useState("");

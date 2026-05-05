@@ -28,7 +28,7 @@ function soDemLuuTru(ngayNhan: string, ngayTra: string): number | null {
   return days > 0 ? days : null;
 }
 
-export default function BookingPage() {
+export default function DatPhong() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();

@@ -91,7 +91,7 @@ const TIEN_ICH = [
   },
 ];
 
-export default function Info() {
+export default function ThongTin() {
   const { isKhachHang, user } = useAuth();
 
   return (
