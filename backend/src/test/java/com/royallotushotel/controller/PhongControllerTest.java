@@ -36,6 +36,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class PhongControllerTest extends WebMvcAuditMockSupport {
 
+    /** Khớp {@code application-test.yml} {@code server.servlet.context-path: /api} — path request không gồm prefix này. */
+    private static final String CTX = "/api";
+
     @Autowired
     private MockMvc mockMvc;
     @Autowired

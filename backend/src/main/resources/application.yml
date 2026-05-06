@@ -24,8 +24,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
+    username: ${MAIL_USERNAME:vansinhmb3@gmail.com}
+    password: ${MAIL_PASSWORD:qymhoypnxyemgsej}
     properties:
       mail:
         smtp:
@@ -45,9 +45,9 @@ jwt:
 
 payment:
   payos:
-    client-id: ${PAYOS_CLIENT_ID:}
-    api-key: ${PAYOS_API_KEY:}
-    checksum-key: ${PAYOS_CHECKSUM_KEY:}
+    client-id: ${PAYOS_CLIENT_ID:770731f5-b8a1-4587-a825-8357de043a2b}
+    api-key: ${PAYOS_API_KEY:ad3d2e7b-8a4c-4f9a-9b71-8c613f6a3286}
+    checksum-key: ${PAYOS_CHECKSUM_KEY:dc139ea2e85c1e2afda6e7e5327ba19152381a908aed5ecc1f547f9ea379bfdb}
     api-url: ${PAYOS_API_URL:https://api-merchant.payos.vn}
     che-do-thu: ${PAYOS_DEV_MODE:false}
     # Tỷ lệ đặt cọc (%) so với tổng tiền kỳ lưu trú khi khách chọn PayOS — đặt cọc

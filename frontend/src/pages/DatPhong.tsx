@@ -89,14 +89,7 @@ export default function DatPhong() {
     next.set("ngayTraPhong", checkOut);
     if (idPhongTuUrl != null) next.set("idPhong", String(idPhongTuUrl));
     setSearchParams(next, { replace: true });
-  }, [
-    datesOk,
-    checkIn,
-    checkOut,
-    idPhongTuUrl,
-    searchParams,
-    setSearchParams,
-  ]);
+  }, [datesOk, checkIn, checkOut, idPhongTuUrl, searchParams, setSearchParams]);
 
   useEffect(() => {
     const id = parseIdPhongTuQuery(searchParams);
@@ -147,10 +140,7 @@ export default function DatPhong() {
             const pidN = Number(pid);
             if (list.some((room) => room.id === pidN)) next.add(pidN);
           }
-          if (
-            idUrl != null &&
-            list.some((room) => room.id === idUrl)
-          ) {
+          if (idUrl != null && list.some((room) => room.id === idUrl)) {
             next.add(idUrl);
           }
           return [...next];
@@ -265,12 +255,13 @@ export default function DatPhong() {
         <p className="page-subtitle page-subtitle--tight">
           {coPhongMacDinhTuUrl ? (
             <>
-              Bạn đã chọn một phòng từ danh sách — chọn ngày để kiểm tra còn trống
-              và xem giá theo kỳ lưu trú, sau đó thanh toán PayOS.{" "}
+              Bạn đã chọn một phòng từ danh sách — chọn ngày để kiểm tra còn
+              trống và xem giá theo kỳ lưu trú, sau đó thanh toán PayOS.{" "}
             </>
           ) : (
             <>
-              Chọn ngày nhận — trả, chọn phòng trống và thanh toán qua PayOS.{" "}
+              Chọn ngày nhận — trả, chọn phòng trống và thanh toán qua
+              PayOS.{" "}
             </>
           )}
           <Link to="/phong" className="booking-intro-link">
@@ -344,9 +335,9 @@ export default function DatPhong() {
               </h2>
               {coPhongMacDinhTuUrl && (
                 <p className="booking-preset-lead text-muted text-sm">
-                  Phòng bạn đã chọn trên trang &quot;Danh sách phòng&quot; được ưu
-                  tiên hiển thị bên dưới. Bạn vẫn có thể thêm phòng khác nếu còn
-                  trống cùng kỳ.
+                  Phòng bạn đã chọn trên trang &quot;Danh sách phòng&quot; được
+                  ưu tiên hiển thị bên dưới. Bạn vẫn có thể thêm phòng khác nếu
+                  còn trống cùng kỳ.
                 </p>
               )}
               {phongDaChonKhongConTrong && phongXemTruoc && (
@@ -479,8 +470,8 @@ export default function DatPhong() {
                   </span>
                 </p>
                 <p className="booking-picked-room__hint text-muted text-sm">
-                  Chọn ngày nhận và trả ở bước 1 để kiểm tra còn trống và xem giá
-                  theo kỳ lưu trú.
+                  Chọn ngày nhận và trả ở bước 1 để kiểm tra còn trống và xem
+                  giá theo kỳ lưu trú.
                 </p>
               </div>
             )}
@@ -582,9 +573,9 @@ export default function DatPhong() {
                         <p className="booking-pay-mode__hint text-muted text-sm">
                           Còn lại{" "}
                           <strong>
-                            {(
-                              totalAmount - tienThuPayOsLanNay
-                            ).toLocaleString("vi-VN")}{" "}
+                            {(totalAmount - tienThuPayOsLanNay).toLocaleString(
+                              "vi-VN",
+                            )}{" "}
                             VND
                           </strong>{" "}
                           — thanh toán bổ sung tại khách sạn hoặc qua PayOS (lần
@@ -595,7 +586,9 @@ export default function DatPhong() {
                 )}
               </>
             )}
-            {error && <p className="form-error booking-summary-error">{error}</p>}
+            {error && (
+              <p className="form-error booking-summary-error">{error}</p>
+            )}
             <button
               type="submit"
               className="btn booking-pay-btn"
@@ -610,14 +603,14 @@ export default function DatPhong() {
                 <>
                   <CreditCard className="btn-ico" aria-hidden />
                   {datesOk && selectedIds.length > 0
-                    ? `PayOS — ${tienThuPayOsLanNay.toLocaleString("vi-VN")} VND`
+                    ? `Thanh toán — ${tienThuPayOsLanNay.toLocaleString("vi-VN")} VND`
                     : "Thanh toán PayOS"}
                 </>
               )}
             </button>
             <p className="booking-summary-footnote text-muted text-sm">
-              Bạn sẽ được chuyển tới cổng thanh toán an toàn. Đăng nhập tài khoản
-              khách trước khi bấm nếu chưa đăng nhập.
+              Bạn sẽ được chuyển tới cổng thanh toán an toàn. Đăng nhập tài
+              khoản khách trước khi bấm nếu chưa đăng nhập.
             </p>
           </div>
         </aside>

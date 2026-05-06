@@ -1,6 +1,5 @@
 package com.royallotushotel.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.royallotushotel.service.ThanhToanService;
 import com.royallotushotel.testsupport.WebMvcAuditMockSupport;
 import org.junit.jupiter.api.Test;
@@ -23,8 +22,6 @@ class ThanhToanControllerTest extends WebMvcAuditMockSupport {
     private MockMvc mockMvc;
     @MockBean
     private ThanhToanService thanhToanService;
-    @MockBean
-    private ObjectMapper objectMapper;
 
     @Test
     void goiLai() throws Exception {

@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,6 +49,36 @@ class LoaiPhongServiceTest {
     void layTheoId_shouldThrowWhenNotFound() {
         when(repository.findById(1L)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.layTheoId(1L)).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void layTheoId_whenFound() {
+        when(repository.findById(3L)).thenReturn(Optional.of(entity(3L)));
+        assertThat(service.layTheoId(3L).getId()).isEqualTo(3L);
+    }
+
+    @Test
+    void timPhanTrang_blankKeyword_becomesNull() {
+        var pageable = PageRequest.of(0, 5);
+        when(repository.timCoPhanTrang(isNull(), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of()));
+        assertThat(service.timPhanTrang(pageable, "   ").getContent()).isEmpty();
+    }
+
+    @Test
+    void capNhat_whenFound() {
+        LoaiPhong existing = entity(4L);
+        when(repository.findById(4L)).thenReturn(Optional.of(existing));
+        when(repository.save(any(LoaiPhong.class))).thenAnswer(i -> i.getArgument(0));
+        LoaiPhongDto in = dto();
+        in.setTen("Updated");
+        assertThat(service.capNhat(4L, in).getTen()).isEqualTo("Updated");
+    }
+
+    @Test
+    void capNhat_shouldThrowWhenNotFound() {
+        when(repository.findById(9L)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.capNhat(9L, dto())).isInstanceOf(RuntimeException.class);
     }
 
     @Test
