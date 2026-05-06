@@ -2226,9 +2226,9 @@ a.layout-nav-link.layout-nav-link--active {
   overflow: auto;
 }
 
-/* Modal quản lý người dùng: khung hẹp, form một cột — tránh input kéo giãn quá rộng */
+/* Modal quản lý người dùng: 2 cột; grid gap siết để khớp các form modal khác */
 .nd-modal-nguoi-dung {
-  max-width: min(24rem, calc(100vw - 2rem));
+  max-width: min(40rem, calc(100vw - 2rem));
 }
 
 .nd-modal-nguoi-dung__grid .form-group {

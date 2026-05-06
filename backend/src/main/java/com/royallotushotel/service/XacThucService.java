@@ -17,6 +17,9 @@ import com.royallotushotel.security.TienIchJwt;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,21 +45,29 @@ public class XacThucService {
 
     @Transactional
     public PhanHoiXacThuc dangNhap(YeuCauDangNhap yeuCau) {
-        Authentication xacThuc = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(yeuCau.getTenDangNhap(), yeuCau.getMatKhau()));
-        ChuTheNguoiDung chuThe = (ChuTheNguoiDung) xacThuc.getPrincipal();
-        String tokenTruyCap = tienIchJwt.taoToken(xacThuc);
-        String tokenLamMoi = tienIchJwt.taoTokenLamMoi(chuThe.getTenDangNhap());
-        return PhanHoiXacThuc.builder()
-                .tokenTruyCap(tokenTruyCap)
-                .tokenLamMoi(tokenLamMoi)
-                .idNguoiDung(chuThe.getId())
-                .tenDangNhap(chuThe.getTenDangNhap())
-                .email(chuThe.getEmail())
-                .vaiTro(chuThe.getAuthorities().stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .collect(Collectors.toList()))
-                .build();
+        try {
+            Authentication xacThuc = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(yeuCau.getTenDangNhap(), yeuCau.getMatKhau()));
+            ChuTheNguoiDung chuThe = (ChuTheNguoiDung) xacThuc.getPrincipal();
+            String tokenTruyCap = tienIchJwt.taoToken(xacThuc);
+            String tokenLamMoi = tienIchJwt.taoTokenLamMoi(chuThe.getTenDangNhap());
+            return PhanHoiXacThuc.builder()
+                    .tokenTruyCap(tokenTruyCap)
+                    .tokenLamMoi(tokenLamMoi)
+                    .idNguoiDung(chuThe.getId())
+                    .tenDangNhap(chuThe.getTenDangNhap())
+                    .email(chuThe.getEmail())
+                    .vaiTro(chuThe.getAuthorities().stream()
+                            .map(GrantedAuthority::getAuthority)
+                            .collect(Collectors.toList()))
+                    .build();
+        } catch (LockedException e) {
+            throw new RuntimeException("Tài khoản đã bị khoá");
+        } catch (DisabledException e) {
+            throw new RuntimeException("Tai khoan đã bị vô hiệu khoá");
+        } catch (BadCredentialsException e) {
+            throw new RuntimeException("Tài khoản hoặc mật khẩu không chính xác");
+        }
     }
 
     @Transactional

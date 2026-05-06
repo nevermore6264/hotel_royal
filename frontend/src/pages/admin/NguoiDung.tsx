@@ -1,5 +1,5 @@
-import { useState, useEffect, type CSSProperties } from "react";
-import { Pencil, Plus, Save, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Lock, LockOpen, Pencil, Plus, Save, X } from "lucide-react";
 import api from "../../api/client";
 import PaginationBar from "../../components/PaginationBar";
 import { useToast } from "../../context/ToastContext";
@@ -59,15 +59,6 @@ function normalizeEmail(v: string): string {
   return v.trim().toLowerCase();
 }
 
-function errorSlotStyle(): CSSProperties {
-  return {
-    minHeight: "2.6rem",
-    marginTop: "0.35rem",
-    display: "flex",
-    alignItems: "flex-start",
-  };
-}
-
 export default function AdminNguoiDung() {
   const { toast } = useToast();
   const [page, setPage] = useState(0);
@@ -81,6 +72,7 @@ export default function AdminNguoiDung() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<NguoiDung | null>(null);
   const [saveBusy, setSaveBusy] = useState(false);
+  const [toggleBusyId, setToggleBusyId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...USER_FORM_INITIAL });
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
 
@@ -256,6 +248,39 @@ export default function AdminNguoiDung() {
     }
   };
 
+  const doiTrangThaiNhanh = async (u: NguoiDung) => {
+    const trangThaiHienTai = u.trangThai || "HOAT_DONG";
+    const trangThaiMoi = trangThaiHienTai === "KHOA" ? "HOAT_DONG" : "KHOA";
+    const vaiTroPayload =
+      u.vaiTro && u.vaiTro.length > 0 ? u.vaiTro : [USER_FORM_INITIAL.vaiTro];
+
+    setToggleBusyId(u.id);
+    try {
+      await api.put(`/nguoi-dung/${u.id}`, {
+        email: u.email,
+        hoTen: u.hoTen || undefined,
+        soDienThoai: "",
+        trangThai: trangThaiMoi,
+        vaiTro: vaiTroPayload,
+      });
+      toast(
+        trangThaiMoi === "KHOA"
+          ? "Đã khóa tài khoản."
+          : "Đã mở khóa tài khoản.",
+        "success",
+      );
+      load();
+    } catch (err) {
+      toast(
+        (err as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error || "Không thể cập nhật trạng thái tài khoản.",
+        "error",
+      );
+    } finally {
+      setToggleBusyId(null);
+    }
+  };
+
   return (
     <div className="container page-shell">
       <h1 className="page-title">Quản lý người dùng</h1>
@@ -347,14 +372,29 @@ export default function AdminNguoiDung() {
                     .join(", ")}
                 </td>
                 <td>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => openEditModal(u)}
-                  >
-                    <Pencil className="btn-ico" aria-hidden />
-                    Sửa
-                  </button>
+                  <div className="inline-actions" style={{ justifyContent: "flex-end" }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => openEditModal(u)}
+                    >
+                      <Pencil className="btn-ico" aria-hidden />
+                      Sửa
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      disabled={toggleBusyId === u.id}
+                      onClick={() => doiTrangThaiNhanh(u)}
+                    >
+                      {u.trangThai === "KHOA" ? (
+                        <LockOpen className="btn-ico" aria-hidden />
+                      ) : (
+                        <Lock className="btn-ico" aria-hidden />
+                      )}
+                      {u.trangThai === "KHOA" ? "Mở khóa" : "Khóa"}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -407,8 +447,9 @@ export default function AdminNguoiDung() {
                 className="nd-modal-nguoi-dung__grid"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr",
-                  gap: "0.65rem",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "0.55rem 0.85rem",
+                  alignItems: "start",
                 }}
               >
                 <div className="form-group">
@@ -430,23 +471,15 @@ export default function AdminNguoiDung() {
                     placeholder="Tên đăng nhập nhân viên"
                     autoComplete="username"
                   />
-                  <div style={errorSlotStyle()}>
-                    {fieldErrors.tenDangNhap ? (
-                      <p
-                        id="nd-ten-err"
-                        className="form-error"
-                        style={{
-                          margin: 0,
-                          display: "-webkit-box",
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {fieldErrors.tenDangNhap}
-                      </p>
-                    ) : null}
-                  </div>
+                  {fieldErrors.tenDangNhap ? (
+                    <p
+                      id="nd-ten-err"
+                      className="form-error"
+                      style={{ margin: "0.35rem 0 0" }}
+                    >
+                      {fieldErrors.tenDangNhap}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="form-group">
                   <label>Mật khẩu {editing && "(để trống nếu không đổi)"}</label>
@@ -467,13 +500,11 @@ export default function AdminNguoiDung() {
                     }
                     autoComplete="new-password"
                   />
-                  <div style={errorSlotStyle()}>
-                    {fieldErrors.matKhau ? (
-                      <p id="nd-mk-err" className="form-error" style={{ margin: 0 }}>
-                        {fieldErrors.matKhau}
-                      </p>
-                    ) : null}
-                  </div>
+                  {fieldErrors.matKhau ? (
+                    <p id="nd-mk-err" className="form-error" style={{ margin: "0.35rem 0 0" }}>
+                      {fieldErrors.matKhau}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="form-group">
                   <label>Email</label>
@@ -492,23 +523,15 @@ export default function AdminNguoiDung() {
                     placeholder="email@khachsan.vn"
                     autoComplete="email"
                   />
-                  <div style={errorSlotStyle()}>
-                    {fieldErrors.email ? (
-                      <p
-                        id="nd-email-err"
-                        className="form-error"
-                        style={{
-                          margin: 0,
-                          display: "-webkit-box",
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {fieldErrors.email}
-                      </p>
-                    ) : null}
-                  </div>
+                  {fieldErrors.email ? (
+                    <p
+                      id="nd-email-err"
+                      className="form-error"
+                      style={{ margin: "0.35rem 0 0" }}
+                    >
+                      {fieldErrors.email}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="form-group">
                   <label>Họ tên</label>
@@ -526,13 +549,11 @@ export default function AdminNguoiDung() {
                     placeholder="Họ và tên"
                     autoComplete="name"
                   />
-                  <div style={errorSlotStyle()}>
-                    {fieldErrors.hoTen ? (
-                      <p id="nd-hoten-err" className="form-error" style={{ margin: 0 }}>
-                        {fieldErrors.hoTen}
-                      </p>
-                    ) : null}
-                  </div>
+                  {fieldErrors.hoTen ? (
+                    <p id="nd-hoten-err" className="form-error" style={{ margin: "0.35rem 0 0" }}>
+                      {fieldErrors.hoTen}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="form-group">
                   <label>Trạng thái tài khoản</label>
@@ -545,7 +566,6 @@ export default function AdminNguoiDung() {
                     <option value="VO_HIEU">{TEN_TRANG_THAI.VO_HIEU}</option>
                     <option value="KHOA">{TEN_TRANG_THAI.KHOA}</option>
                   </select>
-                  <div style={{ ...errorSlotStyle(), minHeight: 0 }} />
                 </div>
                 <div className="form-group">
                   <label htmlFor="vai-tro-modal">Vai trò</label>
@@ -568,13 +588,11 @@ export default function AdminNguoiDung() {
                       </option>
                     ))}
                   </select>
-                  <div style={errorSlotStyle()}>
-                    {fieldErrors.vaiTro ? (
-                      <p id="nd-vt-err" className="form-error" style={{ margin: 0 }}>
-                        {fieldErrors.vaiTro}
-                      </p>
-                    ) : null}
-                  </div>
+                  {fieldErrors.vaiTro ? (
+                    <p id="nd-vt-err" className="form-error" style={{ margin: "0.35rem 0 0" }}>
+                      {fieldErrors.vaiTro}
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <div
