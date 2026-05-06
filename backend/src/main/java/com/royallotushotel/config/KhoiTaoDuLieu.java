@@ -136,21 +136,18 @@ public class KhoiTaoDuLieu implements CommandLineRunner {
                 .soGioTruocNhanPhong(72)
                 .tyLeHoanTien(new BigDecimal("100"))
                 .moTa("Hủy trước giờ nhận phòng ít nhất 72 giờ: hoàn 100% tiền phòng (theo điều kiện thanh toán).")
-                .thuTuUuTien(30)
                 .conHieuLuc(true)
                 .build());
         chinhSachHuyPhongRepository.save(ChinhSachHuyPhong.builder()
                 .soGioTruocNhanPhong(24)
                 .tyLeHoanTien(new BigDecimal("50"))
                 .moTa("Hủy trước 24 giờ: hoàn 50% tiền phòng.")
-                .thuTuUuTien(20)
                 .conHieuLuc(true)
                 .build());
         chinhSachHuyPhongRepository.save(ChinhSachHuyPhong.builder()
                 .soGioTruocNhanPhong(0)
                 .tyLeHoanTien(BigDecimal.ZERO)
                 .moTa("Hủy trong vòng 24 giờ trước nhận phòng: không hoàn tiền.")
-                .thuTuUuTien(10)
                 .conHieuLuc(true)
                 .build());
     }

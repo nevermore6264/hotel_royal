@@ -27,9 +27,6 @@ public class ChinhSachHuyPhong {
     @Column(name = "mo_ta", columnDefinition = "TEXT")
     private String moTa;
 
-    @Column(name = "thu_tu_uu_tien")
-    private Integer thuTuUuTien;
-
     @Column(name = "con_hieu_luc", nullable = false)
     @Builder.Default
     private Boolean conHieuLuc = true;

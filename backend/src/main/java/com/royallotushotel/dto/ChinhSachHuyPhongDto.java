@@ -10,6 +10,5 @@ public class ChinhSachHuyPhongDto {
     private Integer soGioTruocNhanPhong;
     private BigDecimal tyLeHoanTien;
     private String moTa;
-    private Integer thuTuUuTien;
     private Boolean conHieuLuc;
 }

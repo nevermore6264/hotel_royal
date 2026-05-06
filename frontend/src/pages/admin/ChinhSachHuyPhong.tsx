@@ -19,7 +19,6 @@ const POLICY_FORM_INITIAL = {
   tyLeHoanTien: 100,
   moTa: "",
   conHieuLuc: true,
-  thuTuUuTien: 0,
 };
 
 export default function AdminChinhSachHuyPhong() {
@@ -87,7 +86,6 @@ export default function AdminChinhSachHuyPhong() {
         tyLeHoanTien: form.tyLeHoanTien,
         moTa: form.moTa || undefined,
         conHieuLuc: form.conHieuLuc,
-        thuTuUuTien: form.thuTuUuTien,
       });
       toast("Đã thêm chính sách.", "success");
       closeFormModal();

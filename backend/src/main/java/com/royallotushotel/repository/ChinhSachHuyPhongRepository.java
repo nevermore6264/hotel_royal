@@ -17,7 +17,7 @@ public interface ChinhSachHuyPhongRepository extends JpaRepository<ChinhSachHuyP
     @Query("SELECT c FROM ChinhSachHuyPhong c WHERE " +
             "(:conHieuLuc IS NULL OR c.conHieuLuc = :conHieuLuc) " +
             "AND (:q IS NULL OR :q = '' OR LOWER(COALESCE(c.moTa,'')) LIKE LOWER(CONCAT('%', :q, '%'))) " +
-            "ORDER BY c.thuTuUuTien ASC, c.soGioTruocNhanPhong DESC")
+            "ORDER BY c.soGioTruocNhanPhong DESC")
     Page<ChinhSachHuyPhong> timCoPhanTrang(
             @Param("q") String q,
             @Param("conHieuLuc") Boolean conHieuLuc,

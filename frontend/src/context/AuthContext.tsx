@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 import api from "../api/client";
 
 export type NguoiDungSession = {
@@ -31,13 +31,16 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<NguoiDungSession | null>(null);
-
-  useEffect(() => {
-    const t = localStorage.getItem("tokenTruyCap");
-    const u = localStorage.getItem("nguoiDung");
-    if (t && u) setUser(JSON.parse(u));
-  }, []);
+  const [user, setUser] = useState<NguoiDungSession | null>(() => {
+    try {
+      const t = localStorage.getItem("tokenTruyCap");
+      const u = localStorage.getItem("nguoiDung");
+      if (t && u) return JSON.parse(u) as NguoiDungSession;
+    } catch {
+      // Dữ liệu localStorage lỗi định dạng thì bỏ qua, coi như chưa đăng nhập.
+    }
+    return null;
+  });
 
   const login = async (tenDangNhap: string, matKhau: string) => {
     const { data } = await api.post("/xac-thuc/dang-nhap", {

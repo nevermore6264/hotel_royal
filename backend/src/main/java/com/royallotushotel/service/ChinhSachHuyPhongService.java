@@ -35,7 +35,6 @@ public class ChinhSachHuyPhongService {
         cs.setSoGioTruocNhanPhong(dto.getSoGioTruocNhanPhong());
         cs.setTyLeHoanTien(dto.getTyLeHoanTien());
         cs.setMoTa(dto.getMoTa());
-        cs.setThuTuUuTien(dto.getThuTuUuTien());
         cs.setConHieuLuc(dto.getConHieuLuc() != null ? dto.getConHieuLuc() : true);
         cs = chinhSachHuyPhongRepository.save(cs);
         return sangDto(cs);
@@ -47,7 +46,6 @@ public class ChinhSachHuyPhongService {
         cs.setSoGioTruocNhanPhong(dto.getSoGioTruocNhanPhong());
         cs.setTyLeHoanTien(dto.getTyLeHoanTien());
         cs.setMoTa(dto.getMoTa());
-        cs.setThuTuUuTien(dto.getThuTuUuTien());
         if (dto.getConHieuLuc() != null) cs.setConHieuLuc(dto.getConHieuLuc());
         cs = chinhSachHuyPhongRepository.save(cs);
         return sangDto(cs);
@@ -64,7 +62,6 @@ public class ChinhSachHuyPhongService {
         dto.setSoGioTruocNhanPhong(cs.getSoGioTruocNhanPhong());
         dto.setTyLeHoanTien(cs.getTyLeHoanTien());
         dto.setMoTa(cs.getMoTa());
-        dto.setThuTuUuTien(cs.getThuTuUuTien());
         dto.setConHieuLuc(cs.getConHieuLuc());
         return dto;
     }
