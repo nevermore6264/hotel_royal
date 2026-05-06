@@ -1,4 +1,12 @@
-import { BedDouble, CalendarPlus, UserPlus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  BedDouble,
+  CalendarPlus,
+  ChevronLeft,
+  ChevronRight,
+  UserPlus,
+  X,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import LoginForm from "../components/LoginForm";
@@ -92,6 +100,14 @@ const STEPS = [
 const US = (photoPath: string) =>
   `https://images.unsplash.com/${photoPath}?ixlib=rb-4.0.3&auto=format&fit=crop&w=900&q=82`;
 
+const US_SLIDE = (photoPath: string) =>
+  `https://images.unsplash.com/${photoPath}?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=85`;
+
+/** Cùng ảnh Unsplash, tăng chiều rộng crop để xem lớn trong lightbox */
+function galleryLargeSrc(url: string) {
+  return url.replace(/w=\d+/, "w=1920").replace(/q=\d+/, "q=88");
+}
+
 type GalleryItem = {
   label: string;
   src: string;
@@ -158,26 +174,246 @@ function GalleryImage({ item }: { item: GalleryItem }) {
   );
 }
 
-const QUOTES = [
+function GalleryZoomLightbox({
+  item,
+  onClose,
+}: {
+  item: GalleryItem;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="landing-gallery-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="gallery-lightbox-title"
+      onClick={onClose}
+    >
+      <div
+        className="landing-gallery-lightbox__frame"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          className="landing-gallery-lightbox__close"
+          onClick={onClose}
+          aria-label="Đóng ảnh phóng to"
+        >
+          <X size={22} strokeWidth={2} aria-hidden />
+        </button>
+        <img
+          className="landing-gallery-lightbox__img"
+          src={galleryLargeSrc(item.src)}
+          alt={item.alt}
+          decoding="async"
+          width={1920}
+          height={1440}
+          onError={(e) => {
+            const el = e.currentTarget;
+            if (item.fallback) {
+              const fb = galleryLargeSrc(item.fallback);
+              if (el.src !== fb) el.src = fb;
+            }
+          }}
+        />
+        <p id="gallery-lightbox-title" className="landing-gallery-lightbox__title">
+          {item.label}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+type SlideItem = {
+  label: string;
+  src: string;
+  alt: string;
+  fallback?: string;
+};
+
+/** Ảnh full-width cho slideshow (khác kích thước crop với grid gallery) */
+const SLIDESHOW: SlideItem[] = [
   {
-    q: "Đặt phòng nhanh, email xác nhận rõ ràng. Không phải chờ lễ tân gọi lại.",
-    a: "Chị Minh Anh",
-    r: "Khách lưu trú",
+    label: "Sảnh & lễ tân",
+    src: US_SLIDE("photo-1566073771259-6a8506099945"),
+    alt: "Không gian sảnh khách sạn sang trọng",
+    fallback: US_SLIDE("photo-1520250497591-112f2f40a3f4"),
   },
   {
-    q: "Một màn hình cho đơn, nhận phòng và dịch vụ — đỡ nhầm giữa các bộ phận.",
-    a: "Anh Tuấn",
-    r: "Lễ tân",
+    label: "Phòng Deluxe",
+    src: US_SLIDE("photo-1618773928121-c32242e63f39"),
+    alt: "Phòng khách sạn hiện đại",
+    fallback: US_SLIDE("photo-1582719478250-c89cae4dc85b"),
   },
   {
-    q: "Bảng điều khiển doanh thu và tỉ lệ lấp phòng giúp tôi quyết định giá theo mùa.",
-    a: "Chị Lan",
-    r: "Quản trị",
+    label: "Suite",
+    src: US_SLIDE("photo-1590490360182-c33d57733427"),
+    alt: "Suite rộng với phòng khách",
+    fallback: US_SLIDE("photo-1611892440504-42a792e24d32"),
+  },
+  {
+    label: "Nhà hàng",
+    src: US_SLIDE("photo-1517248135467-4c7edcad34c4"),
+    alt: "Không gian nhà hàng",
+    fallback: US_SLIDE("photo-1414235077428-338989a2e8c0"),
+  },
+  {
+    label: "Spa & thư giãn",
+    src: US_SLIDE("photo-1544161515-4ab6ce6db874"),
+    alt: "Khu spa",
+    fallback: US_SLIDE("photo-1540555700478-4be289fbecef"),
+  },
+  {
+    label: "Sky bar",
+    src: US_SLIDE("photo-1514933651103-005eec06c04b"),
+    alt: "Không gian bar view thành phố",
+    fallback: US_SLIDE("photo-1470337458703-46ad1756a187"),
   },
 ];
 
+const SLIDE_INTERVAL_MS = 5200;
+
+function LandingSlideshow() {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const n = SLIDESHOW.length;
+  const go = useCallback((delta: number) => {
+    setIndex((i) => (i + delta + n) % n);
+  }, [n]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setReduceMotion(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion || paused || n <= 1) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
+    timerRef.current = setInterval(() => {
+      setIndex((i) => (i + 1) % n);
+    }, SLIDE_INTERVAL_MS);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [reduceMotion, paused, n]);
+
+  return (
+    <div
+      className="landing-slideshow"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) setPaused(false);
+      }}
+    >
+      <div
+        className="landing-slideshow__viewport"
+        role="region"
+        aria-roledescription="carousel"
+        aria-label="Ảnh không gian khách sạn"
+        aria-live={reduceMotion ? "polite" : "off"}
+      >
+        {SLIDESHOW.map((slide, i) => (
+          <div
+            key={slide.label}
+            className={
+              i === index
+                ? "landing-slideshow__slide landing-slideshow__slide--active"
+                : "landing-slideshow__slide"
+            }
+            aria-hidden={i !== index}
+          >
+            <img
+              className="landing-slideshow__img"
+              src={slide.src}
+              alt={slide.alt}
+              loading={i === 0 ? "eager" : "lazy"}
+              decoding="async"
+              sizes="100vw"
+              width={1920}
+              height={1080}
+              onError={(e) => {
+                const el = e.currentTarget;
+                if (slide.fallback && el.src !== slide.fallback) {
+                  el.src = slide.fallback;
+                }
+              }}
+            />
+            <div className="landing-slideshow__scrim" aria-hidden />
+            <p className="landing-slideshow__caption">
+              <span className="landing-slideshow__caption-title">{slide.label}</span>
+            </p>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          className="landing-slideshow__nav landing-slideshow__nav--prev"
+          aria-label="Ảnh trước"
+          onClick={() => go(-1)}
+        >
+          <ChevronLeft size={22} strokeWidth={2} aria-hidden />
+        </button>
+        <button
+          type="button"
+          className="landing-slideshow__nav landing-slideshow__nav--next"
+          aria-label="Ảnh sau"
+          onClick={() => go(1)}
+        >
+          <ChevronRight size={22} strokeWidth={2} aria-hidden />
+        </button>
+      </div>
+
+      <div className="landing-slideshow__dots" role="tablist" aria-label="Chọn ảnh">
+        {SLIDESHOW.map((slide, i) => (
+          <button
+            key={slide.label}
+            type="button"
+            role="tab"
+            aria-selected={i === index}
+            aria-label={`${slide.label}, ảnh ${i + 1} / ${n}`}
+            className={
+              i === index
+                ? "landing-slideshow__dot landing-slideshow__dot--active"
+                : "landing-slideshow__dot"
+            }
+            onClick={() => setIndex(i)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function TrangChu() {
   const { isKhachHang, user } = useAuth();
+  const [galleryZoom, setGalleryZoom] = useState<GalleryItem | null>(null);
+  const closeGalleryZoom = useCallback(() => setGalleryZoom(null), []);
 
   return (
     <div className="landing">
@@ -406,7 +642,15 @@ export default function TrangChu() {
           {GALLERY.map((item) => (
             <figure key={item.label} className="landing-gallery__cell">
               <div className="landing-gallery__img-wrap">
-                <GalleryImage item={item} />
+                <button
+                  type="button"
+                  className="landing-gallery__trigger"
+                  onClick={() => setGalleryZoom(item)}
+                  aria-label={`Phóng to ảnh: ${item.label}`}
+                  title="Xem ảnh lớn"
+                >
+                  <GalleryImage item={item} />
+                </button>
               </div>
               <figcaption>{item.label}</figcaption>
             </figure>
@@ -414,23 +658,19 @@ export default function TrangChu() {
         </div>
       </section>
 
-      <section className="landing-quotes-wrap" aria-labelledby="quotes-heading">
+      <section
+        className="landing-slideshow-wrap"
+        aria-labelledby="slideshow-heading"
+      >
         <div className="container">
           <header className="landing-section-head">
-            <h2 id="quotes-heading">Phản hồi từ người dùng</h2>
-            <p>Khách, lễ tân và quản trị — cùng một nền tảng.</p>
+            <h2 id="slideshow-heading">Không gian &amp; cảm hứng</h2>
+            <p>
+              Khách, lễ tân và quản trị — cùng một nền tảng. Một vòng khách sạn
+              qua hình ảnh.
+            </p>
           </header>
-          <div className="landing-quotes">
-            {QUOTES.map((x) => (
-              <blockquote key={x.a} className="landing-quote">
-                <p className="landing-quote__text">&ldquo;{x.q}&rdquo;</p>
-                <footer>
-                  <strong>{x.a}</strong>
-                  <span className="landing-quote__role">{x.r}</span>
-                </footer>
-              </blockquote>
-            ))}
-          </div>
+          <LandingSlideshow />
         </div>
       </section>
 
@@ -498,6 +738,10 @@ export default function TrangChu() {
           </div>
         </div>
       </section>
+
+      {galleryZoom ? (
+        <GalleryZoomLightbox item={galleryZoom} onClose={closeGalleryZoom} />
+      ) : null}
     </div>
   );
 }

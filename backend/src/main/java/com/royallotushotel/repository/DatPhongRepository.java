@@ -44,4 +44,26 @@ public interface DatPhongRepository extends JpaRepository<DatPhong, Long> {
     @Query("SELECT COUNT(b) FROM DatPhong b WHERE b.trangThai IN ('DA_XAC_NHAN','DA_NHAN_PHONG','DA_TRA_PHONG') " +
            "AND b.ngayNhanPhong >= :tu AND b.ngayNhanPhong <= :den")
     Long demDatPhongTheoKhoangNgay(@Param("tu") LocalDate tu, @Param("den") LocalDate den);
+
+    @Query("SELECT b.ngayNhanPhong, COALESCE(SUM(tt.tongDaThu), 0) FROM DatPhong b " +
+           "LEFT JOIN b.thanhToan tt WHERE b.trangThai IN ('DA_XAC_NHAN','DA_NHAN_PHONG','DA_TRA_PHONG') " +
+           "AND b.ngayNhanPhong >= :tu AND b.ngayNhanPhong <= :den " +
+           "GROUP BY b.ngayNhanPhong ORDER BY b.ngayNhanPhong ASC")
+    List<Object[]> tongDoanhThuGomTheoNgay(@Param("tu") LocalDate tu, @Param("den") LocalDate den);
+
+    @Query("SELECT b.trangThai, COUNT(b) FROM DatPhong b GROUP BY b.trangThai ORDER BY b.trangThai")
+    List<Object[]> demNhomTheoTrangThaiDatPhong();
+
+    @Query("SELECT b.ngayNhanPhong, COUNT(b) FROM DatPhong b " +
+           "WHERE b.trangThai IN ('DA_XAC_NHAN','DA_NHAN_PHONG','DA_TRA_PHONG') " +
+           "AND b.ngayNhanPhong >= :tu AND b.ngayNhanPhong <= :den " +
+           "GROUP BY b.ngayNhanPhong ORDER BY b.ngayNhanPhong ASC")
+    List<Object[]> demDonGomTheoNgayNhan(@Param("tu") LocalDate tu, @Param("den") LocalDate den);
+
+    @Query("SELECT lp.ten, COALESCE(SUM(ct.gia), 0) FROM DatPhong b " +
+           "JOIN b.chiTiet ct JOIN ct.phong p JOIN p.loaiPhong lp " +
+           "WHERE b.trangThai IN ('DA_XAC_NHAN','DA_NHAN_PHONG','DA_TRA_PHONG') " +
+           "AND b.ngayNhanPhong >= :tu AND b.ngayNhanPhong <= :den " +
+           "GROUP BY lp.id, lp.ten ORDER BY SUM(ct.gia) DESC")
+    List<Object[]> tongThanhTienPhongGomTheoLoaiPhong(@Param("tu") LocalDate tu, @Param("den") LocalDate den);
 }

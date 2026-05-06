@@ -14,6 +14,14 @@ import java.util.Optional;
 
 @Repository
 public interface PhongRepository extends JpaRepository<Phong, Long> {
+    long countByTrangThai(String trangThai);
+
+    @Query("SELECT p.trangThai, COUNT(p) FROM Phong p GROUP BY p.trangThai ORDER BY p.trangThai")
+    List<Object[]> demNhomTheoTrangThai();
+
+    @Query("SELECT lp.ten, COUNT(p) FROM Phong p JOIN p.loaiPhong lp GROUP BY lp.id, lp.ten ORDER BY lp.ten")
+    List<Object[]> demNhomTheoLoaiPhong();
+
     Optional<Phong> findBySoPhong(String soPhong);
 
     boolean existsBySoPhong(String soPhong);

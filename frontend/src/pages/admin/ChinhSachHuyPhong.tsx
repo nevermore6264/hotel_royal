@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Save, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import api from "../../api/client";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import PaginationBar from "../../components/PaginationBar";
@@ -33,6 +33,7 @@ export default function AdminChinhSachHuyPhong() {
     totalPages: number;
   }>({ content: [], totalPages: 0 });
   const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<ChinhSach | null>(null);
   const [saveBusy, setSaveBusy] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -59,6 +60,7 @@ export default function AdminChinhSachHuyPhong() {
   const closeFormModal = () => {
     if (saveBusy) return;
     setFormOpen(false);
+    setEditing(null);
     setForm({ ...POLICY_FORM_INITIAL });
   };
 
@@ -73,7 +75,19 @@ export default function AdminChinhSachHuyPhong() {
   }, [formOpen, saveBusy]);
 
   const openCreateModal = () => {
+    setEditing(null);
     setForm({ ...POLICY_FORM_INITIAL });
+    setFormOpen(true);
+  };
+
+  const openEditModal = (p: ChinhSach) => {
+    setEditing(p);
+    setForm({
+      soGioTruocNhanPhong: Number(p.soGioTruocNhanPhong) || 0,
+      tyLeHoanTien: Number(p.tyLeHoanTien) || 0,
+      moTa: p.moTa || "",
+      conHieuLuc: p.conHieuLuc ?? true,
+    });
     setFormOpen(true);
   };
 
@@ -81,13 +95,19 @@ export default function AdminChinhSachHuyPhong() {
     e.preventDefault();
     setSaveBusy(true);
     try {
-      await api.post("/chinh-sach-huy-phong", {
+      const payload = {
         soGioTruocNhanPhong: form.soGioTruocNhanPhong,
         tyLeHoanTien: form.tyLeHoanTien,
         moTa: form.moTa || undefined,
         conHieuLuc: form.conHieuLuc,
-      });
-      toast("Đã thêm chính sách.", "success");
+      };
+      if (editing) {
+        await api.put(`/chinh-sach-huy-phong/${editing.id}`, payload);
+        toast("Đã cập nhật chính sách.", "success");
+      } else {
+        await api.post("/chinh-sach-huy-phong", payload);
+        toast("Đã thêm chính sách.", "success");
+      }
       closeFormModal();
       load();
     } catch (err) {
@@ -179,14 +199,24 @@ export default function AdminChinhSachHuyPhong() {
                 <td>{p.moTa || "-"}</td>
                 <td>{p.conHieuLuc ? "Áp dụng" : "Tắt"}</td>
                 <td>
-                  <button
-                    type="button"
-                    className="btn btn-danger btn-sm"
-                    onClick={() => setPendingDeleteId(p.id)}
-                  >
-                    <Trash2 className="btn-ico" aria-hidden />
-                    Xóa
-                  </button>
+                  <div className="inline-actions" style={{ justifyContent: "flex-end" }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => openEditModal(p)}
+                    >
+                      <Pencil className="btn-ico" aria-hidden />
+                      Sửa
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm"
+                      onClick={() => setPendingDeleteId(p.id)}
+                    >
+                      <Trash2 className="btn-ico" aria-hidden />
+                      Xóa
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -222,7 +252,7 @@ export default function AdminChinhSachHuyPhong() {
               style={{ alignItems: "flex-start", gap: "1rem" }}
             >
               <h2 id="policy-modal-title" className="card-title" style={{ margin: 0 }}>
-                Thêm chính sách
+                {editing ? "Sửa chính sách" : "Thêm chính sách"}
               </h2>
               <button
                 type="button"
@@ -268,7 +298,8 @@ export default function AdminChinhSachHuyPhong() {
                 </div>
                 <div className="form-group" style={{ flex: "2 1 220px" }}>
                   <label>Mô tả</label>
-                  <input
+                  <textarea
+                    rows={3}
                     value={form.moTa}
                     disabled={saveBusy}
                     onChange={(e) => setForm({ ...form, moTa: e.target.value })}
@@ -287,10 +318,13 @@ export default function AdminChinhSachHuyPhong() {
                   Đang áp dụng
                 </label>
               </div>
-              <div className="inline-actions mt-4">
+              <div
+                className="inline-actions mt-4"
+                style={{ justifyContent: "flex-end" }}
+              >
                 <button type="submit" className="btn" disabled={saveBusy}>
                   <Save className="btn-ico" aria-hidden />
-                  {saveBusy ? "Đang lưu…" : "Thêm"}
+                  {saveBusy ? "Đang lưu…" : "Lưu"}
                 </button>
                 <button
                   type="button"
