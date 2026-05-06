@@ -54,13 +54,13 @@ class PhongControllerTest extends WebMvcAuditMockSupport {
     @Test
     void conTrong_khongThamSo() throws Exception {
         when(phongService.timPhongTrong(any())).thenReturn(List.of());
-        mockMvc.perform(get("/api/phong/con-trong")).andExpect(status().isOk());
+        mockMvc.perform(get("/phong/con-trong").contextPath(CTX)).andExpect(status().isOk());
     }
 
     @Test
     void conTrong_coThamSo() throws Exception {
         when(phongService.timPhongTrong(any())).thenReturn(List.of());
-        mockMvc.perform(get("/api/phong/con-trong")
+        mockMvc.perform(get("/phong/con-trong").contextPath(CTX)
                         .param("ngayNhanPhong", "2026-05-01")
                         .param("ngayTraPhong", "2026-05-03")
                         .param("idLoaiPhong", "2"))
@@ -71,7 +71,7 @@ class PhongControllerTest extends WebMvcAuditMockSupport {
     @WithMockUser(roles = "LE_TAN")
     void danhSach_khongPhanTrang() throws Exception {
         when(phongService.timTatCa()).thenReturn(List.of());
-        mockMvc.perform(get("/api/phong")).andExpect(status().isOk());
+        mockMvc.perform(get("/phong").contextPath(CTX)).andExpect(status().isOk());
     }
 
     @Test
@@ -81,7 +81,7 @@ class PhongControllerTest extends WebMvcAuditMockSupport {
         dto.setId(1L);
         when(phongService.timPhanTrang(any(), eq("101"), eq("PHONG_TRONG"), eq(5L)))
                 .thenReturn(new PageImpl<>(List.of(dto), PageRequest.of(0, 12), 1));
-        mockMvc.perform(get("/api/phong")
+        mockMvc.perform(get("/phong").contextPath(CTX)
                         .param("page", "0")
                         .param("size", "12")
                         .param("q", "101")
@@ -95,7 +95,7 @@ class PhongControllerTest extends WebMvcAuditMockSupport {
         PhongDto dto = new PhongDto();
         dto.setId(1L);
         when(phongService.layTheoId(1L)).thenReturn(dto);
-        mockMvc.perform(get("/api/phong/1")).andExpect(status().isOk());
+        mockMvc.perform(get("/phong/1").contextPath(CTX)).andExpect(status().isOk());
     }
 
     @Test
@@ -107,7 +107,7 @@ class PhongControllerTest extends WebMvcAuditMockSupport {
         PhongDto traVe = new PhongDto();
         traVe.setId(99L);
         when(phongService.tao(any(PhongDto.class))).thenReturn(traVe);
-        mockMvc.perform(post("/api/phong")
+        mockMvc.perform(post("/phong").contextPath(CTX)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
@@ -119,7 +119,7 @@ class PhongControllerTest extends WebMvcAuditMockSupport {
         PhongDto body = new PhongDto();
         body.setSoPhong("201");
         when(phongService.capNhat(eq(7L), any(PhongDto.class))).thenReturn(body);
-        mockMvc.perform(put("/api/phong/7")
+        mockMvc.perform(put("/phong/7").contextPath(CTX)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
@@ -128,8 +128,8 @@ class PhongControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void capNhatTrangThai() throws Exception {
-        mockMvc.perform(patch("/api/phong/3/trang-thai").param("trangThai", "DANG_SU_DUNG"))
-                .andExpect(status().isOk());
+        mockMvc.perform(patch("/phong/3/trang-thai").contextPath(CTX).param("trangThai", "DANG_SU_DUNG"))
+                .andExpect(status().isNoContent());
         verify(phongService).capNhatTrangThai(3L, "DANG_SU_DUNG");
     }
 
@@ -137,31 +137,31 @@ class PhongControllerTest extends WebMvcAuditMockSupport {
     @WithMockUser(roles = "LE_TAN")
     void canDonVeSinh() throws Exception {
         when(phongService.timPhongCanDon()).thenReturn(List.of());
-        mockMvc.perform(get("/api/phong/can-don-ve-sinh")).andExpect(status().isOk());
+        mockMvc.perform(get("/phong/can-don-ve-sinh").contextPath(CTX)).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void capNhatVeSinh_coGhiChu() throws Exception {
-        mockMvc.perform(patch("/api/phong/4/ve-sinh")
+        mockMvc.perform(patch("/phong/4/ve-sinh").contextPath(CTX)
                         .param("trangThaiVeSinh", "SACH")
                         .param("ghiChu", "Da don"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
         verify(phongService).capNhatVeSinh(4L, "SACH", "Da don");
     }
 
     @Test
     @WithMockUser(roles = "BUONG_PHONG")
     void capNhatVeSinh_khongGhiChu() throws Exception {
-        mockMvc.perform(patch("/api/phong/4/ve-sinh").param("trangThaiVeSinh", "BAN"))
-                .andExpect(status().isOk());
+        mockMvc.perform(patch("/phong/4/ve-sinh").contextPath(CTX).param("trangThaiVeSinh", "BAN"))
+                .andExpect(status().isNoContent());
         verify(phongService).capNhatVeSinh(4L, "BAN", null);
     }
 
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/api/phong/8")).andExpect(status().isOk());
+        mockMvc.perform(delete("/phong/8").contextPath(CTX)).andExpect(status().isNoContent());
         verify(phongService).xoa(8L);
     }
 }

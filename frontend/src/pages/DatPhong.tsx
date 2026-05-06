@@ -28,6 +28,24 @@ function soDemLuuTru(ngayNhan: string, ngayTra: string): number | null {
   return days > 0 ? days : null;
 }
 
+/** Hôm nay theo lịch máy, yyyy-MM-dd (dùng cho input type=date và so sánh chuỗi). */
+function ngayHomNayYyyyMmDd(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function congNgay(yyyyMmDd: string, soNgay: number): string {
+  const [yy, mm, dd] = yyyyMmDd.split("-").map(Number);
+  const x = new Date(yy, mm - 1, dd + soNgay);
+  const y = x.getFullYear();
+  const m = String(x.getMonth() + 1).padStart(2, "0");
+  const day = String(x.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 /** Hiển thị ngày theo kiểu Việt Nam: dd/MM/yyyy (từ chuỗi yyyy-MM-dd của input type=date). */
 function formatNgayVietNam(yyyyMmDd: string): string {
   if (!yyyyMmDd) return "";
@@ -74,6 +92,33 @@ export default function DatPhong() {
 
   const soDem = soDemLuuTru(checkIn, checkOut);
   const datesOk = !!(checkIn && checkOut && soDem != null);
+
+  const homNayStr = ngayHomNayYyyyMmDd();
+  const minNgayTraPhong =
+    checkIn && checkIn >= homNayStr
+      ? congNgay(checkIn, 1)
+      : congNgay(homNayStr, 1);
+
+  /** Chuẩn hoá ngày từ URL / trạng thái: không nhận/trả trước hôm nay; trả sau ≥ nhận + 1 đêm. */
+  useEffect(() => {
+    const homNay = ngayHomNayYyyyMmDd();
+    let nextIn = checkIn;
+    let nextOut = checkOut;
+    let dirty = false;
+    if (nextIn && nextIn < homNay) {
+      nextIn = homNay;
+      dirty = true;
+    }
+    const minOut = nextIn ? congNgay(nextIn, 1) : congNgay(homNay, 1);
+    if (nextOut && nextOut < minOut) {
+      nextOut = minOut;
+      dirty = true;
+    }
+    if (dirty) {
+      if (nextIn !== checkIn) setCheckIn(nextIn);
+      if (nextOut !== checkOut) setCheckOut(nextOut);
+    }
+  }, [checkIn, checkOut]);
 
   /** Giữ idPhong + ngày trên URL khi khách chọn ngày (tránh mất ngữ cảnh / F5). */
   useEffect(() => {
@@ -299,7 +344,18 @@ export default function DatPhong() {
                 <input
                   type="date"
                   value={checkIn}
-                  onChange={(e) => setCheckIn(e.target.value)}
+                  min={homNayStr}
+                  onChange={(e) => {
+                    const t = ngayHomNayYyyyMmDd();
+                    let v = e.target.value;
+                    if (v && v < t) v = t;
+                    setCheckIn(v);
+                    setCheckOut((o) => {
+                      if (!v || !o) return o;
+                      const minO = congNgay(v, 1);
+                      return o < minO ? minO : o;
+                    });
+                  }}
                   required
                 />
               </div>
@@ -308,7 +364,13 @@ export default function DatPhong() {
                 <input
                   type="date"
                   value={checkOut}
-                  onChange={(e) => setCheckOut(e.target.value)}
+                  min={minNgayTraPhong}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    const minO = minNgayTraPhong;
+                    const out = v && v < minO ? minO : v;
+                    setCheckOut(out);
+                  }}
                   required
                 />
               </div>
