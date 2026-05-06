@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(PhongController.class)
+@WebMvcTest(value = PhongController.class, properties = "server.servlet.context-path=/")
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class PhongControllerTest extends WebMvcAuditMockSupport {
@@ -126,7 +126,7 @@ class PhongControllerTest extends WebMvcAuditMockSupport {
     @WithMockUser(roles = "QUAN_TRI")
     void capNhatTrangThai() throws Exception {
         mockMvc.perform(patch("/phong/3/trang-thai").param("trangThai", "DANG_SU_DUNG"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
         verify(phongService).capNhatTrangThai(3L, "DANG_SU_DUNG");
     }
 
@@ -143,7 +143,7 @@ class PhongControllerTest extends WebMvcAuditMockSupport {
         mockMvc.perform(patch("/phong/4/ve-sinh")
                         .param("trangThaiVeSinh", "SACH")
                         .param("ghiChu", "Da don"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
         verify(phongService).capNhatVeSinh(4L, "SACH", "Da don");
     }
 
@@ -151,14 +151,14 @@ class PhongControllerTest extends WebMvcAuditMockSupport {
     @WithMockUser(roles = "BUONG_PHONG")
     void capNhatVeSinh_khongGhiChu() throws Exception {
         mockMvc.perform(patch("/phong/4/ve-sinh").param("trangThaiVeSinh", "BAN"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
         verify(phongService).capNhatVeSinh(4L, "BAN", null);
     }
 
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/phong/8")).andExpect(status().isOk());
+        mockMvc.perform(delete("/phong/8")).andExpect(status().isNoContent());
         verify(phongService).xoa(8L);
     }
 }

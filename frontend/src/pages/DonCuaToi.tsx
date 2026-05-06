@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { Ban, BedDouble, FileText, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Ban, BedDouble, CreditCard, FileText, Loader2, LogOut, X } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
 import api from "../api/client";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../context/ToastContext";
@@ -49,29 +49,108 @@ type DatPhong = {
   };
 };
 
+/** Khớp backend `payment.payos.ty-le-coc-phan-tram` (mặc định 30). */
+const TY_LE_COC_PAYOS = 30;
+
+function tienConLai(b: DatPhong): number {
+  return Number(b.thanhToan?.conPhaiThu ?? 0);
+}
+
+function coTheThanhToanPayOs(b: DatPhong): boolean {
+  if (b.trangThai === "DA_HUY") return false;
+  return b.thanhToan != null && tienConLai(b) > 0.009;
+}
+
+function tienThuPayOsLanNay(b: DatPhong, cheDo: "TOAN_BO" | "DAT_COC"): number {
+  const con = tienConLai(b);
+  const tong = Number(b.tongTien || 0);
+  if (con <= 0) return 0;
+  if (cheDo === "DAT_COC") {
+    const coc = Math.ceil((tong * TY_LE_COC_PAYOS) / 100);
+    return Math.min(coc, con);
+  }
+  return con;
+}
+
 export default function DonCuaToi() {
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const payosHuyToastKey = useRef<string | null>(null);
   const [list, setList] = useState<DatPhong[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingCancel, setPendingCancel] = useState<PendingCancel | null>(null);
   const [cancelBusy, setCancelBusy] = useState(false);
+  const [payTarget, setPayTarget] = useState<DatPhong | null>(null);
+  const [payCheDo, setPayCheDo] = useState<"TOAN_BO" | "DAT_COC">("TOAN_BO");
+  const [payBusy, setPayBusy] = useState(false);
+
+  const refreshList = useCallback(
+    () =>
+      api.get("/dat-phong/cua-toi").then((r) => {
+        setList(r.data);
+        return r;
+      }),
+    [],
+  );
 
   useEffect(() => {
-    api
-      .get("/dat-phong/cua-toi")
-      .then((r) => setList(r.data))
-      .finally(() => setLoading(false));
-  }, []);
+    refreshList().finally(() => setLoading(false));
+  }, [refreshList]);
+
+  /** PayOS redirect về /don-cua-toi khi hủy cổng thanh toán. */
+  useEffect(() => {
+    const cancel = searchParams.get("cancel");
+    const status = searchParams.get("status");
+    const orderCode = searchParams.get("orderCode");
+    const isPayOsReturn =
+      searchParams.has("code") &&
+      searchParams.has("id") &&
+      orderCode != null &&
+      orderCode !== "";
+    if (!isPayOsReturn) return;
+
+    const isCancelled =
+      cancel === "true" ||
+      (status != null && status.toUpperCase() === "CANCELLED");
+    if (!isCancelled) return;
+
+    const dedupeKey = orderCode ?? searchParams.get("id") ?? "once";
+    try {
+      if (sessionStorage.getItem(`payos-huy-toast-don-${dedupeKey}`)) return;
+    } catch {
+      /* ignore */
+    }
+    if (payosHuyToastKey.current === dedupeKey) return;
+    payosHuyToastKey.current = dedupeKey;
+
+    try {
+      sessionStorage.setItem(`payos-huy-toast-don-${dedupeKey}`, "1");
+    } catch {
+      /* ignore */
+    }
+
+    toast(
+      "Bạn đã hủy thanh toán trên PayOS. Đơn vẫn giữ nguyên — có thể thử thanh toán lại.",
+      "info",
+    );
+
+    const next = new URLSearchParams(searchParams);
+    ["code", "id", "cancel", "status", "orderCode"].forEach((k) =>
+      next.delete(k),
+    );
+    setSearchParams(next, { replace: true });
+    void refreshList();
+  }, [searchParams, setSearchParams, toast, refreshList]);
 
   /** Sau khi quay lại từ PayOS / tab khác, làm mới danh sách để thấy trạng thái thanh toán mới. */
   useEffect(() => {
     const onVis = () => {
       if (document.visibilityState !== "visible") return;
-      api.get("/dat-phong/cua-toi").then((r) => setList(r.data)).catch(() => {});
+      refreshList().catch(() => {});
     };
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
-  }, []);
+  }, [refreshList]);
 
   const runPendingCancel = async () => {
     if (!pendingCancel) return;
@@ -79,8 +158,7 @@ export default function DonCuaToi() {
     try {
       if (pendingCancel.kind === "whole") {
         await api.post(`/dat-phong/${pendingCancel.bookingId}/huy`);
-        const refreshed = await api.get("/dat-phong/cua-toi");
-        setList(refreshed.data);
+        await refreshList();
         toast("Đã hủy đơn đặt phòng.", "success");
       } else {
         const res = await api.post(

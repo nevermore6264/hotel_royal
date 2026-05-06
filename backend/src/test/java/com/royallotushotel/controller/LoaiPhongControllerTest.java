@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(LoaiPhongController.class)
+@WebMvcTest(value = LoaiPhongController.class, properties = "server.servlet.context-path=/")
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class LoaiPhongControllerTest extends WebMvcAuditMockSupport {
@@ -106,7 +106,7 @@ class LoaiPhongControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/loai-phong/9")).andExpect(status().isOk());
+        mockMvc.perform(delete("/loai-phong/9")).andExpect(status().isNoContent());
         verify(loaiPhongService).xoa(9L);
     }
 }

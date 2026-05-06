@@ -8,8 +8,10 @@ import org.springframework.test.context.TestPropertySource;
 /**
  * Beans that {@code @WebMvcTest} pulls into the slice but whose dependencies are not
  * scanned: audit interceptor; JWT filter ({@link BoiLocJwt} is a {@link jakarta.servlet.Filter}).
- * <p>Ghi đè {@code application-test.yml} context-path: MockMvc dùng path servlet giống mapping
- * controller (không tiền tố {@code /api}).
+ * <p>Context-path servlet phải là {@code /} trong slice {@code @WebMvcTest} để URI kiểu
+ * {@code /loai-phong/1} khớp mapping (tránh lệch so với {@code /api} trong {@code application.yml}).
+ * Mỗi lớp test khai báo {@code @WebMvcTest(..., properties = "server.servlet.context-path=/")}
+ * để chắc chắn thuộc tính được nạp; {@code @TestPropertySource} ở đây chỉ bổ sung.
  */
 @TestPropertySource(properties = "server.servlet.context-path=/")
 public abstract class WebMvcAuditMockSupport {

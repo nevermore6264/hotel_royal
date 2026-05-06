@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(TapTinController.class)
+@WebMvcTest(value = TapTinController.class, properties = "server.servlet.context-path=/")
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class TapTinControllerTest extends WebMvcAuditMockSupport {
@@ -60,6 +60,11 @@ class TapTinControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void taiLenNhieu_khongCoTep_400() throws Exception {
-        mockMvc.perform(multipart("/tap-tin/phong-anh-nhieu")).andExpect(status().isBadRequest());
+        MockMultipartFile trong = new MockMultipartFile(
+                "files",
+                "trong.bin",
+                MediaType.APPLICATION_OCTET_STREAM_VALUE,
+                new byte[0]);
+        mockMvc.perform(multipart("/tap-tin/phong-anh-nhieu").file(trong)).andExpect(status().isBadRequest());
     }
 }

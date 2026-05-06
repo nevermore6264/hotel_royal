@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(ChinhSachHuyPhongController.class)
+@WebMvcTest(value = ChinhSachHuyPhongController.class, properties = "server.servlet.context-path=/")
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class ChinhSachHuyPhongControllerTest extends WebMvcAuditMockSupport {
@@ -99,7 +99,7 @@ class ChinhSachHuyPhongControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/chinh-sach-huy-phong/7")).andExpect(status().isOk());
+        mockMvc.perform(delete("/chinh-sach-huy-phong/7")).andExpect(status().isNoContent());
         verify(chinhSachHuyPhongService).xoa(7L);
     }
 }

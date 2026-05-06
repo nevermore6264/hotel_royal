@@ -23,7 +23,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(HoSoController.class)
+@WebMvcTest(value = HoSoController.class, properties = "server.servlet.context-path=/")
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class HoSoControllerTest extends WebMvcAuditMockSupport {

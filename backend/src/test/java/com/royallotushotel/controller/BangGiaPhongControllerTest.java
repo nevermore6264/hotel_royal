@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(BangGiaPhongController.class)
+@WebMvcTest(value = BangGiaPhongController.class, properties = "server.servlet.context-path=/")
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class BangGiaPhongControllerTest extends WebMvcAuditMockSupport {
@@ -104,7 +104,7 @@ class BangGiaPhongControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/bang-gia-phong/8")).andExpect(status().isOk());
+        mockMvc.perform(delete("/bang-gia-phong/8")).andExpect(status().isNoContent());
         verify(bangGiaPhongService).xoa(8L);
     }
 }

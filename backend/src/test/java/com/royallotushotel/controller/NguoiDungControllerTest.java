@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(NguoiDungController.class)
+@WebMvcTest(value = NguoiDungController.class, properties = "server.servlet.context-path=/")
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class NguoiDungControllerTest extends WebMvcAuditMockSupport {
@@ -108,7 +108,7 @@ class NguoiDungControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/nguoi-dung/6")).andExpect(status().isOk());
+        mockMvc.perform(delete("/nguoi-dung/6")).andExpect(status().isNoContent());
         verify(nguoiDungService).xoa(6L);
     }
 }

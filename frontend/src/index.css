@@ -4647,35 +4647,152 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
   opacity: 0.9;
 }
 
+/* Bản «giấy» khi xuất PDF (html2canvas cần chữ tối trên nền sáng) */
+.invoice-doc--paper.invoice-doc {
+  background: #fff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.invoice-doc--paper .invoice-doc__head {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.invoice-doc--paper .invoice-doc__logo {
+  background: rgba(14, 116, 144, 0.12) !important;
+  color: #0d9488 !important;
+}
+
+.invoice-doc--paper .invoice-doc__hotel,
+.invoice-doc--paper .invoice-doc__meta-value,
+.invoice-doc--paper .invoice-kv__v,
+.invoice-doc--paper .invoice-table__strong {
+  color: #0f172a !important;
+}
+
+.invoice-doc--paper .invoice-doc__tagline,
+.invoice-doc--paper .invoice-doc__meta-label,
+.invoice-doc--paper .invoice-section__title,
+.invoice-doc--paper .invoice-kv__k,
+.invoice-doc--paper .invoice-table__muted,
+.invoice-doc--paper .invoice-foot,
+.invoice-doc--paper .invoice-muted {
+  color: #64748b !important;
+}
+
+.invoice-doc--paper .invoice-section {
+  border-bottom-color: #e2e8f0 !important;
+}
+
+.invoice-doc--paper .invoice-table-wrap {
+  border-color: #e2e8f0 !important;
+  background: #fff !important;
+}
+
+.invoice-doc--paper .invoice-table--lines thead th {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+}
+
+.invoice-doc--paper .invoice-table--lines th,
+.invoice-doc--paper .invoice-table--lines td {
+  border-color: #e2e8f0 !important;
+}
+
+.invoice-doc--paper .invoice-summary {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+.invoice-doc--paper .invoice-pill {
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+  background: #fff !important;
+}
+
+.invoice-doc--paper .badge {
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm;
+  }
+
   .no-print {
     display: none !important;
   }
-  .layout-header,
-  .role-subnav-ribbon,
-  .layout-main > .container {
-    padding: 0;
+
+  html,
+  body {
+    background: #fff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
+
+  .layout-wrapper {
+    background: #fff !important;
+    min-height: auto !important;
+  }
+
+  .layout-header,
+  .layout-menu-toggle,
+  .role-subnav-ribbon,
+  .toast-host {
+    display: none !important;
+  }
+
+  .layout-main {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
+  }
+
+  .invoice-page.container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .invoice-page.page-shell {
+    padding-bottom: 0 !important;
+  }
+
+  .invoice-print-wrap {
+    margin: 0 !important;
+  }
+
   .invoice-page {
     max-width: none;
   }
+
   .invoice-print-card,
   .invoice-doc {
     box-shadow: none !important;
-    border: none !important;
+    border: 1px solid #e2e8f0 !important;
     background: #fff !important;
     color: #0f172a !important;
   }
+
   .invoice-doc__head {
+    page-break-inside: avoid;
     background: #f8fafc !important;
     border-bottom: 1px solid #e2e8f0 !important;
+    padding: 0.65rem 0.75rem !important;
   }
+
   .invoice-doc__hotel,
   .invoice-doc__meta-value,
   .invoice-kv__v,
   .invoice-table__strong {
     color: #0f172a !important;
   }
+
   .invoice-doc__tagline,
   .invoice-doc__meta-label,
   .invoice-section__title,
@@ -4685,28 +4802,129 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
   .invoice-muted {
     color: #64748b !important;
   }
-  .invoice-table--lines thead th {
-    background: #f1f5f9 !important;
-    color: #475569 !important;
+
+  .invoice-section {
+    padding: 0.55rem 0.65rem !important;
+    page-break-inside: avoid;
   }
+
+  .invoice-table-wrap {
+    overflow: visible !important;
+    max-width: 100% !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  .invoice-table {
+    table-layout: fixed !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 8.5pt !important;
+  }
+
   .invoice-table--lines th,
   .invoice-table--lines td {
     border-color: #e2e8f0 !important;
+    padding: 0.28rem 0.35rem !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
   }
+
+  .invoice-table--lines thead th {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    font-size: 7.5pt !important;
+  }
+
+  .invoice-table--tx th:nth-child(1) {
+    width: 20%;
+  }
+
+  .invoice-table--tx th:nth-child(2) {
+    width: 16%;
+  }
+
+  .invoice-table--tx th:nth-child(3) {
+    width: 18%;
+  }
+
+  .invoice-table--tx th:nth-child(4) {
+    width: 46%;
+  }
+
+  .invoice-table--lines:not(.invoice-table--tx) th:nth-child(1) {
+    width: 18%;
+  }
+
+  .invoice-table--lines:not(.invoice-table--tx) th:nth-child(2) {
+    width: 10%;
+  }
+
+  .invoice-table--lines:not(.invoice-table--tx) th:nth-child(3) {
+    width: 22%;
+  }
+
+  .invoice-table--lines:not(.invoice-table--tx) th:nth-child(4) {
+    width: 22%;
+  }
+
+  .invoice-table--lines:not(.invoice-table--tx) th:nth-child(5) {
+    width: 28%;
+  }
+
+  .invoice-bottom {
+    display: block !important;
+  }
+
+  .invoice-bottom .invoice-section--compact {
+    border-right: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    page-break-inside: avoid;
+  }
+
   .invoice-summary {
     background: #f8fafc !important;
-    border-color: #e2e8f0 !important;
+    border: none !important;
+    border-top: 1px solid #e2e8f0 !important;
+    padding: 0.65rem 0.75rem !important;
+    page-break-inside: avoid;
   }
+
+  .invoice-summary__row {
+    padding: 0.3rem 0 !important;
+  }
+
+  .invoice-summary__row dd {
+    max-width: 55%;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+
   .invoice-foot {
     background: #fff !important;
+    padding: 0.5rem 0.65rem !important;
+    font-size: 7.5pt !important;
   }
+
   .invoice-pill {
     border-color: #e2e8f0 !important;
     color: #475569 !important;
+    font-size: 7pt !important;
+    padding: 0.08rem 0.35rem !important;
   }
+
   .badge {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+    font-size: 7pt !important;
+  }
+
+  .invoice-doc__meta {
+    gap: 0.5rem 0.85rem !important;
+  }
+
+  .invoice-doc__hotel {
+    font-size: 1.1rem !important;
   }
 }
 

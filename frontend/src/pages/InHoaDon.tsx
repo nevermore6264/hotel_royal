@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Building2, FileText, Printer } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Building2, Download, FileText, Loader2, Printer } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import api from "../api/client";
 import { formatNgayGioVN, formatNgayVN } from "../lib/ngayGio";
@@ -76,10 +76,26 @@ function tenLoaiGiaoDich(ma?: string): string {
   return m[ma] ?? ma;
 }
 
+/** Một dòng ghi chú, tránh lặp chữ «PayOS» khi ghiChu đã nhắc cổng thanh toán. */
+function ghiChuHienThi(g: GiaoDich): string {
+  const note = g.ghiChu?.trim();
+  const quaPayOs = g.congThanhToan === "CONG_PAYOS";
+  if (note) {
+    if (quaPayOs && !/pay\s*os/i.test(note)) {
+      return `${note} · PayOS`;
+    }
+    return note;
+  }
+  if (quaPayOs) return "Thanh toán qua PayOS";
+  return "—";
+}
+
 export default function InHoaDon() {
   const { id } = useParams();
   const [dp, setDp] = useState<DatPhong | null>(null);
   const [err, setErr] = useState("");
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const invoiceRootRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -95,6 +111,39 @@ export default function InHoaDon() {
       typeof dp.thoiGianTao === "string" ? dp.thoiGianTao : String(dp.thoiGianTao),
     );
   }, [dp?.thoiGianTao]);
+
+  const taiPdf = useCallback(async () => {
+    const el = invoiceRootRef.current;
+    if (!el || !id) return;
+    setPdfBusy(true);
+    el.classList.add("invoice-doc--paper");
+    try {
+      const mod = await import("html2pdf.js");
+      const html2pdf = mod.default;
+      await html2pdf()
+        .set({
+          margin: [8, 8, 8, 8],
+          filename: `hoa-don-${id}.pdf`,
+          image: { type: "jpeg", quality: 0.92 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: "#ffffff",
+            scrollY: 0,
+            scrollX: 0,
+          },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        })
+        .from(el)
+        .save();
+    } catch {
+      window.alert("Không tạo được file PDF. Bạn có thể dùng nút In và chọn «Lưu thành PDF».");
+    } finally {
+      el.classList.remove("invoice-doc--paper");
+      setPdfBusy(false);
+    }
+  }, [id]);
 
   if (err) {
     return (
@@ -134,9 +183,22 @@ export default function InHoaDon() {
             Xem trước hóa đơn — in hoặc lưu PDF từ trình duyệt.
           </p>
           <div className="invoice-toolbar__actions">
-            <button type="button" className="btn" onClick={() => window.print()}>
+            <button
+              type="button"
+              className="btn"
+              disabled={pdfBusy}
+              onClick={() => void taiPdf()}
+            >
+              {pdfBusy ? (
+                <Loader2 className="btn-ico btn-ico--spin" aria-hidden />
+              ) : (
+                <Download className="btn-ico" aria-hidden />
+              )}
+              Tải PDF
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={() => window.print()}>
               <Printer className="btn-ico" aria-hidden />
-              In / Lưu PDF
+              In trang
             </button>
             <Link to="/don-cua-toi" className="btn btn-secondary">
               <ArrowLeft className="btn-ico" aria-hidden />
@@ -146,7 +208,10 @@ export default function InHoaDon() {
         </div>
       </div>
 
-      <article className="invoice-doc card invoice-print-card">
+      <article
+        ref={invoiceRootRef}
+        className="invoice-doc card invoice-print-card"
+      >
         <header className="invoice-doc__head">
           <div className="invoice-doc__brand">
             <div className="invoice-doc__logo" aria-hidden>
@@ -287,11 +352,7 @@ export default function InHoaDon() {
                         </td>
                         <td>{tenLoaiGiaoDich(g.loaiGiaoDich)}</td>
                         <td className="invoice-table__num invoice-table__strong">{tien(g.soTien)}</td>
-                        <td className="invoice-table__muted">
-                          {[g.ghiChu, g.congThanhToan === "CONG_PAYOS" ? "PayOS" : ""]
-                            .filter(Boolean)
-                            .join(" · ") || "—"}
-                        </td>
+                        <td className="invoice-table__muted">{ghiChuHienThi(g)}</td>
                       </tr>
                     ))}
                   </tbody>

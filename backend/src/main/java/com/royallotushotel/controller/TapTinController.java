@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,9 @@ public class TapTinController {
     @PostMapping("/phong-anh-nhieu")
     @PreAuthorize("hasRole('QUAN_TRI')")
     public ResponseEntity<?> taiLenNhieu(@RequestParam("files") MultipartFile[] files) {
-        if (files == null || files.length == 0)
+        boolean coTepThucSu = files != null
+                && Arrays.stream(files).anyMatch(f -> f != null && !f.isEmpty());
+        if (!coTepThucSu)
             return ResponseEntity.badRequest().body(Map.of("error", "Không có tệp"));
         List<Map<String, String>> ketQua = new ArrayList<>();
         for (MultipartFile f : files) {

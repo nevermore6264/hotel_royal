@@ -1,6 +1,7 @@
 server:
   servlet:
-    context-path: /api
+    # Gốc servlet = "/" để @WebMvcTest/MockMvc khớp URI không tiền tố /api (production vẫn dùng /api trong application.yml)
+    context-path: /
 
 spring:
   datasource:

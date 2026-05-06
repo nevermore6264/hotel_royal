@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(DichVuController.class)
+@WebMvcTest(value = DichVuController.class, properties = "server.servlet.context-path=/")
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class DichVuControllerTest extends WebMvcAuditMockSupport {
@@ -96,7 +96,7 @@ class DichVuControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/dich-vu/3")).andExpect(status().isOk());
+        mockMvc.perform(delete("/dich-vu/3")).andExpect(status().isNoContent());
         verify(quanLyDichVuService).xoa(3L);
     }
 
@@ -106,7 +106,7 @@ class DichVuControllerTest extends WebMvcAuditMockSupport {
         mockMvc.perform(post("/dich-vu/dat-phong/100/them")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("idDichVu", 5, "soLuong", 2))))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
         verify(quanLyDichVuService).themVaoDatPhong(100L, 5L, 2);
     }
 
@@ -116,7 +116,7 @@ class DichVuControllerTest extends WebMvcAuditMockSupport {
         mockMvc.perform(post("/dich-vu/dat-phong/101/them")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("idDichVu", 7))))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
         verify(quanLyDichVuService).themVaoDatPhong(101L, 7L, 1);
     }
 }
