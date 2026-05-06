@@ -23,6 +23,8 @@ public interface NguoiDungRepository extends JpaRepository<NguoiDung, Long> {
 
     boolean existsByEmailAndIdNot(String email, Long id);
 
+    boolean existsBySoDienThoaiAndIdNot(String soDienThoai, Long id);
+
     @Query("SELECT DISTINCT n FROM NguoiDung n JOIN n.vaiTro v WHERE v.ten IN ('ROLE_LE_TAN','ROLE_QUAN_TRI') AND n.trangThai = :tt ORDER BY n.hoTen ASC, n.tenDangNhap ASC")
     List<NguoiDung> timNhanVienHoTroChat(@Param("tt") String trangThai);
 

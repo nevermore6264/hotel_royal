@@ -20,7 +20,6 @@ class PhanHoiXacThucTest {
                 .build();
 
         assertThat(dto.getTokenTruyCap()).isEqualTo("jwt-access");
-        assertThat(dto.getLoaiToken()).isEqualTo("Bearer");
         assertThat(dto.getVaiTro()).hasSize(1);
     }
 

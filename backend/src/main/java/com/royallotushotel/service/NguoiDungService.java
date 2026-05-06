@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -99,18 +100,30 @@ public class NguoiDungService {
     @Transactional
     public NguoiDungDto capNhatThongTinCaNhan(Long idNguoiDung, YeuCauCapNhatHoSo yeuCau) {
         NguoiDung nd = nguoiDungRepository.findById(idNguoiDung).orElseThrow(() -> new RuntimeException("Khong tim thay nguoi dung"));
-        if (yeuCau.getEmail() != null && !yeuCau.getEmail().equals(nd.getEmail())) {
-            if (nguoiDungRepository.existsByEmailAndIdNot(yeuCau.getEmail(), idNguoiDung))
+        if (yeuCau.getEmail() != null) {
+            String emailMoi = yeuCau.getEmail().trim();
+            String emailCu = nd.getEmail() != null ? nd.getEmail().trim() : "";
+            if (!emailMoi.equalsIgnoreCase(emailCu)
+                    && nguoiDungRepository.existsByEmailAndIdNot(emailMoi, idNguoiDung))
                 throw new RuntimeException("Email da duoc su dung");
+            nd.setEmail(emailMoi);
         }
-        if (yeuCau.getHoTen() != null) nd.setHoTen(yeuCau.getHoTen());
-        if (yeuCau.getSoDienThoai() != null) nd.setSoDienThoai(yeuCau.getSoDienThoai());
-        if (yeuCau.getEmail() != null) nd.setEmail(yeuCau.getEmail());
+        if (yeuCau.getHoTen() != null) nd.setHoTen(yeuCau.getHoTen().trim());
+        if (yeuCau.getSoDienThoai() != null) {
+            String sdtRaw = yeuCau.getSoDienThoai().trim();
+            String sdtMoi = sdtRaw.isEmpty() ? null : sdtRaw;
+            String sdtCu = nd.getSoDienThoai() != null ? nd.getSoDienThoai().trim() : null;
+            if (sdtMoi != null && !Objects.equals(sdtMoi, sdtCu)
+                    && nguoiDungRepository.existsBySoDienThoaiAndIdNot(sdtMoi, idNguoiDung))
+                throw new RuntimeException("So dien thoai da duoc su dung");
+            nd.setSoDienThoai(sdtMoi);
+        }
         nd = nguoiDungRepository.save(nd);
+        NguoiDung finalNd = nd;
         khachHangRepository.findByNguoiDung_Id(idNguoiDung).ifPresent(kh -> {
-            if (yeuCau.getHoTen() != null) kh.setHoTen(yeuCau.getHoTen());
-            if (yeuCau.getSoDienThoai() != null) kh.setSoDienThoai(yeuCau.getSoDienThoai());
-            if (yeuCau.getEmail() != null) kh.setEmail(yeuCau.getEmail());
+            if (yeuCau.getHoTen() != null) kh.setHoTen(finalNd.getHoTen());
+            if (yeuCau.getSoDienThoai() != null) kh.setSoDienThoai(finalNd.getSoDienThoai());
+            if (yeuCau.getEmail() != null) kh.setEmail(finalNd.getEmail());
             khachHangRepository.save(kh);
         });
         return sangDto(nd);

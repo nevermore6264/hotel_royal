@@ -50,6 +50,8 @@ payment:
     checksum-key: ${PAYOS_CHECKSUM_KEY:}
     api-url: ${PAYOS_API_URL:https://api-merchant.payos.vn}
     che-do-thu: ${PAYOS_DEV_MODE:false}
+    # Tỷ lệ đặt cọc (%) so với tổng tiền kỳ lưu trú khi khách chọn PayOS — đặt cọc
+    ty-le-coc-phan-tram: ${PAYOS_TY_LE_COC:30}
 
 app:
   upload:

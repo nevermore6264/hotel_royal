@@ -28,14 +28,31 @@ function soDemLuuTru(ngayNhan: string, ngayTra: string): number | null {
   return days > 0 ? days : null;
 }
 
+/** Hiển thị ngày theo kiểu Việt Nam: dd/MM/yyyy (từ chuỗi yyyy-MM-dd của input type=date). */
+function formatNgayVietNam(yyyyMmDd: string): string {
+  if (!yyyyMmDd) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(yyyyMmDd.trim());
+  if (!m) return yyyyMmDd;
+  const [, y, mo, d] = m;
+  return `${d}/${mo}/${y}`;
+}
+
+function chuanHoaPhong(p: Phong): Phong {
+  return { ...p, id: Number(p.id) };
+}
+
+/** Khớp mặc định backend `payment.payos.ty-le-coc-phan-tram` (30). */
+const TY_LE_COC_PAYOS = 30;
+
 export default function DatPhong() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const idPhongTuUrl = useMemo(
     () => parseIdPhongTuQuery(searchParams),
     [searchParams],
   );
+  const coPhongMacDinhTuUrl = idPhongTuUrl != null;
   const [rooms, setRooms] = useState<Phong[]>([]);
   const [roomsLoading, setRoomsLoading] = useState(false);
   const [checkIn, setCheckIn] = useState(
@@ -51,9 +68,35 @@ export default function DatPhong() {
   const [phongXemTruoc, setPhongXemTruoc] = useState<Phong | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [cheDoThanhToan, setCheDoThanhToan] = useState<"TOAN_BO" | "DAT_COC">(
+    "TOAN_BO",
+  );
 
   const soDem = soDemLuuTru(checkIn, checkOut);
   const datesOk = !!(checkIn && checkOut && soDem != null);
+
+  /** Giữ idPhong + ngày trên URL khi khách chọn ngày (tránh mất ngữ cảnh / F5). */
+  useEffect(() => {
+    if (!datesOk) return;
+    const idStr = idPhongTuUrl != null ? String(idPhongTuUrl) : null;
+    const inSync =
+      searchParams.get("ngayNhanPhong") === checkIn &&
+      searchParams.get("ngayTraPhong") === checkOut &&
+      (idStr == null || searchParams.get("idPhong") === idStr);
+    if (inSync) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("ngayNhanPhong", checkIn);
+    next.set("ngayTraPhong", checkOut);
+    if (idPhongTuUrl != null) next.set("idPhong", String(idPhongTuUrl));
+    setSearchParams(next, { replace: true });
+  }, [
+    datesOk,
+    checkIn,
+    checkOut,
+    idPhongTuUrl,
+    searchParams,
+    setSearchParams,
+  ]);
 
   useEffect(() => {
     const id = parseIdPhongTuQuery(searchParams);
@@ -65,7 +108,7 @@ export default function DatPhong() {
     api
       .get<Phong>(`/phong/${id}`)
       .then((r) => {
-        if (!cancelled) setPhongXemTruoc(r.data);
+        if (!cancelled) setPhongXemTruoc(chuanHoaPhong(r.data));
       })
       .catch(() => {
         if (!cancelled) setPhongXemTruoc(null);
@@ -96,14 +139,18 @@ export default function DatPhong() {
         params: { ngayNhanPhong: checkIn, ngayTraPhong: checkOut },
       })
       .then((r) => {
-        const list = r.data as Phong[];
+        const list = (r.data as Phong[]).map(chuanHoaPhong);
         setRooms(list);
         setSelectedIds((prev) => {
           const next = new Set<number>();
           for (const pid of prev) {
-            if (list.some((room) => room.id === pid)) next.add(pid);
+            const pidN = Number(pid);
+            if (list.some((room) => room.id === pidN)) next.add(pidN);
           }
-          if (idUrl != null && list.some((room) => room.id === idUrl)) {
+          if (
+            idUrl != null &&
+            list.some((room) => room.id === idUrl)
+          ) {
             next.add(idUrl);
           }
           return [...next];
@@ -111,6 +158,16 @@ export default function DatPhong() {
       })
       .finally(() => setRoomsLoading(false));
   }, [checkIn, checkOut, searchParams]);
+
+  /** Luôn giữ phòng từ URL trong danh sách chọn nếu còn trống theo ngày. */
+  useEffect(() => {
+    if (idPhongTuUrl == null || !datesOk || roomsLoading) return;
+    const con = rooms.some((r) => r.id === idPhongTuUrl);
+    if (!con) return;
+    setSelectedIds((prev) =>
+      prev.includes(idPhongTuUrl) ? prev : [...prev, idPhongTuUrl],
+    );
+  }, [idPhongTuUrl, datesOk, rooms, roomsLoading]);
 
   const toggleRoom = (id: number) => {
     setSelectedIds((prev) =>
@@ -123,6 +180,27 @@ export default function DatPhong() {
     (sum, r) => sum + Number(r.giaChoKyLuuTru || r.giaLoaiPhong),
     0,
   );
+  const tienCocUocTinh = useMemo(() => {
+    if (totalAmount <= 0) return 0;
+    return Math.ceil((totalAmount * TY_LE_COC_PAYOS) / 100);
+  }, [totalAmount]);
+  const tienThuPayOsLanNay = useMemo(() => {
+    if (totalAmount <= 0) return 0;
+    if (cheDoThanhToan === "DAT_COC") {
+      return Math.min(tienCocUocTinh, totalAmount);
+    }
+    return totalAmount;
+  }, [totalAmount, cheDoThanhToan, tienCocUocTinh]);
+  const phongMacDinhTrongList = useMemo(() => {
+    if (idPhongTuUrl == null) return null;
+    return rooms.find((r) => r.id === idPhongTuUrl) ?? null;
+  }, [rooms, idPhongTuUrl]);
+
+  const phongKhacDeChon = useMemo(() => {
+    if (idPhongTuUrl == null) return rooms;
+    return rooms.filter((r) => r.id !== idPhongTuUrl);
+  }, [rooms, idPhongTuUrl]);
+
   const phongDaChonKhongConTrong =
     !!idPhongTuUrl &&
     datesOk &&
@@ -167,6 +245,7 @@ export default function DatPhong() {
         idDatPhong,
         urlTroVe: `${window.location.origin}/dat-phong/thanh-cong?idDatPhong=${idDatPhong}`,
         urlHuy: `${window.location.origin}/dat-phong`,
+        cheDoThanhToan,
       });
       window.location.href = payRes.data.duongThanhToan;
     } catch (err: unknown) {
@@ -184,7 +263,16 @@ export default function DatPhong() {
       <header className="booking-page-header">
         <h1 className="page-title animate-fade-in">Đặt phòng</h1>
         <p className="page-subtitle page-subtitle--tight">
-          Chọn ngày nhận — trả, chọn phòng trống và thanh toán qua PayOS.{" "}
+          {coPhongMacDinhTuUrl ? (
+            <>
+              Bạn đã chọn một phòng từ danh sách — chọn ngày để kiểm tra còn trống
+              và xem giá theo kỳ lưu trú, sau đó thanh toán PayOS.{" "}
+            </>
+          ) : (
+            <>
+              Chọn ngày nhận — trả, chọn phòng trống và thanh toán qua PayOS.{" "}
+            </>
+          )}
           <Link to="/phong" className="booking-intro-link">
             Xem danh sách phòng
           </Link>
@@ -250,10 +338,17 @@ export default function DatPhong() {
             <section className="card booking-section">
               <h2 className="booking-section__title">
                 <span className="booking-step-num">2</span>
-                {idPhongTuUrl && phongXemTruoc
-                  ? "Xác nhận phòng & giá"
+                {coPhongMacDinhTuUrl
+                  ? "Xác nhận phòng đã chọn"
                   : "Chọn phòng trống"}
               </h2>
+              {coPhongMacDinhTuUrl && (
+                <p className="booking-preset-lead text-muted text-sm">
+                  Phòng bạn đã chọn trên trang &quot;Danh sách phòng&quot; được ưu
+                  tiên hiển thị bên dưới. Bạn vẫn có thể thêm phòng khác nếu còn
+                  trống cùng kỳ.
+                </p>
+              )}
               {phongDaChonKhongConTrong && phongXemTruoc && (
                 <p className="form-error booking-inline-error" role="alert">
                   Phòng {phongXemTruoc.soPhong} không còn trống trong khoảng
@@ -275,41 +370,96 @@ export default function DatPhong() {
                   .
                 </p>
               ) : (
-                <div className="booking-room-grid">
-                  {rooms.map((r) => {
-                    const price = Number(r.giaChoKyLuuTru || r.giaLoaiPhong);
-                    const checked = selectedIds.includes(r.id);
-                    return (
-                      <label
-                        key={r.id}
-                        className={`booking-room-card${checked ? " booking-room-card--selected" : ""}`}
-                      >
-                        <input
-                          type="checkbox"
-                          className="booking-room-card__check"
-                          checked={checked}
-                          onChange={() => toggleRoom(r.id)}
-                        />
-                        <div className="booking-room-card__body">
-                          <span className="booking-room-card__room">
-                            Phòng {r.soPhong}
-                          </span>
-                          <span className="booking-room-card__type">
-                            {r.tenLoaiPhong}
-                          </span>
+                <>
+                  {phongMacDinhTrongList && (
+                    <div className="booking-preset-room">
+                      <div className="booking-preset-room__head">
+                        <span className="booking-preset-room__badge">
+                          Phòng bạn đã chọn
+                        </span>
+                        <Link
+                          to="/phong"
+                          className="booking-preset-room__change text-sm"
+                        >
+                          Chọn phòng khác
+                        </Link>
+                      </div>
+                      <div className="booking-preset-room__body">
+                        <div>
+                          <p className="booking-preset-room__line">
+                            <strong>
+                              Phòng {phongMacDinhTrongList.soPhong}
+                            </strong>
+                            <span className="text-muted text-sm">
+                              {" "}
+                              · {phongMacDinhTrongList.tenLoaiPhong}
+                            </span>
+                          </p>
+                          <p className="booking-preset-room__hint text-muted text-sm">
+                            Đã gồm trong đơn; giá theo số đêm bạn chọn ở bước 1.
+                          </p>
                         </div>
-                        <div className="booking-room-card__price">
-                          <span className="booking-room-card__amount">
-                            {price.toLocaleString("vi-VN")}
+                        <div className="booking-preset-room__price">
+                          <span className="booking-preset-room__amount">
+                            {Number(
+                              phongMacDinhTrongList.giaChoKyLuuTru ||
+                                phongMacDinhTrongList.giaLoaiPhong,
+                            ).toLocaleString("vi-VN")}
                           </span>
-                          <span className="booking-room-card__unit">
+                          <span className="booking-preset-room__unit">
                             VND / kỳ
                           </span>
                         </div>
-                      </label>
-                    );
-                  })}
-                </div>
+                      </div>
+                    </div>
+                  )}
+                  {phongKhacDeChon.length > 0 && (
+                    <>
+                      <h3 className="booking-add-rooms-title">
+                        {phongMacDinhTrongList
+                          ? "Thêm phòng (tuỳ chọn)"
+                          : "Phòng trống"}
+                      </h3>
+                      <div className="booking-room-grid">
+                        {phongKhacDeChon.map((r) => {
+                          const price = Number(
+                            r.giaChoKyLuuTru || r.giaLoaiPhong,
+                          );
+                          const checked = selectedIds.includes(r.id);
+                          return (
+                            <label
+                              key={r.id}
+                              className={`booking-room-card${checked ? " booking-room-card--selected" : ""}`}
+                            >
+                              <input
+                                type="checkbox"
+                                className="booking-room-card__check"
+                                checked={checked}
+                                onChange={() => toggleRoom(r.id)}
+                              />
+                              <div className="booking-room-card__body">
+                                <span className="booking-room-card__room">
+                                  Phòng {r.soPhong}
+                                </span>
+                                <span className="booking-room-card__type">
+                                  {r.tenLoaiPhong}
+                                </span>
+                              </div>
+                              <div className="booking-room-card__price">
+                                <span className="booking-room-card__amount">
+                                  {price.toLocaleString("vi-VN")}
+                                </span>
+                                <span className="booking-room-card__unit">
+                                  VND / kỳ
+                                </span>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </>
               )}
             </section>
           )}
@@ -345,11 +495,11 @@ export default function DatPhong() {
                 <dl className="booking-summary-dl">
                   <div>
                     <dt>Nhận</dt>
-                    <dd>{checkIn}</dd>
+                    <dd>{formatNgayVietNam(checkIn)}</dd>
                   </div>
                   <div>
                     <dt>Trả</dt>
-                    <dd>{checkOut}</dd>
+                    <dd>{formatNgayVietNam(checkOut)}</dd>
                   </div>
                   <div>
                     <dt>Số đêm</dt>
@@ -377,6 +527,72 @@ export default function DatPhong() {
                     </strong>
                   </div>
                 )}
+                {selectedIds.length > 0 && (
+                  <fieldset className="booking-pay-mode">
+                    <legend className="booking-pay-mode__legend">
+                      Thanh toán PayOS
+                    </legend>
+                    <label
+                      className={
+                        cheDoThanhToan === "TOAN_BO"
+                          ? "booking-pay-mode__opt booking-pay-mode__opt--on"
+                          : "booking-pay-mode__opt"
+                      }
+                    >
+                      <input
+                        type="radio"
+                        name="cheDoPayOS"
+                        checked={cheDoThanhToan === "TOAN_BO"}
+                        onChange={() => setCheDoThanhToan("TOAN_BO")}
+                      />
+                      <span className="booking-pay-mode__opt-body">
+                        <span className="booking-pay-mode__opt-title">
+                          Thanh toán đủ
+                        </span>
+                        <span className="booking-pay-mode__amt">
+                          {totalAmount.toLocaleString("vi-VN")} VND
+                        </span>
+                      </span>
+                    </label>
+                    <label
+                      className={
+                        cheDoThanhToan === "DAT_COC"
+                          ? "booking-pay-mode__opt booking-pay-mode__opt--on"
+                          : "booking-pay-mode__opt"
+                      }
+                    >
+                      <input
+                        type="radio"
+                        name="cheDoPayOS"
+                        checked={cheDoThanhToan === "DAT_COC"}
+                        onChange={() => setCheDoThanhToan("DAT_COC")}
+                      />
+                      <span className="booking-pay-mode__opt-body">
+                        <span className="booking-pay-mode__opt-title">
+                          Đặt cọc ({TY_LE_COC_PAYOS}%)
+                        </span>
+                        <span className="booking-pay-mode__amt">
+                          {tienThuPayOsLanNay.toLocaleString("vi-VN")} VND lần
+                          này
+                        </span>
+                      </span>
+                    </label>
+                    {cheDoThanhToan === "DAT_COC" &&
+                      totalAmount > tienThuPayOsLanNay && (
+                        <p className="booking-pay-mode__hint text-muted text-sm">
+                          Còn lại{" "}
+                          <strong>
+                            {(
+                              totalAmount - tienThuPayOsLanNay
+                            ).toLocaleString("vi-VN")}{" "}
+                            VND
+                          </strong>{" "}
+                          — thanh toán bổ sung tại khách sạn hoặc qua PayOS (lần
+                          sau / lễ tân hỗ trợ tạo link).
+                        </p>
+                      )}
+                  </fieldset>
+                )}
               </>
             )}
             {error && <p className="form-error booking-summary-error">{error}</p>}
@@ -393,7 +609,9 @@ export default function DatPhong() {
               ) : (
                 <>
                   <CreditCard className="btn-ico" aria-hidden />
-                  Thanh toán PayOS
+                  {datesOk && selectedIds.length > 0
+                    ? `PayOS — ${tienThuPayOsLanNay.toLocaleString("vi-VN")} VND`
+                    : "Thanh toán PayOS"}
                 </>
               )}
             </button>

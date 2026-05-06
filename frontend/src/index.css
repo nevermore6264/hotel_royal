@@ -3769,46 +3769,6 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
   outline-offset: 3px;
 }
 
-.room-detail-hero__nav {
-  position: absolute;
-  top: 50%;
-  z-index: 2;
-  transform: translateY(-50%);
-  width: 2.35rem;
-  height: 2.35rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: none;
-  border-radius: 999px;
-  cursor: pointer;
-  color: #f8fafc;
-  background: rgba(8, 12, 18, 0.55);
-  border: 1px solid rgba(248, 250, 252, 0.18);
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.room-detail-hero__nav:hover {
-  background: rgba(45, 212, 191, 0.28);
-  border-color: rgba(45, 212, 191, 0.4);
-}
-
-/* Global button:active dùng scale(0.98) — gộp với translateY(-50%) để icon không nhảy dọc */
-.room-detail-hero__nav:active {
-  transform: translateY(-50%) scale(0.98);
-}
-
-.room-detail-hero__nav--prev {
-  left: 0.5rem;
-}
-
-.room-detail-hero__nav--next {
-  right: 0.5rem;
-}
-
 .room-detail-hero__img-count {
   position: absolute;
   top: 0.55rem;
@@ -3872,60 +3832,52 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.room-detail-gallery {
-  display: flex;
-  justify-content: center;
-  padding: 0.45rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-  border-top: 1px solid rgba(148, 163, 184, 0.12);
-  background: rgba(8, 12, 18, 0.35);
+.room-detail-gallery-grid-wrap {
   width: 100%;
   box-sizing: border-box;
+  padding: 0.65rem 0.5rem 0.5rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(8, 12, 18, 0.35);
 }
 
-.room-detail-gallery__track {
-  display: flex;
-  flex-direction: row;
-  gap: 0.4rem;
-  margin-inline: auto;
-  flex-shrink: 0;
+.room-detail-gallery-grid__hint {
+  margin: 0 0 0.5rem;
+  text-align: center;
 }
 
-.room-detail-gallery__btn {
-  flex: 0 0 auto;
-  width: 72px;
-  height: 52px;
+.room-detail-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.75rem, 1fr));
+  gap: 0.45rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+.room-detail-gallery-grid__cell {
+  position: relative;
+  aspect-ratio: 4 / 3;
   padding: 0;
   border: 2px solid transparent;
   border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
-  background: transparent;
-  opacity: 0.75;
-  scroll-snap-align: center;
+  background: rgba(15, 23, 42, 0.5);
+  opacity: 0.82;
   transition:
-    opacity 0.15s,
-    border-color 0.15s;
+    opacity 0.15s ease,
+    border-color 0.15s ease;
 }
 
-.room-detail-gallery__btn:hover {
+.room-detail-gallery-grid__cell:hover {
   opacity: 1;
 }
 
-.room-detail-gallery__btn--active {
+.room-detail-gallery-grid__cell--active {
   opacity: 1;
-  border-color: rgba(45, 212, 191, 0.75);
+  border-color: rgba(45, 212, 191, 0.8);
 }
 
-.room-detail-gallery__btn:active {
-  transform: scale(0.98);
-}
-
-.room-detail-gallery__btn img {
+.room-detail-gallery-grid__cell img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -4051,52 +4003,47 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
   text-align: center;
 }
 
-.room-detail-lightbox__strip {
+.room-detail-lightbox__grid {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  max-width: 100%;
-  overflow-x: auto;
-  padding: 0.25rem 0;
-  scrollbar-width: thin;
-  -webkit-overflow-scrolling: touch;
+  align-content: flex-start;
+  gap: 0.4rem;
   width: 100%;
+  max-width: 100%;
+  max-height: min(22vh, 200px);
+  overflow-y: auto;
+  padding: 0.2rem 0;
+  scrollbar-width: thin;
   box-sizing: border-box;
 }
 
-.room-detail-lightbox__strip-track {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 0.4rem;
-  flex-shrink: 0;
-  margin-inline: auto;
-}
-
-.room-detail-lightbox__thumb {
+.room-detail-lightbox__grid-cell {
   flex: 0 0 auto;
-  width: 64px;
-  height: 48px;
+  width: 4rem;
+  height: 3rem;
   padding: 0;
   border: 2px solid transparent;
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  background: transparent;
-  opacity: 0.65;
+  background: rgba(15, 23, 42, 0.6);
+  opacity: 0.7;
   transition:
     opacity 0.15s ease,
     border-color 0.15s ease;
 }
 
-.room-detail-lightbox__thumb:hover {
+.room-detail-lightbox__grid-cell:hover {
   opacity: 1;
 }
 
-.room-detail-lightbox__thumb--active {
+.room-detail-lightbox__grid-cell--active {
   opacity: 1;
   border-color: rgba(45, 212, 191, 0.85);
 }
 
-.room-detail-lightbox__thumb img {
+.room-detail-lightbox__grid-cell img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -4441,6 +4388,95 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
 
 .booking-inline-error {
   margin: 0.75rem 0 0;
+}
+
+.booking-preset-lead {
+  margin: -0.35rem 0 1rem;
+  line-height: 1.5;
+}
+
+.booking-preset-room {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  background: linear-gradient(
+    145deg,
+    rgba(45, 212, 191, 0.1) 0%,
+    rgba(15, 23, 42, 0.55) 100%
+  );
+}
+
+.booking-preset-room__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.65rem;
+}
+
+.booking-preset-room__badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(45, 212, 191, 0.2);
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  color: var(--primary);
+}
+
+.booking-preset-room__change {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.booking-preset-room__change:hover {
+  color: var(--primary);
+}
+
+.booking-preset-room__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+}
+
+.booking-preset-room__line {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+}
+
+.booking-preset-room__hint {
+  margin: 0;
+}
+
+.booking-preset-room__price {
+  text-align: right;
+}
+
+.booking-preset-room__amount {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+}
+
+.booking-preset-room__unit {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.booking-add-rooms-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-muted);
 }
 
 .booking-rooms-loading {
@@ -6645,6 +6681,81 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
   margin-top: 0.35rem;
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+.profile-username-field {
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.35rem;
+  border-radius: var(--radius-md);
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px dashed rgba(148, 163, 184, 0.28);
+}
+
+.profile-username-field__label-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.profile-username-field__label-row label {
+  margin-bottom: 0;
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.profile-username-field__badge {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  color: rgba(148, 163, 184, 0.95);
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.profile-username-field__input:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+  color: rgba(226, 232, 240, 0.72);
+  background: rgba(2, 6, 23, 0.55);
+  border-style: dashed;
+  border-color: rgba(100, 116, 139, 0.45);
+  box-shadow: none;
+}
+
+.profile-username-field__input:disabled:focus {
+  border-color: rgba(100, 116, 139, 0.5);
+  box-shadow: none;
+}
+
+.profile-field-hint--username {
+  margin-top: 0.45rem;
+  padding-left: 0.55rem;
+  border-left: 2px solid rgba(45, 212, 191, 0.35);
+  line-height: 1.45;
+}
+
+.profile-field-error {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--danger);
+  line-height: 1.35;
+}
+
+.profile-field-error--block {
+  margin-top: 0;
+  margin-bottom: 0.65rem;
+}
+
+.profile-form .form-group input[aria-invalid="true"] {
+  border-color: rgba(248, 113, 113, 0.55);
 }
 
 .profile-form--narrow {

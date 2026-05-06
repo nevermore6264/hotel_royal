@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -45,10 +47,24 @@ public class ThanhToanService {
     private String payOsApiUrl;
     @Value("${payment.payos.che-do-thu:false}")
     private boolean payOsCheDoThu;
+    /** Tỷ lệ đặt cọc so với tổng tiền kỳ lưu trú (1–99). */
+    @Value("${payment.payos.ty-le-coc-phan-tram:30}")
+    private int tyLeCocPhanTram;
 
+    /**
+     * @param cheDoThanhToan {@code TOAN_BO} — thu toàn bộ số còn lại; {@code DAT_COC} — thu cọc theo tỷ lệ cấu hình (tối đa bằng số còn lại).
+     */
     @Transactional
-    public String taoUrlThanhToanPayOs(Long idDatPhong, String urlTroVe, String urlHuy) {
-        DatPhong dp = datPhongRepository.findById(idDatPhong)
+    public String taoUrlThanhToanPayOs(
+            Long idDatPhong,
+            String urlTroVe,
+            String urlHuy,
+            String cheDoThanhToan) {
+        String cheDo = "DAT_COC".equalsIgnoreCase(
+                cheDoThanhToan != null ? cheDoThanhToan.trim() : "")
+                ? "DAT_COC"
+                : "TOAN_BO";
+        datPhongRepository.findById(idDatPhong)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đặt phòng"));
         BigDecimal tongTien = datPhongService.tinhTongTien(idDatPhong);
         if (tongTien == null || tongTien.compareTo(BigDecimal.ZERO) <= 0) {
@@ -68,7 +84,28 @@ public class ThanhToanService {
                     "Chưa cấu hình payOS: đặt PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY hoặc bật payment.payos.che-do-thu=true để chạy local.");
         }
 
-        long amountVnd = tongTien.longValue();
+        ThanhToan tt = thanhToanRepository.findByDatPhong_Id(idDatPhong)
+                .orElseThrow(() -> new RuntimeException("Không có bản ghi thanh toán cho đặt phòng"));
+        BigDecimal conPhai = tt.getConPhaiThu() != null ? tt.getConPhaiThu() : tongTien;
+        if (conPhai.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Đơn không còn số tiền cần thu");
+        }
+
+        BigDecimal soTienThu;
+        if ("DAT_COC".equals(cheDo)) {
+            soTienThu = tinhSoTienCocTheoTong(tongTien);
+            if (soTienThu.compareTo(conPhai) > 0) {
+                soTienThu = conPhai;
+            }
+        } else {
+            soTienThu = conPhai;
+        }
+
+        long amountVnd = soTienThu.setScale(0, RoundingMode.HALF_UP).longValue();
+        if (amountVnd < 1_000L) {
+            throw new RuntimeException("Số tiền thanh toán quá nhỏ (tối thiểu 1.000 VND)");
+        }
+
         int orderCode = taoMaDonPayOs();
         String moTa = moTaNgan(idDatPhong);
         String chuKy = PayOsKySo.taoChuKyTaoLinkThanhToan(
@@ -80,8 +117,6 @@ public class ThanhToanService {
                 payOsChecksumKey.trim()
         );
 
-        ThanhToan tt = thanhToanRepository.findByDatPhong_Id(idDatPhong)
-                .orElseThrow(() -> new RuntimeException("Không có bản ghi thanh toán cho đặt phòng"));
         tt.setPayosOrderCode(orderCode);
         tt.setPhuongThuc(MaPhuongThucThanhToan.CONG_PAYOS);
         thanhToanRepository.save(tt);
@@ -120,6 +155,19 @@ public class ThanhToanService {
         }
     }
 
+    private BigDecimal tinhSoTienCocTheoTong(BigDecimal tongTienKy) {
+        int tl = tyLeCocPhanTram;
+        if (tl <= 0 || tl >= 100) {
+            return tongTienKy;
+        }
+        BigDecimal tyLe = BigDecimal.valueOf(tl).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+        BigDecimal coc = tongTienKy.multiply(tyLe).setScale(0, RoundingMode.CEILING);
+        if (coc.compareTo(BigDecimal.valueOf(1_000L)) < 0) {
+            coc = BigDecimal.valueOf(1_000L);
+        }
+        return coc;
+    }
+
     private static String noiQuery(String base, String them) {
         if (base.contains("?")) return base + "&" + them;
         return base + "?" + them;
@@ -145,13 +193,28 @@ public class ThanhToanService {
         return s.length() <= 9 ? s : s.substring(0, 9);
     }
 
+    /** Ghi nhận một lần thu (đủ hoặc cọc); dùng cho webhook PayOS theo {@code amount} thực tế. */
     @Transactional
-    public void xacNhanThanhToan(Long idDatPhong, String cong, String maGiaoDich) {
+    public void ghiNhanThanhToan(
+            Long idDatPhong,
+            String cong,
+            String maGiaoDich,
+            BigDecimal soTienLanNay) {
+        if (soTienLanNay == null || soTienLanNay.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Số tiền thanh toán không hợp lệ");
+        }
         DatPhong dp = datPhongRepository.findById(idDatPhong)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đặt phòng"));
         ThanhToan tt0 = thanhToanRepository.findByDatPhong_Id(idDatPhong).orElse(null);
         if (tt0 != null && MaTrangThaiThanhToan.DA_THANH_TOAN.equals(tt0.getTrangThai())) {
             return;
+        }
+        if (tt0 != null && maGiaoDich != null && !maGiaoDich.isBlank()) {
+            for (GiaoDichThanhToan gd : tt0.getGiaoDich()) {
+                if (maGiaoDich.equals(gd.getMaGiaoDich())) {
+                    return;
+                }
+            }
         }
 
         BigDecimal tongTien = datPhongService.tinhTongTien(idDatPhong);
@@ -163,34 +226,61 @@ public class ThanhToanService {
                     .tongDaThu(BigDecimal.ZERO)
                     .tongHoan(BigDecimal.ZERO)
                     .conPhaiThu(tongTien)
-                    .phuongThuc(cong)
                     .trangThai(MaTrangThaiThanhToan.CHUA_THANH_TOAN)
-                    .thoiDiemThanhToan(java.time.LocalDateTime.now())
+                    .thoiDiemThanhToan(LocalDateTime.now())
                     .build();
             tt = thanhToanRepository.save(tt);
         }
-        tt.setTongPhaiThu(tongTien);
-        tt.setTongDaThu(tongTien);
-        tt.setTongHoan(tt.getTongHoan() != null ? tt.getTongHoan() : BigDecimal.ZERO);
-        tt.setConPhaiThu(BigDecimal.ZERO);
-        tt.setTrangThai(MaTrangThaiThanhToan.DA_THANH_TOAN);
-        tt.setThoiDiemThanhToan(java.time.LocalDateTime.now());
-        tt.setPhuongThuc(cong);
-        thanhToanRepository.save(tt);
+
+        datPhongService.capNhatTongThanhToan(idDatPhong);
+        tt = thanhToanRepository.findByDatPhong_Id(idDatPhong).orElseThrow();
+        BigDecimal conPhai = tt.getConPhaiThu() != null ? tt.getConPhaiThu() : tongTien;
+        if (conPhai.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        BigDecimal thu = soTienLanNay.min(conPhai);
+        BigDecimal daThuCu = tt.getTongDaThu() != null ? tt.getTongDaThu() : BigDecimal.ZERO;
+        BigDecimal daThuMoi = daThuCu.add(thu);
+        tt.setTongDaThu(daThuMoi);
+
+        BigDecimal tongSau = datPhongService.tinhTongTien(idDatPhong);
+        boolean du = daThuMoi.compareTo(tongSau) >= 0;
+        String loaiGd = du ? LoaiGiaoDichThanhToan.THANH_TOAN : LoaiGiaoDichThanhToan.DAT_COC;
         GiaoDichThanhToan gd = GiaoDichThanhToan.builder()
                 .thanhToan(tt)
                 .maGiaoDich(maGiaoDich != null ? maGiaoDich : "")
-                .loaiGiaoDich(LoaiGiaoDichThanhToan.THANH_TOAN)
-                .soTien(tongTien)
+                .loaiGiaoDich(loaiGd)
+                .soTien(thu)
                 .trangThai(MaTrangThaiThanhToan.DA_THANH_TOAN)
                 .phuongThuc(cong)
                 .congThanhToan(cong)
                 .thamChieuCong(maGiaoDich != null ? maGiaoDich : "")
-                .ghiChu("Thanh toán đặt phòng qua payOS")
+                .ghiChu(du ? "Thanh toán đặt phòng qua payOS" : "Đặt cọc đặt phòng qua payOS")
                 .build();
         tt.getGiaoDich().add(gd);
+        tt.setPayosOrderCode(null);
         thanhToanRepository.save(tt);
+        datPhongService.capNhatTongThanhToan(idDatPhong);
         datPhongService.xacNhanDatPhong(idDatPhong);
+    }
+
+    /** Thu một lần toàn bộ số tiền còn lại (chế độ thử / tương thích cũ). */
+    @Transactional
+    public void xacNhanThanhToan(Long idDatPhong, String cong, String maGiaoDich) {
+        ThanhToan tt0 = thanhToanRepository.findByDatPhong_Id(idDatPhong).orElse(null);
+        if (tt0 != null && MaTrangThaiThanhToan.DA_THANH_TOAN.equals(tt0.getTrangThai())) {
+            return;
+        }
+        datPhongService.capNhatTongThanhToan(idDatPhong);
+        ThanhToan tt = thanhToanRepository.findByDatPhong_Id(idDatPhong).orElse(null);
+        BigDecimal conPhai = tt != null && tt.getConPhaiThu() != null
+                ? tt.getConPhaiThu()
+                : datPhongService.tinhTongTien(idDatPhong);
+        if (conPhai.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        ghiNhanThanhToan(idDatPhong, cong, maGiaoDich, conPhai);
     }
 
     @Transactional
@@ -212,11 +302,19 @@ public class ThanhToanService {
         int orderCode = data.path("orderCode").asInt(0);
         if (orderCode == 0) return;
 
+        long amountVnd = data.path("amount").asLong(0L);
+        if (amountVnd <= 0L) {
+            throw new RuntimeException("Webhook payOS thiếu hoặc sai amount");
+        }
+
         ThanhToan tt = thanhToanRepository.findByPayosOrderCode(orderCode)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn thanh toán payOS: " + orderCode));
         Long idDatPhong = tt.getDatPhong().getId();
-        String ref = data.path("reference").asText("");
-        if (ref.isBlank()) ref = "PAYOS-" + orderCode;
-        xacNhanThanhToan(idDatPhong, MaPhuongThucThanhToan.CONG_PAYOS, ref);
+        String idem = "PAYOS-" + orderCode;
+        ghiNhanThanhToan(
+                idDatPhong,
+                MaPhuongThucThanhToan.CONG_PAYOS,
+                idem,
+                BigDecimal.valueOf(amountVnd));
     }
 }

@@ -13,6 +13,41 @@ type HoSo = {
   soDienThoai?: string;
 };
 
+type ProfileFieldErrors = Partial<
+  Record<"hoTen" | "email" | "soDienThoai", string>
+>;
+
+function layLoiApi(err: unknown): string {
+  const d = (err as { response?: { data?: { error?: string; message?: string } } })
+    ?.response?.data;
+  return (d?.error || d?.message || "").trim();
+}
+
+function mapLoiHoSoTuApi(msg: string): ProfileFieldErrors | null {
+  const m = msg.toLowerCase();
+  if (m.includes("email") && (m.includes("su dung") || m.includes("ton tai"))) {
+    return { email: "Email này đã được dùng cho tài khoản khác." };
+  }
+  if (
+    m.includes("dien thoai") &&
+    (m.includes("su dung") || m.includes("ton tai"))
+  ) {
+    return {
+      soDienThoai: "Số điện thoại này đã được dùng cho tài khoản khác.",
+    };
+  }
+  return null;
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function hopLeSoDienThoaiTuChon(raw: string): boolean {
+  const t = raw.trim();
+  if (!t) return true;
+  const digits = t.replace(/\D/g, "");
+  return digits.length >= 8 && digits.length <= 11;
+}
+
 function initials(hoTen: string, tenDangNhap: string): string {
   const s = hoTen?.trim() || tenDangNhap || "?";
   const parts = s.split(/\s+/).filter(Boolean);
@@ -86,7 +121,12 @@ export default function HoSo() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<HoSo | null>(null);
-  const [pwd, setPwd] = useState({ cu: "", moi: "" });
+  const [profileErrors, setProfileErrors] = useState<ProfileFieldErrors>({});
+  const [pwd, setPwd] = useState({ cu: "", moi: "", nhapLai: "" });
+  const [pwdErrors, setPwdErrors] = useState<{
+    nhapLai?: string;
+    chung?: string;
+  }>({});
 
   useEffect(() => {
     api
@@ -105,38 +145,86 @@ export default function HoSo() {
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form) return;
+    const hoTen = (form.hoTen || "").trim();
+    const email = (form.email || "").trim();
+    const sdtRaw = (form.soDienThoai || "").trim();
+
+    const nextErr: ProfileFieldErrors = {};
+    if (!hoTen) nextErr.hoTen = "Vui lòng nhập họ tên.";
+    if (!email) nextErr.email = "Vui lòng nhập email.";
+    else if (!EMAIL_RE.test(email)) nextErr.email = "Email không hợp lệ.";
+    if (!hopLeSoDienThoaiTuChon(sdtRaw)) {
+      nextErr.soDienThoai =
+        "Số điện thoại không hợp lệ (khoảng 8–11 chữ số).";
+    }
+
+    setForm({
+      ...form,
+      hoTen,
+      email,
+      soDienThoai: sdtRaw || undefined,
+    });
+    setProfileErrors(nextErr);
+    if (Object.keys(nextErr).length > 0) return;
+
     try {
       await api.put("/ho-so", {
-        hoTen: form.hoTen,
-        soDienThoai: form.soDienThoai,
-        email: form.email,
+        hoTen,
+        soDienThoai: sdtRaw,
+        email,
       });
       await refreshSession();
+      setProfileErrors({});
       toast("Đã cập nhật hồ sơ.", "success");
     } catch (err) {
-      toast(
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Không lưu được hồ sơ.",
-        "error",
-      );
+      const msg = layLoiApi(err);
+      const mapped = mapLoiHoSoTuApi(msg);
+      if (mapped) {
+        setProfileErrors(mapped);
+        toast("Vui lòng sửa các trường được đánh dấu.", "error");
+      } else {
+        toast(msg || "Không lưu được hồ sơ.", "error");
+      }
     }
   };
 
   const savePwd = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPwdErrors({});
+    if (!pwd.cu) {
+      setPwdErrors({
+        chung: "Vui lòng nhập mật khẩu hiện tại.",
+      });
+      return;
+    }
+    if (!pwd.moi) {
+      setPwdErrors({
+        chung: "Vui lòng nhập mật khẩu mới.",
+      });
+      return;
+    }
+    if (pwd.moi.length < 6) {
+      setPwdErrors({
+        chung: "Mật khẩu mới cần ít nhất 6 ký tự.",
+      });
+      return;
+    }
+    if (pwd.moi !== pwd.nhapLai) {
+      setPwdErrors({
+        nhapLai: "Mật khẩu nhập lại không khớp với mật khẩu mới.",
+      });
+      return;
+    }
     try {
       await api.post("/ho-so/doi-mat-khau", {
         matKhauCu: pwd.cu,
         matKhauMoi: pwd.moi,
       });
-      setPwd({ cu: "", moi: "" });
+      setPwd({ cu: "", moi: "", nhapLai: "" });
+      setPwdErrors({});
       toast("Đã đổi mật khẩu.", "success");
     } catch (err) {
-      toast(
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Đổi mật khẩu thất bại.",
-        "error",
-      );
+      toast(layLoiApi(err) || "Đổi mật khẩu thất bại.", "error");
     }
   };
 
@@ -234,47 +322,113 @@ export default function HoSo() {
                   </p>
                 </div>
               </div>
-              <form onSubmit={saveProfile} className="profile-form">
+              <form
+                noValidate
+                onSubmit={saveProfile}
+                className="profile-form"
+              >
                 <div className="profile-form__grid">
-                  <div className="form-group profile-form__full">
-                    <label>Tên đăng nhập</label>
-                    <input value={form.tenDangNhap} disabled />
-                    <span className="profile-field-hint">
-                      Không thể đổi tên đăng nhập.
+                  <div className="form-group profile-form__full profile-username-field">
+                    <div className="profile-username-field__label-row">
+                      <label htmlFor="profile-ten-dang-nhap">
+                        Tên đăng nhập
+                      </label>
+                      <span
+                        className="profile-username-field__badge"
+                        title="Trường này không thể chỉnh sửa"
+                      >
+                        Không chỉnh sửa
+                      </span>
+                    </div>
+                    <input
+                      id="profile-ten-dang-nhap"
+                      className="profile-username-field__input"
+                      value={form.tenDangNhap}
+                      disabled
+                      autoComplete="username"
+                      aria-describedby="profile-ten-dang-nhap-hint"
+                    />
+                    <span
+                      id="profile-ten-dang-nhap-hint"
+                      className="profile-field-hint profile-field-hint--username"
+                    >
+                      Trường này chỉ đọc — tên đăng nhập không thể đổi tại đây.
                     </span>
                   </div>
                   <div className="form-group">
-                    <label>Họ tên</label>
+                    <label htmlFor="profile-ho-ten">Họ tên</label>
                     <input
+                      id="profile-ho-ten"
                       value={form.hoTen || ""}
-                      onChange={(e) =>
-                        setForm({ ...form, hoTen: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setProfileErrors((p) => ({ ...p, hoTen: undefined }));
+                        setForm({ ...form, hoTen: e.target.value });
+                      }}
                       placeholder="Họ và tên"
-                      required
+                      aria-required
+                      aria-invalid={Boolean(profileErrors.hoTen)}
+                      aria-describedby={
+                        profileErrors.hoTen ? "profile-ho-ten-err" : undefined
+                      }
                     />
+                    {profileErrors.hoTen ? (
+                      <span id="profile-ho-ten-err" className="profile-field-error">
+                        {profileErrors.hoTen}
+                      </span>
+                    ) : null}
                   </div>
                   <div className="form-group">
-                    <label>Số điện thoại</label>
+                    <label htmlFor="profile-sdt">Số điện thoại</label>
                     <input
+                      id="profile-sdt"
+                      type="tel"
+                      autoComplete="tel"
                       value={form.soDienThoai || ""}
-                      onChange={(e) =>
-                        setForm({ ...form, soDienThoai: e.target.value })
+                      onChange={(e) => {
+                        setProfileErrors((p) => ({ ...p, soDienThoai: undefined }));
+                        setForm({ ...form, soDienThoai: e.target.value });
+                      }}
+                      placeholder="0xxx xxx xxx (tuỳ chọn)"
+                      aria-invalid={Boolean(profileErrors.soDienThoai)}
+                      aria-describedby={
+                        profileErrors.soDienThoai
+                          ? "profile-sdt-err"
+                          : undefined
                       }
-                      placeholder="0xxx xxx xxx"
                     />
+                    {profileErrors.soDienThoai ? (
+                      <span id="profile-sdt-err" className="profile-field-error">
+                        {profileErrors.soDienThoai}
+                      </span>
+                    ) : null}
                   </div>
                   <div className="form-group profile-form__full">
-                    <label>Email</label>
+                    <label htmlFor="profile-email">Email</label>
                     <input
-                      type="email"
+                      id="profile-email"
+                      type="text"
+                      inputMode="email"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       value={form.email || ""}
-                      onChange={(e) =>
-                        setForm({ ...form, email: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setProfileErrors((p) => ({ ...p, email: undefined }));
+                        setForm({ ...form, email: e.target.value });
+                      }}
                       placeholder="email@example.com"
-                      required
+                      aria-required
+                      autoComplete="email"
+                      aria-invalid={Boolean(profileErrors.email)}
+                      aria-describedby={
+                        profileErrors.email ? "profile-email-err" : undefined
+                      }
                     />
+                    {profileErrors.email ? (
+                      <span id="profile-email-err" className="profile-field-error">
+                        {profileErrors.email}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
                 <button type="submit" className="btn btn-lg profile-save">
@@ -292,33 +446,80 @@ export default function HoSo() {
                 <div>
                   <h2 className="profile-card__title">Bảo mật</h2>
                   <p className="profile-card__sub">
-                    Nhập mật khẩu hiện tại và mật khẩu mới (tối thiểu 6 ký tự).
+                    Nhập mật khẩu hiện tại, mật khẩu mới (tối thiểu 6 ký tự) và xác
+                    nhận lại mật khẩu mới.
                   </p>
                 </div>
               </div>
-              <form onSubmit={savePwd} className="profile-form profile-form--narrow">
+              <form
+                noValidate
+                onSubmit={savePwd}
+                className="profile-form profile-form--narrow"
+              >
+                {pwdErrors.chung ? (
+                  <p className="profile-field-error profile-field-error--block" role="alert">
+                    {pwdErrors.chung}
+                  </p>
+                ) : null}
                 <div className="form-group">
-                  <label>Mật khẩu hiện tại</label>
+                  <label htmlFor="profile-mk-cu">Mật khẩu hiện tại</label>
                   <input
+                    id="profile-mk-cu"
                     type="password"
                     value={pwd.cu}
-                    onChange={(e) => setPwd({ ...pwd, cu: e.target.value })}
+                    onChange={(e) => {
+                      setPwdErrors((p) => ({ ...p, chung: undefined }));
+                      setPwd({ ...pwd, cu: e.target.value });
+                    }}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    required
+                    aria-required
                   />
                 </div>
                 <div className="form-group">
-                  <label>Mật khẩu mới</label>
+                  <label htmlFor="profile-mk-moi">Mật khẩu mới</label>
                   <input
+                    id="profile-mk-moi"
                     type="password"
                     value={pwd.moi}
-                    onChange={(e) => setPwd({ ...pwd, moi: e.target.value })}
+                    onChange={(e) => {
+                      setPwdErrors((p) => ({
+                        ...p,
+                        chung: undefined,
+                        nhapLai: undefined,
+                      }));
+                      setPwd({ ...pwd, moi: e.target.value });
+                    }}
                     placeholder="••••••••"
                     autoComplete="new-password"
-                    minLength={6}
-                    required
+                    aria-required
                   />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="profile-mk-nhap-lai">Nhập lại mật khẩu mới</label>
+                  <input
+                    id="profile-mk-nhap-lai"
+                    type="password"
+                    value={pwd.nhapLai}
+                    onChange={(e) => {
+                      setPwdErrors((p) => ({ ...p, nhapLai: undefined }));
+                      setPwd({ ...pwd, nhapLai: e.target.value });
+                    }}
+                    placeholder="••••••••"
+                    autoComplete="new-password"
+                    aria-invalid={Boolean(pwdErrors.nhapLai)}
+                    aria-describedby={
+                      pwdErrors.nhapLai ? "profile-mk-nhap-lai-err" : undefined
+                    }
+                  />
+                  {pwdErrors.nhapLai ? (
+                    <span
+                      id="profile-mk-nhap-lai-err"
+                      className="profile-field-error"
+                    >
+                      {pwdErrors.nhapLai}
+                    </span>
+                  ) : null}
                 </div>
                 <button type="submit" className="btn btn-lg btn-secondary profile-save">
                   <KeyRound className="btn-ico" aria-hidden />

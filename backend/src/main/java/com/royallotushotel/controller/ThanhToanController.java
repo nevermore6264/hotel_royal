@@ -22,7 +22,9 @@ public class ThanhToanController {
         Long idDatPhong = Long.valueOf(body.get("idDatPhong").toString());
         String urlTroVe = body.getOrDefault("urlTroVe", "http://localhost:5173/dat-phong/thanh-cong").toString();
         String urlHuy = body.getOrDefault("urlHuy", "http://localhost:5173/dat-phong").toString();
-        String url = thanhToanService.taoUrlThanhToanPayOs(idDatPhong, urlTroVe, urlHuy);
+        Object cheDoRaw = body.get("cheDoThanhToan");
+        String cheDoThanhToan = cheDoRaw != null ? cheDoRaw.toString().trim() : "TOAN_BO";
+        String url = thanhToanService.taoUrlThanhToanPayOs(idDatPhong, urlTroVe, urlHuy, cheDoThanhToan);
         return ResponseEntity.ok(Map.of("duongThanhToan", url));
     }
 

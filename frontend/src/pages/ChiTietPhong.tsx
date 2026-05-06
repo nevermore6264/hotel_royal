@@ -3,7 +3,6 @@ import {
   useMemo,
   useState,
   useCallback,
-  useRef,
   type CSSProperties,
 } from "react";
 import {
@@ -165,7 +164,6 @@ export default function ChiTietPhong() {
   const [imgBroken, setImgBroken] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [err, setErr] = useState("");
-  const galleryStripRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -214,13 +212,6 @@ export default function ChiTietPhong() {
   const goNextImg = useCallback(() => {
     setActiveImg((i) => (images.length ? (i + 1) % images.length : 0));
   }, [images.length]);
-
-  useEffect(() => {
-    const strip = galleryStripRef.current;
-    if (!strip || images.length <= 1) return;
-    const btn = strip.querySelector<HTMLElement>(`[data-thumb-idx="${activeImg}"]`);
-    btn?.scrollIntoView({ behavior: "auto", inline: "center", block: "nearest" });
-  }, [activeImg, images.length]);
 
   useEffect(() => {
     if (!lightboxOpen) return;
@@ -456,32 +447,6 @@ export default function ChiTietPhong() {
               <span className="room-detail-hero__num">
                 Phòng {phong.soPhong}
               </span>
-              {images.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    className="room-detail-hero__nav room-detail-hero__nav--prev"
-                    aria-label="Ảnh trước"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      goPrevImg();
-                    }}
-                  >
-                    <ChevronLeft size={22} strokeWidth={2} aria-hidden />
-                  </button>
-                  <button
-                    type="button"
-                    className="room-detail-hero__nav room-detail-hero__nav--next"
-                    aria-label="Ảnh sau"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      goNextImg();
-                    }}
-                  >
-                    <ChevronRight size={22} strokeWidth={2} aria-hidden />
-                  </button>
-                </>
-              )}
               {images.length > 0 && (
                 <span className="room-detail-hero__img-count">
                   {images.length > 1
@@ -491,23 +456,23 @@ export default function ChiTietPhong() {
               )}
             </div>
             {images.length > 1 && (
-              <div
-                ref={galleryStripRef}
-                className="room-detail-gallery"
-                role="tablist"
-                aria-label="Chọn ảnh phòng"
-              >
-                <div className="room-detail-gallery__track">
+              <div className="room-detail-gallery-grid-wrap">
+                <p className="room-detail-gallery-grid__hint text-muted text-sm">
+                  Chọn ảnh bên dưới — bấm ảnh lớn để xem toàn màn hình.
+                </p>
+                <div className="room-detail-gallery-grid" role="list" aria-label="Ảnh phòng">
                   {images.map((url, i) => (
                     <button
                       key={`${url}-${i}`}
                       type="button"
-                      role="tab"
-                      data-thumb-idx={i}
-                      aria-selected={i === activeImg}
-                      className={`room-detail-gallery__btn${
-                        i === activeImg ? " room-detail-gallery__btn--active" : ""
-                      }`}
+                      role="listitem"
+                      aria-label={`Ảnh ${i + 1} / ${images.length}`}
+                      aria-current={i === activeImg ? "true" : undefined}
+                      className={
+                        i === activeImg
+                          ? "room-detail-gallery-grid__cell room-detail-gallery-grid__cell--active"
+                          : "room-detail-gallery-grid__cell"
+                      }
                       onClick={() => setActiveImg(i)}
                     >
                       <img src={url} alt="" loading="lazy" />
@@ -571,25 +536,24 @@ export default function ChiTietPhong() {
               Ảnh {activeImg + 1} / {images.length} · Phòng {phong.soPhong}
             </p>
             {images.length > 1 && (
-              <div className="room-detail-lightbox__strip">
-                <div className="room-detail-lightbox__strip-track">
-                  {images.map((url, i) => (
-                    <button
-                      key={`lb-${url}-${i}`}
-                      type="button"
-                      aria-label={`Ảnh ${i + 1}`}
-                      aria-current={i === activeImg ? "true" : undefined}
-                      className={
-                        i === activeImg
-                          ? "room-detail-lightbox__thumb room-detail-lightbox__thumb--active"
-                          : "room-detail-lightbox__thumb"
-                      }
-                      onClick={() => setActiveImg(i)}
-                    >
-                      <img src={url} alt="" loading="lazy" />
-                    </button>
-                  ))}
-                </div>
+              <div className="room-detail-lightbox__grid" role="list" aria-label="Chọn ảnh">
+                {images.map((url, i) => (
+                  <button
+                    key={`lb-${url}-${i}`}
+                    type="button"
+                    role="listitem"
+                    aria-label={`Ảnh ${i + 1}`}
+                    aria-current={i === activeImg ? "true" : undefined}
+                    className={
+                      i === activeImg
+                        ? "room-detail-lightbox__grid-cell room-detail-lightbox__grid-cell--active"
+                        : "room-detail-lightbox__grid-cell"
+                    }
+                    onClick={() => setActiveImg(i)}
+                  >
+                    <img src={url} alt="" loading="lazy" />
+                  </button>
+                ))}
               </div>
             )}
           </div>

@@ -54,6 +54,6 @@ class BangDieuKhienServiceTest {
         var result = service.layThongKeDoanhThu(LocalDate.now(), LocalDate.now());
 
         assertThat(result.get("doanhThu")).isEqualTo(BigDecimal.ZERO);
-        assertThat(result.get("soDon")).isEqualTo(0);
+        assertThat(result.get("soDon")).isEqualTo(0L);
     }
 }
