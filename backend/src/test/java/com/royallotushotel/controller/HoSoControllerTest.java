@@ -46,7 +46,7 @@ class HoSoControllerTest extends WebMvcAuditMockSupport {
         NguoiDungDto dto = new NguoiDungDto();
         dto.setId(1L);
         when(nguoiDungService.layTheoId(1L)).thenReturn(dto);
-        mockMvc.perform(get("/api/ho-so").with(user(principal)).accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/ho-so").with(user(principal)).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
 }

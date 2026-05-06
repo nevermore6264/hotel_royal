@@ -51,7 +51,7 @@ class LoaiPhongControllerTest extends WebMvcAuditMockSupport {
     @Test
     void danhSachKhongPhanTrang() throws Exception {
         when(loaiPhongService.timTatCa()).thenReturn(List.of());
-        mockMvc.perform(get("/api/loai-phong")).andExpect(status().isOk());
+        mockMvc.perform(get("/loai-phong")).andExpect(status().isOk());
     }
 
     @Test
@@ -61,7 +61,7 @@ class LoaiPhongControllerTest extends WebMvcAuditMockSupport {
         dto.setTen("Std");
         when(loaiPhongService.timPhanTrang(any(), eq("std")))
                 .thenReturn(new PageImpl<>(List.of(dto), PageRequest.of(0, 5), 1));
-        mockMvc.perform(get("/api/loai-phong")
+        mockMvc.perform(get("/loai-phong")
                         .param("page", "0")
                         .param("size", "5")
                         .param("q", "std"))
@@ -73,7 +73,7 @@ class LoaiPhongControllerTest extends WebMvcAuditMockSupport {
         LoaiPhongDto dto = new LoaiPhongDto();
         dto.setId(2L);
         when(loaiPhongService.layTheoId(2L)).thenReturn(dto);
-        mockMvc.perform(get("/api/loai-phong/2")).andExpect(status().isOk());
+        mockMvc.perform(get("/loai-phong/2")).andExpect(status().isOk());
     }
 
     @Test
@@ -85,7 +85,7 @@ class LoaiPhongControllerTest extends WebMvcAuditMockSupport {
         LoaiPhongDto tra = new LoaiPhongDto();
         tra.setId(50L);
         when(loaiPhongService.tao(any(LoaiPhongDto.class))).thenReturn(tra);
-        mockMvc.perform(post("/api/loai-phong")
+        mockMvc.perform(post("/loai-phong")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
@@ -97,7 +97,7 @@ class LoaiPhongControllerTest extends WebMvcAuditMockSupport {
         LoaiPhongDto body = new LoaiPhongDto();
         body.setTen("Suite+");
         when(loaiPhongService.capNhat(eq(3L), any(LoaiPhongDto.class))).thenReturn(body);
-        mockMvc.perform(put("/api/loai-phong/3")
+        mockMvc.perform(put("/loai-phong/3")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
@@ -106,7 +106,7 @@ class LoaiPhongControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/api/loai-phong/9")).andExpect(status().isNoContent());
+        mockMvc.perform(delete("/loai-phong/9")).andExpect(status().isNoContent());
         verify(loaiPhongService).xoa(9L);
     }
 }

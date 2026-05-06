@@ -33,6 +33,6 @@ class DatPhongControllerTest extends WebMvcAuditMockSupport {
     void danhSachPhanTrang() throws Exception {
         when(datPhongService.timTatCa(any(Pageable.class), isNull(), isNull(), isNull(), isNull()))
                 .thenReturn(new PageImpl<>(List.of()));
-        mockMvc.perform(get("/api/dat-phong").param("page", "0").param("size", "10")).andExpect(status().isOk());
+        mockMvc.perform(get("/dat-phong").param("page", "0").param("size", "10")).andExpect(status().isOk());
     }
 }

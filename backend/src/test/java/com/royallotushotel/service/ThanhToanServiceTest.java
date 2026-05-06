@@ -47,11 +47,11 @@ class ThanhToanServiceTest {
                 .conPhaiThu(BigDecimal.ZERO)
                 .trangThai(MaTrangThaiThanhToan.DA_THANH_TOAN)
                 .build();
-        when(datPhongRepository.findById(id)).thenReturn(Optional.of(dp));
         when(thanhToanRepository.findByDatPhong_Id(id)).thenReturn(Optional.of(tt));
 
         thanhToanService.xacNhanThanhToan(id, "TIEN_MAT", "ref");
 
         verify(thanhToanRepository, never()).save(any(ThanhToan.class));
+        verify(datPhongService, never()).capNhatTongThanhToan(any());
     }
 }

@@ -29,6 +29,6 @@ class BangDieuKhienControllerTest extends WebMvcAuditMockSupport {
     @Test
     void phongTheoTrangThai() throws Exception {
         when(bangDieuKhienService.layPhongTheoTrangThai()).thenReturn(List.of());
-        mockMvc.perform(get("/api/bang-dieu-khien/phong-theo-trang-thai")).andExpect(status().isOk());
+        mockMvc.perform(get("/bang-dieu-khien/phong-theo-trang-thai")).andExpect(status().isOk());
     }
 }

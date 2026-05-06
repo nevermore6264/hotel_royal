@@ -53,7 +53,7 @@ class DichVuControllerTest extends WebMvcAuditMockSupport {
     @WithMockUser(roles = "BUONG_PHONG")
     void danhSachKhongPhanTrang() throws Exception {
         when(quanLyDichVuService.timTatCa()).thenReturn(List.of());
-        mockMvc.perform(get("/api/dich-vu")).andExpect(status().isOk());
+        mockMvc.perform(get("/dich-vu")).andExpect(status().isOk());
     }
 
     @Test
@@ -63,7 +63,7 @@ class DichVuControllerTest extends WebMvcAuditMockSupport {
         dto.setId(1L);
         when(quanLyDichVuService.timPhanTrang(any(), eq("spa")))
                 .thenReturn(new PageImpl<>(List.of(dto), PageRequest.of(0, 12), 1));
-        mockMvc.perform(get("/api/dich-vu").param("page", "0").param("q", "spa")).andExpect(status().isOk());
+        mockMvc.perform(get("/dich-vu").param("page", "0").param("q", "spa")).andExpect(status().isOk());
     }
 
     @Test
@@ -75,7 +75,7 @@ class DichVuControllerTest extends WebMvcAuditMockSupport {
         DichVuDto tra = new DichVuDto();
         tra.setId(10L);
         when(quanLyDichVuService.tao(any(DichVuDto.class))).thenReturn(tra);
-        mockMvc.perform(post("/api/dich-vu")
+        mockMvc.perform(post("/dich-vu")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
@@ -87,7 +87,7 @@ class DichVuControllerTest extends WebMvcAuditMockSupport {
         DichVuDto body = new DichVuDto();
         body.setTen("Spa");
         when(quanLyDichVuService.capNhat(eq(2L), any(DichVuDto.class))).thenReturn(body);
-        mockMvc.perform(put("/api/dich-vu/2")
+        mockMvc.perform(put("/dich-vu/2")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
@@ -96,27 +96,27 @@ class DichVuControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/api/dich-vu/3")).andExpect(status().isOk());
+        mockMvc.perform(delete("/dich-vu/3")).andExpect(status().isNoContent());
         verify(quanLyDichVuService).xoa(3L);
     }
 
     @Test
     @WithMockUser(roles = "LE_TAN")
     void themVaoDatPhong_coSoLuong() throws Exception {
-        mockMvc.perform(post("/api/dich-vu/dat-phong/100/them")
+        mockMvc.perform(post("/dich-vu/dat-phong/100/them")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("idDichVu", 5, "soLuong", 2))))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
         verify(quanLyDichVuService).themVaoDatPhong(100L, 5L, 2);
     }
 
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void themVaoDatPhong_macDinhSoLuong1() throws Exception {
-        mockMvc.perform(post("/api/dich-vu/dat-phong/101/them")
+        mockMvc.perform(post("/dich-vu/dat-phong/101/them")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("idDichVu", 7))))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
         verify(quanLyDichVuService).themVaoDatPhong(101L, 7L, 1);
     }
 }

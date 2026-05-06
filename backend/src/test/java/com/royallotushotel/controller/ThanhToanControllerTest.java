@@ -25,6 +25,6 @@ class ThanhToanControllerTest extends WebMvcAuditMockSupport {
 
     @Test
     void goiLai() throws Exception {
-        mockMvc.perform(get("/api/thanh-toan/goi-lai")).andExpect(status().isOk());
+        mockMvc.perform(get("/thanh-toan/goi-lai")).andExpect(status().isOk());
     }
 }

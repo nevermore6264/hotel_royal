@@ -32,6 +32,6 @@ class ChatControllerTest extends WebMvcAuditMockSupport {
     @Test
     void nhanVienHoTro() throws Exception {
         when(chatService.danhSachNhanVienHoTro()).thenReturn(List.of());
-        mockMvc.perform(get("/api/chat/nhan-vien-ho-tro")).andExpect(status().isOk());
+        mockMvc.perform(get("/chat/nhan-vien-ho-tro")).andExpect(status().isOk());
     }
 }

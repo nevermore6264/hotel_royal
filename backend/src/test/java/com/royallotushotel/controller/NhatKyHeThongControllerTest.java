@@ -33,6 +33,6 @@ class NhatKyHeThongControllerTest extends WebMvcAuditMockSupport {
     void danhSach() throws Exception {
         when(nhatKyHeThongService.timLoc(any(Pageable.class), isNull(), isNull(), isNull()))
                 .thenReturn(new PageImpl<>(List.of()));
-        mockMvc.perform(get("/api/nhat-ky").param("page", "0").param("size", "10")).andExpect(status().isOk());
+        mockMvc.perform(get("/nhat-ky").param("page", "0").param("size", "10")).andExpect(status().isOk());
     }
 }

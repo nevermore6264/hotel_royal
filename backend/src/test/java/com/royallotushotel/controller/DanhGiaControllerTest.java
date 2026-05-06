@@ -49,7 +49,7 @@ class DanhGiaControllerTest extends WebMvcAuditMockSupport {
     @Test
     void theoLoaiPhong() throws Exception {
         when(danhGiaService.listTheoLoaiPhong(1L)).thenReturn(List.of());
-        mockMvc.perform(get("/api/danh-gia").param("idLoaiPhong", "1")).andExpect(status().isOk());
+        mockMvc.perform(get("/danh-gia").param("idLoaiPhong", "1")).andExpect(status().isOk());
     }
 
     @Test
@@ -68,7 +68,7 @@ class DanhGiaControllerTest extends WebMvcAuditMockSupport {
         body.setNoiDung("Tot");
         DanhGiaDto tra = DanhGiaDto.builder().id(99L).build();
         when(danhGiaService.tao(any(ChuTheNguoiDung.class), any(YeuCauTaoDanhGia.class))).thenReturn(tra);
-        mockMvc.perform(post("/api/danh-gia")
+        mockMvc.perform(post("/danh-gia")
                         .with(user(khach))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))

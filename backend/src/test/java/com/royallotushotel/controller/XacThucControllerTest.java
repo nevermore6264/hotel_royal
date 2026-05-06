@@ -30,6 +30,6 @@ class XacThucControllerTest extends WebMvcAuditMockSupport {
     @Test
     void toiKhongDangNhap() throws Exception {
         when(xacThucService.layThongTinToi(isNull())).thenReturn(Collections.emptyMap());
-        mockMvc.perform(get("/api/xac-thuc/toi")).andExpect(status().isOk());
+        mockMvc.perform(get("/xac-thuc/toi")).andExpect(status().isOk());
     }
 }

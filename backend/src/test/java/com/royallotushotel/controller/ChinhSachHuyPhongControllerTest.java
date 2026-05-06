@@ -51,7 +51,7 @@ class ChinhSachHuyPhongControllerTest extends WebMvcAuditMockSupport {
     @Test
     void danhSachKhongPhanTrang() throws Exception {
         when(chinhSachHuyPhongService.timTatCa()).thenReturn(List.of());
-        mockMvc.perform(get("/api/chinh-sach-huy-phong")).andExpect(status().isOk());
+        mockMvc.perform(get("/chinh-sach-huy-phong")).andExpect(status().isOk());
     }
 
     @Test
@@ -60,7 +60,7 @@ class ChinhSachHuyPhongControllerTest extends WebMvcAuditMockSupport {
         dto.setId(1L);
         when(chinhSachHuyPhongService.timPhanTrang(any(), eq("vip"), eq(false)))
                 .thenReturn(new PageImpl<>(List.of(dto), PageRequest.of(0, 10), 1));
-        mockMvc.perform(get("/api/chinh-sach-huy-phong")
+        mockMvc.perform(get("/chinh-sach-huy-phong")
                         .param("page", "0")
                         .param("size", "10")
                         .param("q", "vip")
@@ -78,7 +78,7 @@ class ChinhSachHuyPhongControllerTest extends WebMvcAuditMockSupport {
         ChinhSachHuyPhongDto tra = new ChinhSachHuyPhongDto();
         tra.setId(100L);
         when(chinhSachHuyPhongService.tao(any(ChinhSachHuyPhongDto.class))).thenReturn(tra);
-        mockMvc.perform(post("/api/chinh-sach-huy-phong")
+        mockMvc.perform(post("/chinh-sach-huy-phong")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
@@ -90,7 +90,7 @@ class ChinhSachHuyPhongControllerTest extends WebMvcAuditMockSupport {
         ChinhSachHuyPhongDto body = new ChinhSachHuyPhongDto();
         body.setSoGioTruocNhanPhong(24);
         when(chinhSachHuyPhongService.capNhat(eq(5L), any(ChinhSachHuyPhongDto.class))).thenReturn(body);
-        mockMvc.perform(put("/api/chinh-sach-huy-phong/5")
+        mockMvc.perform(put("/chinh-sach-huy-phong/5")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
@@ -99,7 +99,7 @@ class ChinhSachHuyPhongControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/api/chinh-sach-huy-phong/7")).andExpect(status().isOk());
+        mockMvc.perform(delete("/chinh-sach-huy-phong/7")).andExpect(status().isNoContent());
         verify(chinhSachHuyPhongService).xoa(7L);
     }
 }

@@ -121,7 +121,7 @@ public class XacThucService {
                 .build();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Map<String, Object> layThongTinToi(Long idNguoiDung) {
         Map<String, Object> map = new HashMap<>();
         if (idNguoiDung == null) return map;
@@ -132,7 +132,39 @@ public class XacThucService {
         map.put("email", nd.getEmail());
         map.put("hoTen", nd.getHoTen());
         map.put("vaiTro", nd.getVaiTro().stream().map(VaiTro::getTen).collect(Collectors.toList()));
-        khachHangRepository.findByNguoiDung_Id(idNguoiDung).ifPresent(k -> map.put("idKhachHang", k.getId()));
+        Long idKhachHang = khachHangRepository.findByNguoiDung_Id(idNguoiDung)
+                .map(KhachHang::getId)
+                .orElse(null);
+        if (idKhachHang == null) {
+            idKhachHang = taoKhachHangNeuCan(nd);
+        }
+        if (idKhachHang != null) {
+            map.put("idKhachHang", idKhachHang);
+        }
         return map;
+    }
+
+    /**
+     * Tài khoản có ROLE_KHACH_HANG nhưng chưa có bản ghi khách (vd. do quản trị tạo user) — tạo hồ sơ để đặt phòng/thanh toán.
+     */
+    private Long taoKhachHangNeuCan(NguoiDung nd) {
+        boolean laKhach = nd.getVaiTro().stream().map(VaiTro::getTen).anyMatch(MaVaiTro.KHACH_HANG::equals);
+        if (!laKhach) {
+            return null;
+        }
+        String hoTen = nd.getHoTen();
+        if (hoTen == null || hoTen.isBlank()) {
+            hoTen = nd.getTenDangNhap() != null && !nd.getTenDangNhap().isBlank() ? nd.getTenDangNhap() : "Khách";
+        }
+        KhachHang kh = KhachHang.builder()
+                .hoTen(hoTen)
+                .email(nd.getEmail())
+                .soDienThoai(nd.getSoDienThoai())
+                .nguoiDung(nd)
+                .build();
+        kh = khachHangRepository.save(kh);
+        nd.setHoSoKhachHang(kh);
+        nguoiDungRepository.save(nd);
+        return kh.getId();
     }
 }

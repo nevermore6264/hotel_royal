@@ -45,7 +45,7 @@ class TapTinControllerTest extends WebMvcAuditMockSupport {
                 MediaType.IMAGE_JPEG_VALUE,
                 new byte[] { 1, 2, 3 }
         );
-        mockMvc.perform(multipart("/api/tap-tin/phong-anh").file(file)).andExpect(status().isOk());
+        mockMvc.perform(multipart("/tap-tin/phong-anh").file(file)).andExpect(status().isOk());
     }
 
     @Test
@@ -54,12 +54,12 @@ class TapTinControllerTest extends WebMvcAuditMockSupport {
         when(tapTinPhongService.luuAnhPhong(any())).thenReturn("/api/uploads/phong/x.png");
         MockMultipartFile f1 = new MockMultipartFile("files", "a.png", "image/png", new byte[] { 9 });
         MockMultipartFile f2 = new MockMultipartFile("files", "b.png", "image/png", new byte[] { 8 });
-        mockMvc.perform(multipart("/api/tap-tin/phong-anh-nhieu").file(f1).file(f2)).andExpect(status().isOk());
+        mockMvc.perform(multipart("/tap-tin/phong-anh-nhieu").file(f1).file(f2)).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void taiLenNhieu_khongCoTep_400() throws Exception {
-        mockMvc.perform(multipart("/api/tap-tin/phong-anh-nhieu")).andExpect(status().isBadRequest());
+        mockMvc.perform(multipart("/tap-tin/phong-anh-nhieu")).andExpect(status().isBadRequest());
     }
 }

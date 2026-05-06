@@ -51,7 +51,7 @@ class NguoiDungControllerTest extends WebMvcAuditMockSupport {
     @WithMockUser(roles = "QUAN_TRI")
     void danhSachKhongPhanTrang() throws Exception {
         when(nguoiDungService.timTatCa()).thenReturn(List.of());
-        mockMvc.perform(get("/api/nguoi-dung")).andExpect(status().isOk());
+        mockMvc.perform(get("/nguoi-dung")).andExpect(status().isOk());
     }
 
     @Test
@@ -61,7 +61,7 @@ class NguoiDungControllerTest extends WebMvcAuditMockSupport {
         dto.setId(1L);
         when(nguoiDungService.timPhanTrang(any(), eq("admin"), eq("HOAT_DONG"), eq("LE_TAN")))
                 .thenReturn(new PageImpl<>(List.of(dto), PageRequest.of(0, 12), 1));
-        mockMvc.perform(get("/api/nguoi-dung")
+        mockMvc.perform(get("/nguoi-dung")
                         .param("page", "0")
                         .param("q", "admin")
                         .param("trangThai", "HOAT_DONG")
@@ -75,7 +75,7 @@ class NguoiDungControllerTest extends WebMvcAuditMockSupport {
         NguoiDungDto dto = new NguoiDungDto();
         dto.setId(5L);
         when(nguoiDungService.layTheoId(5L)).thenReturn(dto);
-        mockMvc.perform(get("/api/nguoi-dung/5")).andExpect(status().isOk());
+        mockMvc.perform(get("/nguoi-dung/5")).andExpect(status().isOk());
     }
 
     @Test
@@ -87,7 +87,7 @@ class NguoiDungControllerTest extends WebMvcAuditMockSupport {
         NguoiDungDto tra = new NguoiDungDto();
         tra.setId(100L);
         when(nguoiDungService.tao(any(NguoiDungDto.class))).thenReturn(tra);
-        mockMvc.perform(post("/api/nguoi-dung")
+        mockMvc.perform(post("/nguoi-dung")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
@@ -99,7 +99,7 @@ class NguoiDungControllerTest extends WebMvcAuditMockSupport {
         NguoiDungDto body = new NguoiDungDto();
         body.setHoTen("New name");
         when(nguoiDungService.capNhat(eq(2L), any(NguoiDungDto.class))).thenReturn(body);
-        mockMvc.perform(put("/api/nguoi-dung/2")
+        mockMvc.perform(put("/nguoi-dung/2")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
@@ -108,7 +108,7 @@ class NguoiDungControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/api/nguoi-dung/6")).andExpect(status().isNoContent());
+        mockMvc.perform(delete("/nguoi-dung/6")).andExpect(status().isNoContent());
         verify(nguoiDungService).xoa(6L);
     }
 }

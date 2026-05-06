@@ -53,7 +53,7 @@ class BangGiaPhongControllerTest extends WebMvcAuditMockSupport {
     @WithMockUser(roles = "LE_TAN")
     void danhSachKhongPhanTrang() throws Exception {
         when(bangGiaPhongService.timTatCa()).thenReturn(List.of());
-        mockMvc.perform(get("/api/bang-gia-phong")).andExpect(status().isOk());
+        mockMvc.perform(get("/bang-gia-phong")).andExpect(status().isOk());
     }
 
     @Test
@@ -63,7 +63,7 @@ class BangGiaPhongControllerTest extends WebMvcAuditMockSupport {
         dto.setId(1L);
         when(bangGiaPhongService.timPhanTrang(any(), eq("deluxe"), eq(3L)))
                 .thenReturn(new PageImpl<>(List.of(dto), PageRequest.of(1, 6), 2));
-        mockMvc.perform(get("/api/bang-gia-phong")
+        mockMvc.perform(get("/bang-gia-phong")
                         .param("page", "1")
                         .param("size", "6")
                         .param("q", "deluxe")
@@ -83,7 +83,7 @@ class BangGiaPhongControllerTest extends WebMvcAuditMockSupport {
         BangGiaPhongDto tra = new BangGiaPhongDto();
         tra.setId(99L);
         when(bangGiaPhongService.tao(any(BangGiaPhongDto.class))).thenReturn(tra);
-        mockMvc.perform(post("/api/bang-gia-phong")
+        mockMvc.perform(post("/bang-gia-phong")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
@@ -95,7 +95,7 @@ class BangGiaPhongControllerTest extends WebMvcAuditMockSupport {
         BangGiaPhongDto body = new BangGiaPhongDto();
         body.setGiaApDung(BigDecimal.ONE);
         when(bangGiaPhongService.capNhat(eq(4L), any(BangGiaPhongDto.class))).thenReturn(body);
-        mockMvc.perform(put("/api/bang-gia-phong/4")
+        mockMvc.perform(put("/bang-gia-phong/4")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
@@ -104,7 +104,7 @@ class BangGiaPhongControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/api/bang-gia-phong/8")).andExpect(status().isOk());
+        mockMvc.perform(delete("/bang-gia-phong/8")).andExpect(status().isNoContent());
         verify(bangGiaPhongService).xoa(8L);
     }
 }

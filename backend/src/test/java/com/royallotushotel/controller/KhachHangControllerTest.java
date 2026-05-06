@@ -49,14 +49,14 @@ class KhachHangControllerTest extends WebMvcAuditMockSupport {
     @WithMockUser(roles = "LE_TAN")
     void danhSachKhongPhanTrangKhongQ_goiTimTatCa() throws Exception {
         when(khachHangService.timTatCa()).thenReturn(List.of());
-        mockMvc.perform(get("/api/khach-hang")).andExpect(status().isOk());
+        mockMvc.perform(get("/khach-hang")).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void danhSachKhongPhanTrangCoQ_goiTimKiem() throws Exception {
         when(khachHangService.timKiem("090")).thenReturn(List.of());
-        mockMvc.perform(get("/api/khach-hang").param("q", "090")).andExpect(status().isOk());
+        mockMvc.perform(get("/khach-hang").param("q", "090")).andExpect(status().isOk());
     }
 
     @Test
@@ -66,7 +66,7 @@ class KhachHangControllerTest extends WebMvcAuditMockSupport {
         dto.setId(1L);
         when(khachHangService.timPhanTrang(any(), eq("a")))
                 .thenReturn(new PageImpl<>(List.of(dto), PageRequest.of(0, 15), 1));
-        mockMvc.perform(get("/api/khach-hang")
+        mockMvc.perform(get("/khach-hang")
                         .param("page", "0")
                         .param("size", "15")
                         .param("q", "a"))
@@ -79,7 +79,7 @@ class KhachHangControllerTest extends WebMvcAuditMockSupport {
         KhachHangDto dto = new KhachHangDto();
         dto.setId(8L);
         when(khachHangService.layTheoId(8L)).thenReturn(dto);
-        mockMvc.perform(get("/api/khach-hang/8")).andExpect(status().isOk());
+        mockMvc.perform(get("/khach-hang/8")).andExpect(status().isOk());
     }
 
     @Test
@@ -90,7 +90,7 @@ class KhachHangControllerTest extends WebMvcAuditMockSupport {
         KhachHangDto tra = new KhachHangDto();
         tra.setId(20L);
         when(khachHangService.tao(any(KhachHangDto.class))).thenReturn(tra);
-        mockMvc.perform(post("/api/khach-hang")
+        mockMvc.perform(post("/khach-hang")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
@@ -102,7 +102,7 @@ class KhachHangControllerTest extends WebMvcAuditMockSupport {
         KhachHangDto body = new KhachHangDto();
         body.setHoTen("Tran B");
         when(khachHangService.capNhat(eq(3L), any(KhachHangDto.class))).thenReturn(body);
-        mockMvc.perform(put("/api/khach-hang/3")
+        mockMvc.perform(put("/khach-hang/3")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
