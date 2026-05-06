@@ -3594,12 +3594,22 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
   gap: clamp(1.25rem, 3vw, 2.25rem);
   align-items: start;
   grid-template-columns: 1fr;
+  width: 100%;
+  max-width: 1120px;
+  margin-inline: auto;
+  box-sizing: border-box;
 }
 
 @media (min-width: 900px) {
   .room-detail-hero__grid {
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 480px);
+    /* Hai cột đều nhau — ảnh không bị chèn vào cột hẹp / trông lệch trái */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
+    gap: clamp(1.5rem, 3.5vw, 2.5rem);
+  }
+
+  .room-detail-hero__grid > * {
+    min-width: 0;
   }
 }
 
@@ -3742,9 +3752,12 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
 
 .room-detail-hero__main {
   position: relative;
+  width: 100%;
   aspect-ratio: 4 / 3;
   max-height: min(420px, 52vh);
   background: var(--bg-muted);
+  overflow: hidden;
+  /* Chiều cao khung chỉ từ aspect-ratio + max-height, không phụ thuộc kích thước ảnh gốc */
 }
 
 .room-detail-hero__main--clickable {
@@ -3783,6 +3796,11 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
   border-color: rgba(45, 212, 191, 0.4);
 }
 
+/* Global button:active dùng scale(0.98) — gộp với translateY(-50%) để icon không nhảy dọc */
+.room-detail-hero__nav:active {
+  transform: translateY(-50%) scale(0.98);
+}
+
 .room-detail-hero__nav--prev {
   left: 0.5rem;
 }
@@ -3808,13 +3826,18 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
 }
 
 .room-detail-hero__img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   display: block;
 }
 
 .room-detail-hero__grad {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   background: linear-gradient(
@@ -3850,23 +3873,26 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
 }
 
 .room-detail-gallery {
-  display: block;
+  display: flex;
+  justify-content: center;
   padding: 0.45rem;
   overflow-x: auto;
   overflow-y: hidden;
-  text-align: center;
   scrollbar-width: thin;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
   border-top: 1px solid rgba(148, 163, 184, 0.12);
   background: rgba(8, 12, 18, 0.35);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .room-detail-gallery__track {
-  display: inline-flex;
+  display: flex;
+  flex-direction: row;
   gap: 0.4rem;
-  vertical-align: top;
-  text-align: left;
+  margin-inline: auto;
+  flex-shrink: 0;
 }
 
 .room-detail-gallery__btn {
@@ -3893,6 +3919,10 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
 .room-detail-gallery__btn--active {
   opacity: 1;
   border-color: rgba(45, 212, 191, 0.75);
+}
+
+.room-detail-gallery__btn:active {
+  transform: scale(0.98);
 }
 
 .room-detail-gallery__btn img {
@@ -3979,6 +4009,10 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
   border-color: rgba(45, 212, 191, 0.4);
 }
 
+.room-detail-lightbox__nav:active {
+  transform: translateY(-50%) scale(0.98);
+}
+
 .room-detail-lightbox__nav--prev {
   left: 0.25rem;
 }
@@ -4004,6 +4038,7 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
   max-width: 100%;
   max-height: min(62vh, 640px);
   object-fit: contain;
+  object-position: center;
   border-radius: var(--radius-lg);
   box-shadow: 0 24px 56px rgba(0, 0, 0, 0.45);
 }
@@ -4017,21 +4052,23 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
 }
 
 .room-detail-lightbox__strip {
-  display: block;
+  display: flex;
+  justify-content: center;
   max-width: 100%;
   overflow-x: auto;
   padding: 0.25rem 0;
-  text-align: center;
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .room-detail-lightbox__strip-track {
-  display: inline-flex;
+  display: flex;
   flex-wrap: nowrap;
   gap: 0.4rem;
-  vertical-align: top;
-  text-align: left;
+  flex-shrink: 0;
+  margin-inline: auto;
 }
 
 .room-detail-lightbox__thumb {

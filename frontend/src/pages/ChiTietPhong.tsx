@@ -219,7 +219,7 @@ export default function ChiTietPhong() {
     const strip = galleryStripRef.current;
     if (!strip || images.length <= 1) return;
     const btn = strip.querySelector<HTMLElement>(`[data-thumb-idx="${activeImg}"]`);
-    btn?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    btn?.scrollIntoView({ behavior: "auto", inline: "center", block: "nearest" });
   }, [activeImg, images.length]);
 
   useEffect(() => {
