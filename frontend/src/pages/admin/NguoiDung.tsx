@@ -455,6 +455,7 @@ export default function AdminNguoiDung() {
                 <div className="form-group">
                   <label>Tên đăng nhập</label>
                   <input
+                    className={editing ? "nd-input-disabled" : undefined}
                     value={form.tenDangNhap}
                     disabled={saveBusy || !!editing}
                     aria-invalid={Boolean(fieldErrors.tenDangNhap)}

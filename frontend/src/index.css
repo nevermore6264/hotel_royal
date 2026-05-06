@@ -2235,6 +2235,13 @@ a.layout-nav-link.layout-nav-link--active {
   margin-bottom: 0;
 }
 
+.nd-input-disabled[disabled] {
+  background: color-mix(in srgb, var(--surface) 72%, #94a3b8 28%);
+  border-color: color-mix(in srgb, var(--input-border) 70%, #94a3b8 30%);
+  color: color-mix(in srgb, var(--text-muted) 85%, #e2e8f0 15%);
+  cursor: not-allowed;
+}
+
 .modal-panel pre {
   white-space: pre-wrap;
   word-break: break-word;
