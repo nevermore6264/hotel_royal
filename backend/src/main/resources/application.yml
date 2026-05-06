@@ -6,12 +6,14 @@ spring:
   application:
     name: hotel-royal-api
   datasource:
-    url: jdbc:mysql://localhost:3306/hotel_royal?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Ho_Chi_Minh
+    # utf8mb4: hỗ trợ emoji và ký tự 4 byte (khác utf8 cũ 3 byte của MySQL).
+    url: jdbc:mysql://localhost:3306/hotel_royal?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8mb4&connectionCollation=utf8mb4_unicode_ci&useSSL=false&serverTimezone=Asia/Ho_Chi_Minh
     username: root
     password: 12345678
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10
+      connection-init-sql: SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci
   jpa:
     hibernate:
       ddl-auto: update
