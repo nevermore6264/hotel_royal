@@ -21,7 +21,7 @@ public class PhongController {
     private final PhongService phongService;
 
     @GetMapping("/con-trong")
-    public ResponseEntity<List<PhongDto>> conTrong(YeuCauTimPhong yeuCau) {
+    public ResponseEntity<List<PhongDto>> conTrong(@ModelAttribute YeuCauTimPhong yeuCau) {
         return ResponseEntity.ok(phongService.timPhongTrong(yeuCau));
     }
 

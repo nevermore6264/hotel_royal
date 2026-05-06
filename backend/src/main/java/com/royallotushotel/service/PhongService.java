@@ -44,7 +44,17 @@ public class PhongService {
     @Transactional(readOnly = true)
     public List<PhongDto> timPhongTrong(YeuCauTimPhong yeuCau) {
         if (yeuCau.getNgayNhanPhong() == null || yeuCau.getNgayTraPhong() == null) {
-            return phongRepository.findByTrangThai(MaTrangThaiPhong.PHONG_TRONG).stream().map(this::sangDto).collect(Collectors.toList());
+            List<Phong> phong = phongRepository.findByTrangThai(MaTrangThaiPhong.PHONG_TRONG);
+            if (yeuCau.getIdLoaiPhong() != null) {
+                phong = phong.stream()
+                        .filter(r -> r.getLoaiPhong().getId().equals(yeuCau.getIdLoaiPhong()))
+                        .collect(Collectors.toList());
+            }
+            return phong.stream().map(this::sangDto).collect(Collectors.toList());
+        }
+        if (yeuCau.getNgayTraPhong().isBefore(yeuCau.getNgayNhanPhong())
+                || yeuCau.getNgayTraPhong().isEqual(yeuCau.getNgayNhanPhong())) {
+            return List.of();
         }
         List<Phong> phong = phongRepository.timPhongTrong(yeuCau.getNgayNhanPhong(), yeuCau.getNgayTraPhong());
         if (yeuCau.getIdLoaiPhong() != null) {
