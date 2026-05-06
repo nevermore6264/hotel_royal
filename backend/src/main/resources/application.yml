@@ -6,8 +6,7 @@ spring:
   application:
     name: hotel-royal-api
   datasource:
-    # utf8mb4: hỗ trợ emoji và ký tự 4 byte (khác utf8 cũ 3 byte của MySQL).
-    url: jdbc:mysql://localhost:3306/hotel_royal?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8mb4&connectionCollation=utf8mb4_unicode_ci&useSSL=false&serverTimezone=Asia/Ho_Chi_Minh
+    url: jdbc:mysql://localhost:3306/hotel_royal?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&serverTimezone=Asia/Ho_Chi_Minh
     username: root
     password: 12345678
     driver-class-name: com.mysql.cj.jdbc.Driver

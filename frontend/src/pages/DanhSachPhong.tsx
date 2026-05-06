@@ -9,6 +9,7 @@ import { BedDouble, Eye, FilterX, RotateCcw } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { classBadgePhong, tenTrangThaiPhong } from "../lib/trangThai";
 
 type SortKey = "gia-asc" | "gia-desc" | "phong-asc";
 
@@ -115,7 +116,11 @@ function RoomCardImage({ phong }: { phong: Phong }) {
         />
       )}
       <div className="room-card-visual__shade" aria-hidden />
-      <span className="room-card-visual__badge">Còn trống</span>
+      <span
+        className={`room-card-visual__badge ${classBadgePhong(phong.trangThai)}`}
+      >
+        {tenTrangThaiPhong(phong.trangThai)}
+      </span>
       <span className="room-card-visual__num">Phòng {phong.soPhong}</span>
     </div>
   );
@@ -357,6 +362,8 @@ export default function DanhSachPhong() {
               const unitLabel = datesOk
                 ? `VND / kỳ${soDem != null ? ` · ${soDem} đêm` : ""}`
                 : "Giá tham khảo / đêm";
+              const coTheChonPhong =
+                isKhachHang && (datesOk || r.trangThai === "PHONG_TRONG");
 
               return (
                 <article
@@ -389,8 +396,8 @@ export default function DanhSachPhong() {
                         to={`/dat-phong?idPhong=${r.id}&ngayNhanPhong=${checkIn || ""}&ngayTraPhong=${checkOut || ""}`}
                         className="btn room-card__cta"
                         style={{
-                          pointerEvents: isKhachHang ? "auto" : "none",
-                          opacity: isKhachHang ? 1 : 0.55,
+                          pointerEvents: coTheChonPhong ? "auto" : "none",
+                          opacity: coTheChonPhong ? 1 : 0.55,
                         }}
                       >
                         <BedDouble className="btn-ico" aria-hidden />

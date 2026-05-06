@@ -28,11 +28,13 @@ public interface PhongRepository extends JpaRepository<Phong, Long> {
 
     List<Phong> findByTrangThai(String trangThai);
 
+    List<Phong> findByTrangThaiNot(String trangThai);
+
     List<Phong> findByLoaiPhong_Id(Long idLoaiPhong);
 
     List<Phong> findByTrangThaiVeSinhIn(List<String> trangThaiVeSinh);
 
-    @Query("SELECT r FROM Phong r WHERE r.trangThai = 'PHONG_TRONG' AND r.id NOT IN " +
+    @Query("SELECT r FROM Phong r WHERE r.trangThai <> 'BAO_TRI' AND r.id NOT IN " +
            "(SELECT bd.phong.id FROM ChiTietDatPhong bd JOIN bd.datPhong b WHERE b.trangThai NOT IN ('DA_HUY') " +
            "AND ((b.ngayNhanPhong <= :checkOut AND b.ngayTraPhong >= :checkIn)))")
     List<Phong> timPhongTrong(@Param("checkIn") LocalDate checkIn, @Param("checkOut") LocalDate checkOut);

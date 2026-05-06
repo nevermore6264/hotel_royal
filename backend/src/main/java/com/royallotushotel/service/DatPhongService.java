@@ -134,12 +134,17 @@ public class DatPhongService {
         KhachHang kh = khachHangRepository.findById(yeuCau.getIdKhachHang())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
         int soDem = tinhSoDem(yeuCau);
+        List<Phong> theoLich = phongRepository.timPhongTrong(yeuCau.getNgayNhanPhong(), yeuCau.getNgayTraPhong());
+        Set<Long> idPhongConTrongTheoLich = theoLich.stream().map(Phong::getId).collect(Collectors.toSet());
         List<Phong> dsPhong = new ArrayList<>();
         for (Long idPhong : yeuCau.getIdPhong()) {
             Phong p = phongRepository.findById(idPhong)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy phòng: " + idPhong));
-            if (!MaTrangThaiPhong.PHONG_TRONG.equals(p.getTrangThai())) {
-                throw new RuntimeException("Phòng không trống: " + p.getSoPhong());
+            if (MaTrangThaiPhong.BAO_TRI.equals(p.getTrangThai())) {
+                throw new RuntimeException("Phòng đang bảo trì: " + p.getSoPhong());
+            }
+            if (!idPhongConTrongTheoLich.contains(idPhong)) {
+                throw new RuntimeException("Phòng không còn trống trong khoảng ngày đã chọn: " + p.getSoPhong());
             }
             dsPhong.add(p);
         }

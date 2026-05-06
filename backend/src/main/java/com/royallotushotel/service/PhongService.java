@@ -44,7 +44,7 @@ public class PhongService {
     @Transactional(readOnly = true)
     public List<PhongDto> timPhongTrong(YeuCauTimPhong yeuCau) {
         if (yeuCau.getNgayNhanPhong() == null || yeuCau.getNgayTraPhong() == null) {
-            List<Phong> phong = phongRepository.findByTrangThai(MaTrangThaiPhong.PHONG_TRONG);
+            List<Phong> phong = phongRepository.findByTrangThaiNot(MaTrangThaiPhong.BAO_TRI);
             if (yeuCau.getIdLoaiPhong() != null) {
                 phong = phong.stream()
                         .filter(r -> r.getLoaiPhong().getId().equals(yeuCau.getIdLoaiPhong()))

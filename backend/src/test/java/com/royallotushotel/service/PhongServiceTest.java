@@ -117,14 +117,14 @@ class PhongServiceTest {
         p3.setSoPhong("103");
         p3.setAnh(new ArrayList<>());
         p3.setChiTietDatPhong(new ArrayList<>());
-        when(phongRepository.findByTrangThai(MaTrangThaiPhong.PHONG_TRONG)).thenReturn(List.of(phongCoLoai, p2, p3));
+        when(phongRepository.findByTrangThaiNot(MaTrangThaiPhong.BAO_TRI)).thenReturn(List.of(phongCoLoai, p2, p3));
         List<PhongDto> rs = phongService.timPhongTrong(y);
         assertThat(rs).hasSize(2);
     }
 
     @Test
     void timPhongTrong_khongNgay_khongLocLoai() {
-        when(phongRepository.findByTrangThai(MaTrangThaiPhong.PHONG_TRONG)).thenReturn(List.of(phongCoLoai));
+        when(phongRepository.findByTrangThaiNot(MaTrangThaiPhong.BAO_TRI)).thenReturn(List.of(phongCoLoai));
         YeuCauTimPhong y = new YeuCauTimPhong();
         assertThat(phongService.timPhongTrong(y)).hasSize(1);
     }
