@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -59,10 +60,10 @@ public class PhongController {
     }
 
     @PatchMapping("/{id}/trang-thai")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('QUAN_TRI')")
-    public ResponseEntity<Void> capNhatTrangThai(@PathVariable Long id, @RequestParam String trangThai) {
+    public void capNhatTrangThai(@PathVariable Long id, @RequestParam String trangThai) {
         phongService.capNhatTrangThai(id, trangThai);
-        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/can-don-ve-sinh")
@@ -72,19 +73,19 @@ public class PhongController {
     }
 
     @PatchMapping("/{id}/ve-sinh")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN','BUONG_PHONG')")
-    public ResponseEntity<Void> capNhatVeSinh(
+    public void capNhatVeSinh(
             @PathVariable Long id,
             @RequestParam String trangThaiVeSinh,
             @RequestParam(required = false) String ghiChu) {
         phongService.capNhatVeSinh(id, trangThaiVeSinh, ghiChu);
-        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('QUAN_TRI')")
-    public ResponseEntity<Void> xoa(@PathVariable Long id) {
+    public void xoa(@PathVariable Long id) {
         phongService.xoa(id);
-        return ResponseEntity.noContent().build();
     }
 }

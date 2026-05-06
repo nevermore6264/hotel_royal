@@ -16,6 +16,7 @@ import com.royallotushotel.repository.PhongRepository;
 import com.royallotushotel.repository.ThanhToanRepository;
 import com.royallotushotel.security.ChuTheNguoiDung;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,6 +47,10 @@ public class DatPhongService {
     private final DichVuHoanTien dichVuHoanTien;
     private final GuiEmailService guiEmailService;
 
+    /** Số phút giữ chỗ thanh toán cho đơn CHO_DUYET; ≤ 0 = không tự hủy. */
+    @Value("${app.dat-phong.phut-giu-cho-thanh-toan:30}")
+    private int phutGiuChoThanhToan;
+
     @Transactional(readOnly = true)
     public Page<DatPhongDto> timTatCa(
             Pageable phanTrang, String trangThai, LocalDate tuNgay, LocalDate denNgay, String q) {
@@ -53,8 +59,9 @@ public class DatPhongService {
         return datPhongRepository.timLoc(tt, tuNgay, denNgay, qq, phanTrang).map(this::sangDto);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public DatPhongDto layTheoId(Long id, ChuTheNguoiDung chuThe) {
+        huyTuDongNeuCanTheoId(id);
         DatPhong dp = datPhongRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy đặt phòng"));
         if (chuThe != null && chiLaKhachHang(chuThe) && !chiLaNhanVienLeTanHoacQuanTri(chuThe)) {
             Long idKhach = layIdKhachHangTheoIdNguoiDung(chuThe.getId());
@@ -78,9 +85,53 @@ public class DatPhongService {
         return khachHangRepository.findByNguoiDung_Id(idNguoiDung).map(KhachHang::getId).orElse(null);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<DatPhongDto> timTheoKhachHang(Long idKhachHang) {
-        return datPhongRepository.timLichSuTheoKhach(idKhachHang).stream().map(this::sangDto).collect(Collectors.toList());
+        List<DatPhong> truoc = datPhongRepository.timLichSuTheoKhach(idKhachHang);
+        for (DatPhong x : truoc) {
+            huyTuDongNeuCanTheoId(x.getId());
+        }
+        return datPhongRepository.timLichSuTheoKhach(idKhachHang).stream()
+                .map(this::sangDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Hủy đơn CHO_DUYET chưa thu tiền nếu đã quá thời gian giữ chờ thanh toán.
+     * Dùng khóa pessimistic để tránh xung đột với ghi nhận PayOS.
+     */
+    @Transactional
+    public void huyTuDongNeuCanTheoId(Long idDatPhong) {
+        if (phutGiuChoThanhToan <= 0) {
+            return;
+        }
+        Optional<DatPhong> opt = datPhongRepository.timVaKhoaTheoId(idDatPhong);
+        if (opt.isEmpty()) {
+            return;
+        }
+        DatPhong dp = opt.get();
+        if (!MaTrangThaiDatPhong.CHO_DUYET.equals(dp.getTrangThai())) {
+            return;
+        }
+        if (dp.getThoiGianTao() == null) {
+            return;
+        }
+        LocalDateTime hetHan = dp.getThoiGianTao().plusMinutes(phutGiuChoThanhToan);
+        if (!LocalDateTime.now().isAfter(hetHan)) {
+            return;
+        }
+        ThanhToan tt = thanhToanRepository.findByDatPhong_Id(dp.getId()).orElse(null);
+        if (tt != null && tt.getTongDaThu() != null && tt.getTongDaThu().compareTo(BigDecimal.ZERO) > 0) {
+            return;
+        }
+        for (ChiTietDatPhong d : new ArrayList<>(dp.getChiTiet())) {
+            if (coTheHuy(d)) {
+                huyChiTietNoiBo(dp, d, "Tu dong huy: het han thanh toan");
+            }
+        }
+        capNhatTrangThaiDonSauKhiHuy(dp);
+        capNhatTongThanhToan(dp);
+        datPhongRepository.save(dp);
     }
 
     @Transactional
@@ -419,6 +470,17 @@ public class DatPhongService {
         dto.setTienHoan(tinhTienHoan(dp));
         dto.setTongTien(tinhTongTien(dp));
         dto.setThoiGianTao(dp.getThoiGianTao());
+        if (phutGiuChoThanhToan > 0
+                && MaTrangThaiDatPhong.CHO_DUYET.equals(dp.getTrangThai())
+                && dp.getThoiGianTao() != null) {
+            ThanhToan tt0 = dp.getThanhToan();
+            boolean chuaThuTien = tt0 == null
+                    || tt0.getTongDaThu() == null
+                    || tt0.getTongDaThu().compareTo(BigDecimal.ZERO) <= 0;
+            if (chuaThuTien) {
+                dto.setThoiDiemHetHanThanhToan(dp.getThoiGianTao().plusMinutes(phutGiuChoThanhToan));
+            }
+        }
         dto.setSoGioHuyApDung(dp.getSoGioHuyApDung());
         dto.setTyLeHoanTienApDung(dp.getTyLeHoanTienApDung());
         dto.setChiTiet(dp.getChiTiet().stream().map(d -> {

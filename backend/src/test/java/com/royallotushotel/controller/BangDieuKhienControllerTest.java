@@ -16,7 +16,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(value = BangDieuKhienController.class, properties = "server.servlet.context-path=/")
+@WebMvcTest(BangDieuKhienController.class)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class BangDieuKhienControllerTest extends WebMvcAuditMockSupport {

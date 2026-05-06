@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(value = DichVuController.class, properties = "server.servlet.context-path=/")
+@WebMvcTest(DichVuController.class)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class DichVuControllerTest extends WebMvcAuditMockSupport {

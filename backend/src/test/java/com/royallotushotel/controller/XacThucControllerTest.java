@@ -17,7 +17,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(value = XacThucController.class, properties = "server.servlet.context-path=/")
+@WebMvcTest(XacThucController.class)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class XacThucControllerTest extends WebMvcAuditMockSupport {

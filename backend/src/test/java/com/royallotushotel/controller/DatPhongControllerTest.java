@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(value = DatPhongController.class, properties = "server.servlet.context-path=/")
+@WebMvcTest(DatPhongController.class)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class DatPhongControllerTest extends WebMvcAuditMockSupport {

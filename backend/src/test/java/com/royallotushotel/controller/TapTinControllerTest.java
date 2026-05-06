@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(value = TapTinController.class, properties = "server.servlet.context-path=/")
+@WebMvcTest(TapTinController.class)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class TapTinControllerTest extends WebMvcAuditMockSupport {

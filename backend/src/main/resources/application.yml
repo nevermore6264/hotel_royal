@@ -56,6 +56,11 @@ payment:
 app:
   upload:
     root: ${APP_UPLOAD_DIR:uploads}
+  # Đơn CHO_DUYET chưa thanh toán sẽ tự hủy sau khoảng thời gian này (phút). Đặt 0 để tắt.
+  dat-phong:
+    phut-giu-cho-thanh-toan: ${APP_PHUT_GIU_CHO_THANH_TOAN:30}
+    # Khoảng cách giữa các lần quét hủy quá hạn (giây)
+    tan-so-quet-giay: ${APP_QUET_HUY_DAT_PHONG_GIAY:60}
 
 logging:
   level:

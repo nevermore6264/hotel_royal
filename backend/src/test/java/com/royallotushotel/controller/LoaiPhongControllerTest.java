@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(value = LoaiPhongController.class, properties = "server.servlet.context-path=/")
+@WebMvcTest(LoaiPhongController.class)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class LoaiPhongControllerTest extends WebMvcAuditMockSupport {

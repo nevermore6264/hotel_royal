@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(value = BangGiaPhongController.class, properties = "server.servlet.context-path=/")
+@WebMvcTest(BangGiaPhongController.class)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class BangGiaPhongControllerTest extends WebMvcAuditMockSupport {

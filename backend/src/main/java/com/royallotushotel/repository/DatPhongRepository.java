@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,6 +40,9 @@ public interface DatPhongRepository extends JpaRepository<DatPhong, Long> {
 
     @Query("SELECT b FROM DatPhong b WHERE b.khachHang.id = :idKhachHang ORDER BY b.thoiGianTao DESC")
     List<DatPhong> timLichSuTheoKhach(@Param("idKhachHang") Long idKhachHang);
+
+    @Query("SELECT d.id FROM DatPhong d WHERE d.trangThai = 'CHO_DUYET' AND d.thoiGianTao IS NOT NULL AND d.thoiGianTao < :truoc")
+    List<Long> timIdChoDuyetTaoTruoc(@Param("truoc") LocalDateTime truoc);
 
     @Query("SELECT b FROM DatPhong b WHERE b.ngayNhanPhong <= :ngay AND b.ngayTraPhong >= :ngay AND b.trangThai = 'DA_NHAN_PHONG'")
     List<DatPhong> timLuuTruDangHoatDongVaoNgay(@Param("ngay") LocalDate ngay);

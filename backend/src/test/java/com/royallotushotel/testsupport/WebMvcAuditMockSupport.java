@@ -3,17 +3,14 @@ package com.royallotushotel.testsupport;
 import com.royallotushotel.config.NhatKyHanhDongInterceptor;
 import com.royallotushotel.security.BoiLocJwt;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.TestPropertySource;
-
 /**
  * Beans that {@code @WebMvcTest} pulls into the slice but whose dependencies are not
  * scanned: audit interceptor; JWT filter ({@link BoiLocJwt} is a {@link jakarta.servlet.Filter}).
- * <p>Context-path servlet phải là {@code /} trong slice {@code @WebMvcTest} để URI kiểu
- * {@code /loai-phong/1} khớp mapping (tránh lệch so với {@code /api} trong {@code application.yml}).
- * Mỗi lớp test khai báo {@code @WebMvcTest(..., properties = "server.servlet.context-path=/")}
- * để chắc chắn thuộc tính được nạp; {@code @TestPropertySource} ở đây chỉ bổ sung.
+ * <p>Không gắn {@code contextPath=/api} trên default MockMvc request: từ Spring Framework 6.1,
+ * {@code requestURI} phải bắt đầu bằng {@code contextPath} nếu có; test dùng đường dẫn tương
+ * đối servlet (vd. {@code /tap-tin/...}) nên gắn context path sẽ gây lỗi. Slice test vẫn khớp
+ * controller; {@code server.servlet.context-path} chỉ áp dụng khi chạy server thật.
  */
-@TestPropertySource(properties = "server.servlet.context-path=/")
 public abstract class WebMvcAuditMockSupport {
 
     @MockBean
