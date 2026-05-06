@@ -72,33 +72,33 @@ public class ChatService {
                 ? MaKieuTinChat.VAN_BAN
                 : kieuTinRaw.trim();
         if (!MaKieuTinChat.VAN_BAN.equals(kt) && !MaKieuTinChat.ANH.equals(kt)) {
-            throw new RuntimeException("Kieu tin khong hop le");
+            throw new RuntimeException("Kiểu tin không hợp lệ");
         }
         String nd = noiDung == null ? "" : noiDung.trim();
         if (MaKieuTinChat.ANH.equals(kt)) {
-            if (nd.isEmpty()) throw new RuntimeException("Thieu duong dan anh");
-            if (nd.length() > 512) throw new RuntimeException("Duong dan anh qua dai");
+            if (nd.isEmpty()) throw new RuntimeException("Thiếu đường dẫn ảnh");
+            if (nd.length() > 512) throw new RuntimeException("Đường dẫn ảnh quá dài");
             if (!nd.startsWith("/api/uploads/chat/")) {
-                throw new RuntimeException("Duong dan anh khong hop le");
+                throw new RuntimeException("Đường dẫn ảnh không hợp lệ");
             }
             return new NoiDungVaKieu(nd, kt);
         }
-        if (nd.isEmpty()) throw new RuntimeException("Noi dung khong hop le");
-        if (nd.length() > 2000) throw new RuntimeException("Noi dung qua dai");
+        if (nd.isEmpty()) throw new RuntimeException("Nội dung không hợp lệ");
+        if (nd.length() > 2000) throw new RuntimeException("Nội dung quá dài");
         return new NoiDungVaKieu(nd, kt);
     }
 
     private void kiemTraQuyenXemCuoc(ChuTheNguoiDung user, CuocTroChuyen cuoc) {
         if (coVaiTro(user, MaVaiTro.QUAN_TRI)) return;
         if (!laNhanVienHoTro(user)) {
-            throw new RuntimeException("Khong co quyen xem tro chuyen");
+            throw new RuntimeException("Không có quyền xem cuộc trò chuyện");
         }
         NguoiDung ht = cuoc.getNguoiHoTro();
         if (ht == null) {
-            throw new RuntimeException("Cuoc tro chuyen khong co nguoi ho tro");
+            throw new RuntimeException("Cuộc trò chuyện không có người hỗ trợ");
         }
         if (!ht.getId().equals(user.getId())) {
-            throw new RuntimeException("Ban khong phai nguoi ho tro duoc chon cho cuoc nay");
+            throw new RuntimeException("Bạn không phải người hỗ trợ được chọn cho cuộc này");
         }
     }
 
@@ -124,9 +124,9 @@ public class ChatService {
     @Transactional(readOnly = true)
     public List<TinNhanChatDto> tinNhanCuaKhach(ChuTheNguoiDung user, Long idNguoiHoTro) {
         if (!laKhachHang(user)) {
-            throw new RuntimeException("Chi tai khoan khach hang moi xem duoc kenh nay");
+            throw new RuntimeException("Chỉ tài khoản khách hàng mới xem được kênh này");
         }
-        if (idNguoiHoTro == null) throw new RuntimeException("Thieu nguoi ho tro");
+        if (idNguoiHoTro == null) throw new RuntimeException("Thiếu người hỗ trợ");
         return cuocTroChuyenRepository
                 .findByNguoiDungKhach_IdAndNguoiHoTro_Id(user.getId(), idNguoiHoTro)
                 .map(c -> tinNhanChatRepository.findByCuocTroChuyen_IdOrderByThoiDiemAsc(c.getId())
@@ -137,20 +137,20 @@ public class ChatService {
     @Transactional
     public TinNhanChatDto guiTinKhach(ChuTheNguoiDung user, String noiDung, Long idNguoiHoTro, String kieuTin) {
         if (!laKhachHang(user)) {
-            throw new RuntimeException("Chi tai khoan khach hang moi gui tin tai day");
+            throw new RuntimeException("Chỉ tài khoản khách hàng mới gửi tin tại đây");
         }
-        if (idNguoiHoTro == null) throw new RuntimeException("Chon nguoi ho tro");
+        if (idNguoiHoTro == null) throw new RuntimeException("Chọn người hỗ trợ");
         NoiDungVaKieu nk = chuanHoaNoiDung(noiDung, kieuTin);
 
         NguoiDung nguoiGui = nguoiDungRepository.findById(user.getId())
-                .orElseThrow(() -> new RuntimeException("Khong tim thay nguoi dung"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
         NguoiDung nguoiHoTro = nguoiDungRepository.findById(idNguoiHoTro)
-                .orElseThrow(() -> new RuntimeException("Khong tim thay nguoi ho tro"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người hỗ trợ"));
         if (!MaTrangThaiNguoiDung.HOAT_DONG.equals(nguoiHoTro.getTrangThai())) {
-            throw new RuntimeException("Tai khoan ho tro khong hoat dong");
+            throw new RuntimeException("Tài khoản hỗ trợ không hoạt động");
         }
         if (!laNhanVienHoTroChat(nguoiHoTro)) {
-            throw new RuntimeException("Chi duoc chat voi le tan hoac quan tri");
+            throw new RuntimeException("Chỉ được chat với lễ tân hoặc quản trị");
         }
 
         CuocTroChuyen cuoc = cuocTroChuyenRepository
@@ -179,7 +179,7 @@ public class ChatService {
     @Transactional(readOnly = true)
     public List<CuocTroChuyenTomTatDto> danhSachCuocChoNhanVien(ChuTheNguoiDung user) {
         if (!laNhanVienHoTro(user)) {
-            throw new RuntimeException("Khong co quyen");
+            throw new RuntimeException("Không có quyền");
         }
         List<CuocTroChuyen> ds;
         if (coVaiTro(user, MaVaiTro.QUAN_TRI)) {
@@ -207,10 +207,10 @@ public class ChatService {
     @Transactional(readOnly = true)
     public List<TinNhanChatDto> tinTrongCuoc(ChuTheNguoiDung user, Long idCuoc) {
         if (!laNhanVienHoTro(user)) {
-            throw new RuntimeException("Khong co quyen xem tro chuyen");
+            throw new RuntimeException("Không có quyền xem cuộc trò chuyện");
         }
         CuocTroChuyen cuoc = cuocTroChuyenRepository.findById(idCuoc)
-                .orElseThrow(() -> new RuntimeException("Khong tim thay cuoc tro chuyen"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy cuộc trò chuyện"));
         kiemTraQuyenXemCuoc(user, cuoc);
         return tinNhanChatRepository.findByCuocTroChuyen_IdOrderByThoiDiemAsc(idCuoc).stream()
                 .map(this::sangDto)
@@ -220,16 +220,16 @@ public class ChatService {
     @Transactional
     public TinNhanChatDto guiTinNhanVien(ChuTheNguoiDung user, Long idCuoc, String noiDung, String kieuTin) {
         if (!laNhanVienHoTro(user)) {
-            throw new RuntimeException("Khong co quyen gui tin");
+            throw new RuntimeException("Không có quyền gửi tin");
         }
         NoiDungVaKieu nk = chuanHoaNoiDung(noiDung, kieuTin);
 
         CuocTroChuyen cuoc = cuocTroChuyenRepository.findById(idCuoc)
-                .orElseThrow(() -> new RuntimeException("Khong tim thay cuoc tro chuyen"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy cuộc trò chuyện"));
         kiemTraQuyenXemCuoc(user, cuoc);
 
         NguoiDung nguoiGui = nguoiDungRepository.findById(user.getId())
-                .orElseThrow(() -> new RuntimeException("Khong tim thay nguoi dung"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
         TinNhanChat tin = TinNhanChat.builder()
                 .cuocTroChuyen(cuoc)

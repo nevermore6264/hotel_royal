@@ -63,7 +63,7 @@ public class ChatController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Khong luu duoc tep"));
+            return ResponseEntity.internalServerError().body(Map.of("error", "Không lưu được tệp"));
         }
     }
 

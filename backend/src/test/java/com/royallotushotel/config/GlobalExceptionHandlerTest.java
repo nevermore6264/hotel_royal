@@ -9,9 +9,9 @@ class GlobalExceptionHandlerTest {
     @Test
     void runtimeTraVe400() {
         GlobalExceptionHandler handler = new GlobalExceptionHandler();
-        var res = handler.handleRuntime(new RuntimeException("Loi nghiep vu"));
+        var res = handler.handleRuntime(new RuntimeException("Lỗi nghiệp vụ"));
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).containsEntry("error", "Loi nghiep vu");
+        assertThat(res.getBody()).containsEntry("error", "Lỗi nghiệp vụ");
     }
 
     @Test

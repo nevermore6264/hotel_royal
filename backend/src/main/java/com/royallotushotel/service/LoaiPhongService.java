@@ -31,7 +31,7 @@ public class LoaiPhongService {
 
     @Transactional(readOnly = true)
     public LoaiPhongDto layTheoId(Long id) {
-        LoaiPhong lp = loaiPhongRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay loai phong"));
+        LoaiPhong lp = loaiPhongRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy loại phòng"));
         return sangDto(lp);
     }
 
@@ -48,7 +48,7 @@ public class LoaiPhongService {
 
     @Transactional
     public LoaiPhongDto capNhat(Long id, LoaiPhongDto dto) {
-        LoaiPhong lp = loaiPhongRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay loai phong"));
+        LoaiPhong lp = loaiPhongRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy loại phòng"));
         lp.setTen(dto.getTen());
         lp.setGia(dto.getGia());
         lp.setMoTa(dto.getMoTa());

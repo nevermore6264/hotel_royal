@@ -2,9 +2,11 @@ package com.royallotushotel.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.royallotushotel.security.ChuTheNguoiDung;
 import com.royallotushotel.service.ThanhToanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -33,6 +35,22 @@ public class ThanhToanController {
         JsonNode body = objectMapper.readTree(rawBody);
         thanhToanService.xuLyWebhookPayOs(body);
         return ResponseEntity.ok(Map.of("message", "OK"));
+    }
+
+    /** Khách đăng nhập, quay lại từ PayOS — đồng bộ trạng thái khi webhook chưa/chưa tới được server. */
+    @PostMapping("/dong-bo-payos")
+    public ResponseEntity<Map<String, Object>> dongBoPayOs(
+            @RequestBody Map<String, Object> body,
+            @AuthenticationPrincipal ChuTheNguoiDung chuThe) {
+        if (chuThe == null) {
+            throw new RuntimeException("Cần đăng nhập để đồng bộ thanh toán");
+        }
+        Long idDatPhong = Long.valueOf(body.get("idDatPhong").toString());
+        int orderCode = Integer.parseInt(body.get("orderCode").toString().trim());
+        String paymentLinkId = body.get("paymentLinkId").toString().trim();
+        Map<String, Object> ketQua = thanhToanService.dongBoSauRedirectPayOs(
+                idDatPhong, orderCode, paymentLinkId, chuThe.getId());
+        return ResponseEntity.ok(ketQua);
     }
 
     @GetMapping("/goi-lai")

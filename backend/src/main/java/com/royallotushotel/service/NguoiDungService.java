@@ -43,14 +43,14 @@ public class NguoiDungService {
 
     @Transactional(readOnly = true)
     public NguoiDungDto layTheoId(Long id) {
-        NguoiDung nd = nguoiDungRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay nguoi dung"));
+        NguoiDung nd = nguoiDungRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
         return sangDto(nd);
     }
 
     @Transactional
     public NguoiDungDto tao(NguoiDungDto dto) {
-        if (nguoiDungRepository.existsByTenDangNhap(dto.getTenDangNhap())) throw new RuntimeException("Ten dang nhap da ton tai");
-        if (nguoiDungRepository.existsByEmail(dto.getEmail())) throw new RuntimeException("Email da ton tai");
+        if (nguoiDungRepository.existsByTenDangNhap(dto.getTenDangNhap())) throw new RuntimeException("Tên đăng nhập đã tồn tại");
+        if (nguoiDungRepository.existsByEmail(dto.getEmail())) throw new RuntimeException("Email đã tồn tại");
         NguoiDung nd = new NguoiDung();
         nd.setTenDangNhap(dto.getTenDangNhap());
         nd.setMatKhau(passwordEncoder.encode(dto.getMatKhau()));
@@ -68,12 +68,12 @@ public class NguoiDungService {
 
     @Transactional
     public NguoiDungDto capNhat(Long id, NguoiDungDto dto) {
-        NguoiDung nd = nguoiDungRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay nguoi dung"));
+        NguoiDung nd = nguoiDungRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
         if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
             String emailMoi = dto.getEmail().trim();
             if (!emailMoi.equals(nd.getEmail())
                     && nguoiDungRepository.existsByEmailAndIdNot(emailMoi, id))
-                throw new RuntimeException("Email da duoc su dung");
+                throw new RuntimeException("Email đã được sử dụng");
             nd.setEmail(emailMoi);
         }
         nd.setHoTen(dto.getHoTen());
@@ -99,13 +99,13 @@ public class NguoiDungService {
 
     @Transactional
     public NguoiDungDto capNhatThongTinCaNhan(Long idNguoiDung, YeuCauCapNhatHoSo yeuCau) {
-        NguoiDung nd = nguoiDungRepository.findById(idNguoiDung).orElseThrow(() -> new RuntimeException("Khong tim thay nguoi dung"));
+        NguoiDung nd = nguoiDungRepository.findById(idNguoiDung).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
         if (yeuCau.getEmail() != null) {
             String emailMoi = yeuCau.getEmail().trim();
             String emailCu = nd.getEmail() != null ? nd.getEmail().trim() : "";
             if (!emailMoi.equalsIgnoreCase(emailCu)
                     && nguoiDungRepository.existsByEmailAndIdNot(emailMoi, idNguoiDung))
-                throw new RuntimeException("Email da duoc su dung");
+                throw new RuntimeException("Email đã được sử dụng");
             nd.setEmail(emailMoi);
         }
         if (yeuCau.getHoTen() != null) nd.setHoTen(yeuCau.getHoTen().trim());
@@ -115,7 +115,7 @@ public class NguoiDungService {
             String sdtCu = nd.getSoDienThoai() != null ? nd.getSoDienThoai().trim() : null;
             if (sdtMoi != null && !Objects.equals(sdtMoi, sdtCu)
                     && nguoiDungRepository.existsBySoDienThoaiAndIdNot(sdtMoi, idNguoiDung))
-                throw new RuntimeException("So dien thoai da duoc su dung");
+                throw new RuntimeException("Số điện thoại đã được sử dụng");
             nd.setSoDienThoai(sdtMoi);
         }
         nd = nguoiDungRepository.save(nd);
@@ -132,10 +132,10 @@ public class NguoiDungService {
     @Transactional
     public void doiMatKhau(Long idNguoiDung, String matKhauCu, String matKhauMoi) {
         if (matKhauMoi == null || matKhauMoi.length() < 6)
-            throw new RuntimeException("Mat khau moi phai co it nhat 6 ky tu");
-        NguoiDung nd = nguoiDungRepository.findById(idNguoiDung).orElseThrow(() -> new RuntimeException("Khong tim thay nguoi dung"));
+            throw new RuntimeException("Mật khẩu mới phải có ít nhất 6 ký tự");
+        NguoiDung nd = nguoiDungRepository.findById(idNguoiDung).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
         if (!passwordEncoder.matches(matKhauCu, nd.getMatKhau()))
-            throw new RuntimeException("Mat khau hien tai khong dung");
+            throw new RuntimeException("Mật khẩu hiện tại không đúng");
         nd.setMatKhau(passwordEncoder.encode(matKhauMoi));
         nguoiDungRepository.save(nd);
     }

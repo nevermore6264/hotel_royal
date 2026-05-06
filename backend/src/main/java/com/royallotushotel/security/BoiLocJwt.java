@@ -36,7 +36,7 @@ public class BoiLocJwt extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(xacThuc);
             }
         } catch (Exception e) {
-            logger.debug("Khong dat xac thuc: " + e.getMessage());
+            logger.debug("Không đạt xác thực: " + e.getMessage());
         }
         filterChain.doFilter(request, response);
     }

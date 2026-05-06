@@ -48,7 +48,7 @@ public class QuanLyDichVuService {
 
     @Transactional
     public DichVuDto capNhat(Long id, DichVuDto dto) {
-        DichVu dv = dichVuRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay dich vu"));
+        DichVu dv = dichVuRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy dịch vụ"));
         dv.setTen(dto.getTen());
         dv.setGia(dto.getGia());
         dv.setMoTa(dto.getMoTa());
@@ -59,15 +59,15 @@ public class QuanLyDichVuService {
     @Transactional
     public void xoa(Long id) {
         if (suDungDichVuRepository.existsByDichVu_Id(id)) {
-            throw new RuntimeException("Khong xoa duoc: dich vu da duoc su dung trong dat phong");
+            throw new RuntimeException("Không xóa được: dịch vụ đã được sử dụng trong đặt phòng");
         }
         dichVuRepository.deleteById(id);
     }
 
     @Transactional
     public void themVaoDatPhong(Long idDatPhong, Long idDichVu, int soLuong) {
-        DatPhong dp = datPhongRepository.findById(idDatPhong).orElseThrow(() -> new RuntimeException("Khong tim thay dat phong"));
-        DichVu dv = dichVuRepository.findById(idDichVu).orElseThrow(() -> new RuntimeException("Khong tim thay dich vu"));
+        DatPhong dp = datPhongRepository.findById(idDatPhong).orElseThrow(() -> new RuntimeException("Không tìm thấy đặt phòng"));
+        DichVu dv = dichVuRepository.findById(idDichVu).orElseThrow(() -> new RuntimeException("Không tìm thấy dịch vụ"));
         SuDungDichVu sd = SuDungDichVu.builder().datPhong(dp).dichVu(dv).soLuong(soLuong).build();
         dp.getSuDungDichVu().add(sd);
         datPhongRepository.save(dp);

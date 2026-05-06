@@ -35,13 +35,13 @@ public class DanhGiaService {
     @Transactional
     public DanhGiaDto tao(ChuTheNguoiDung chuThe, YeuCauTaoDanhGia yeuCau) {
         if (yeuCau.getIdLoaiPhong() == null || yeuCau.getDiem() == null)
-            throw new RuntimeException("Thieu du lieu danh gia");
+            throw new RuntimeException("Thiếu dữ liệu đánh giá");
         int diem = yeuCau.getDiem();
-        if (diem < 1 || diem > 5) throw new RuntimeException("Diem tu 1 den 5");
+        if (diem < 1 || diem > 5) throw new RuntimeException("Điểm từ 1 đến 5");
         if (danhGiaRepository.existsByLoaiPhong_IdAndNguoiDung_Id(yeuCau.getIdLoaiPhong(), chuThe.getId()))
-            throw new RuntimeException("Ban da danh gia loai phong nay");
+            throw new RuntimeException("Bạn đã đánh giá loại phòng này");
         LoaiPhong lp = loaiPhongRepository.findById(yeuCau.getIdLoaiPhong())
-                .orElseThrow(() -> new RuntimeException("Khong tim thay loai phong"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy loại phòng"));
         NguoiDung nd = nguoiDungRepository.findById(chuThe.getId()).orElseThrow();
         DanhGia dg = DanhGia.builder()
                 .loaiPhong(lp)

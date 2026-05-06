@@ -4,18 +4,22 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.royallotushotel.entity.DatPhong;
 import com.royallotushotel.entity.GiaoDichThanhToan;
+import com.royallotushotel.entity.KhachHang;
 import com.royallotushotel.entity.ThanhToan;
 import com.royallotushotel.hangso.LoaiGiaoDichThanhToan;
 import com.royallotushotel.hangso.MaPhuongThucThanhToan;
 import com.royallotushotel.hangso.MaTrangThaiThanhToan;
 import com.royallotushotel.payment.PayOsKySo;
 import com.royallotushotel.repository.DatPhongRepository;
+import com.royallotushotel.repository.KhachHangRepository;
 import com.royallotushotel.repository.ThanhToanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -32,6 +36,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class ThanhToanService {
 
     private final DatPhongRepository datPhongRepository;
+    private final KhachHangRepository khachHangRepository;
     private final ThanhToanRepository thanhToanRepository;
     private final DatPhongService datPhongService;
     private final RestTemplate restTemplate;
@@ -203,7 +208,7 @@ public class ThanhToanService {
         if (soTienLanNay == null || soTienLanNay.compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Số tiền thanh toán không hợp lệ");
         }
-        DatPhong dp = datPhongRepository.findById(idDatPhong)
+        DatPhong dp = datPhongRepository.timVaKhoaTheoId(idDatPhong)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đặt phòng"));
         ThanhToan tt0 = thanhToanRepository.findByDatPhong_Id(idDatPhong).orElse(null);
         if (tt0 != null && MaTrangThaiThanhToan.DA_THANH_TOAN.equals(tt0.getTrangThai())) {
@@ -304,7 +309,7 @@ public class ThanhToanService {
 
         long amountVnd = data.path("amount").asLong(0L);
         if (amountVnd <= 0L) {
-            throw new RuntimeException("Webhook payOS thiếu hoặc sai amount");
+            throw new RuntimeException("Webhook payOS thiếu hoặc sai số tiền (amount)");
         }
 
         ThanhToan tt = thanhToanRepository.findByPayosOrderCode(orderCode)
@@ -316,5 +321,108 @@ public class ThanhToanService {
                 MaPhuongThucThanhToan.CONG_PAYOS,
                 idem,
                 BigDecimal.valueOf(amountVnd));
+    }
+
+    /**
+     * Sau khi khách quay lại từ PayOS (returnUrl), gọi API PayOS để lấy {@code amountPaid} và ghi nhận
+     * giống webhook — cần thiết khi webhook không tới được (vd. chạy local).
+     */
+    @Transactional
+    public Map<String, Object> dongBoSauRedirectPayOs(
+            Long idDatPhong,
+            int orderCode,
+            String paymentLinkId,
+            Long idNguoiDung) {
+        if (payOsCheDoThu) {
+            return Map.of(
+                    "trangThai", "CHE_DO_THU",
+                    "thongDiep", "Chế độ thử: đơn đã được xác nhận khi tạo link.");
+        }
+        if (paymentLinkId == null || paymentLinkId.isBlank()) {
+            throw new RuntimeException("Thiếu mã link thanh toán PayOS (id)");
+        }
+        if (payOsClientId == null || payOsClientId.isBlank()
+                || payOsApiKey == null || payOsApiKey.isBlank()
+                || payOsChecksumKey == null || payOsChecksumKey.isBlank()) {
+            throw new RuntimeException("Chưa cấu hình payOS");
+        }
+
+        DatPhong dp = datPhongRepository.findById(idDatPhong)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đặt phòng"));
+        KhachHang kh = khachHangRepository.findByNguoiDung_Id(idNguoiDung)
+                .orElseThrow(() -> new RuntimeException("Chỉ tài khoản khách mới đồng bộ được thanh toán."));
+        if (!dp.getKhachHang().getId().equals(kh.getId())) {
+            throw new RuntimeException("Đơn đặt phòng không thuộc tài khoản hiện tại.");
+        }
+
+        JsonNode root = goiLayThongTinLinkPayOs(paymentLinkId.trim());
+        JsonNode data = root.get("data");
+        int ocApi = data.path("orderCode").asInt(0);
+        if (ocApi != orderCode) {
+            throw new RuntimeException("Dữ liệu payOS không khớp mã đơn.");
+        }
+
+        ThanhToan tt = thanhToanRepository.findByDatPhong_Id(idDatPhong)
+                .orElseThrow(() -> new RuntimeException("Không có bản ghi thanh toán"));
+        if (tt.getPayosOrderCode() != null && !tt.getPayosOrderCode().equals(orderCode)) {
+            throw new RuntimeException("Mã payOS không khớp với đơn đang chờ thanh toán.");
+        }
+
+        String st = data.path("status").asText("");
+        long amountPaid = data.path("amountPaid").asLong(0L);
+
+        if (("CANCELLED".equalsIgnoreCase(st) || "CANCELED".equalsIgnoreCase(st)) && amountPaid <= 0L) {
+            return Map.of(
+                    "trangThai", "DA_HUY_TREN_CONG",
+                    "thongDiep", "Giao dịch đã hủy trên cổng PayOS.");
+        }
+
+        if (amountPaid <= 0L) {
+            return Map.of(
+                    "trangThai", "CHO_THANH_TOAN",
+                    "thongDiep", "Chưa ghi nhận khoản thanh toán. Hệ thống sẽ cập nhật khi PayOS xử lý xong.");
+        }
+
+        String idem = "PAYOS-" + orderCode;
+        ghiNhanThanhToan(
+                idDatPhong,
+                MaPhuongThucThanhToan.CONG_PAYOS,
+                idem,
+                BigDecimal.valueOf(amountPaid));
+        return Map.of(
+                "trangThai", "DA_GHI_NHAN",
+                "thongDiep", "Đã ghi nhận thanh toán.");
+    }
+
+    private JsonNode goiLayThongTinLinkPayOs(String paymentLinkId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("x-client-id", payOsClientId.trim());
+        headers.set("x-api-key", payOsApiKey.trim());
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        String base = payOsApiUrl.replaceAll("/+$", "");
+        String url = base + "/v2/payment-requests/" + paymentLinkId;
+        try {
+            ResponseEntity<String> res = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+            String raw = res.getBody();
+            JsonNode root = objectMapper.readTree(raw != null ? raw : "{}");
+            if (!"00".equals(root.path("code").asText())) {
+                throw new RuntimeException("payOS: " + root.path("desc").asText("Không lấy được trạng thái link"));
+            }
+            JsonNode data = root.get("data");
+            if (data == null || data.isNull()) {
+                throw new RuntimeException("payOS không trả về data");
+            }
+            String sig = root.path("signature").asText("");
+            if (!PayOsKySo.xacThucDuLieuWebhook(data, sig, payOsChecksumKey.trim())) {
+                throw new RuntimeException("Chữ ký phản hồi payOS không hợp lệ");
+            }
+            return root;
+        } catch (org.springframework.web.client.RestClientException e) {
+            throw new RuntimeException("Gọi payOS thất bại: " + e.getMessage(), e);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Xử lý phản hồi payOS thất bại: " + e.getMessage(), e);
+        }
     }
 }

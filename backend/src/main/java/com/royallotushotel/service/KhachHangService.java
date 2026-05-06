@@ -38,7 +38,7 @@ public class KhachHangService {
 
     @Transactional(readOnly = true)
     public KhachHangDto layTheoId(Long id) {
-        KhachHang kh = khachHangRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay khach hang"));
+        KhachHang kh = khachHangRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
         return sangDto(kh);
     }
 
@@ -55,7 +55,7 @@ public class KhachHangService {
 
     @Transactional
     public KhachHangDto capNhat(Long id, KhachHangDto dto) {
-        KhachHang kh = khachHangRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay khach hang"));
+        KhachHang kh = khachHangRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
         kh.setHoTen(dto.getHoTen());
         kh.setSoDienThoai(dto.getSoDienThoai());
         kh.setEmail(dto.getEmail());

@@ -31,7 +31,7 @@ public class TapTinController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Khong luu duoc tep"));
+            return ResponseEntity.internalServerError().body(Map.of("error", "Không lưu được tệp"));
         }
     }
 
@@ -39,7 +39,7 @@ public class TapTinController {
     @PreAuthorize("hasRole('QUAN_TRI')")
     public ResponseEntity<?> taiLenNhieu(@RequestParam("files") MultipartFile[] files) {
         if (files == null || files.length == 0)
-            return ResponseEntity.badRequest().body(Map.of("error", "Khong co tep"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Không có tệp"));
         List<Map<String, String>> ketQua = new ArrayList<>();
         for (MultipartFile f : files) {
             if (f.isEmpty()) continue;
@@ -49,8 +49,11 @@ public class TapTinController {
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
             } catch (IOException e) {
-                return ResponseEntity.internalServerError().body(Map.of("error", "Khong luu duoc tep"));
+                return ResponseEntity.internalServerError().body(Map.of("error", "Không lưu được tệp"));
             }
+        }
+        if (ketQua.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Không có tệp"));
         }
         return ResponseEntity.ok(Map.of("tep", ketQua));
     }

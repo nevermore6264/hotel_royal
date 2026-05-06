@@ -19,10 +19,10 @@ public class TapTinPhongService {
     private String thuMucGoc;
 
     public String luuAnhPhong(MultipartFile tep) throws IOException {
-        if (tep == null || tep.isEmpty()) throw new IllegalArgumentException("Tep trong");
+        if (tep == null || tep.isEmpty()) throw new IllegalArgumentException("Tệp trống");
         String loai = tep.getContentType();
         if (loai == null || !loai.startsWith("image/"))
-            throw new IllegalArgumentException("Chi chap nhan tep anh (JPEG, PNG, WebP, GIF)");
+            throw new IllegalArgumentException("Chỉ chấp nhận tệp ảnh (JPEG, PNG, WebP, GIF)");
         String moRong = layMoRongAnToan(tep.getOriginalFilename(), loai);
         String ten = UUID.randomUUID() + moRong;
         Path thuMuc = Paths.get(thuMucGoc).toAbsolutePath().normalize().resolve("phong");
@@ -34,10 +34,10 @@ public class TapTinPhongService {
 
     /** Ảnh đính kèm tin nhắn chat — thư mục uploads/chat */
     public String luuAnhChat(MultipartFile tep) throws IOException {
-        if (tep == null || tep.isEmpty()) throw new IllegalArgumentException("Tep trong");
+        if (tep == null || tep.isEmpty()) throw new IllegalArgumentException("Tệp trống");
         String loai = tep.getContentType();
         if (loai == null || !loai.startsWith("image/"))
-            throw new IllegalArgumentException("Chi chap nhan tep anh (JPEG, PNG, WebP, GIF)");
+            throw new IllegalArgumentException("Chỉ chấp nhận tệp ảnh (JPEG, PNG, WebP, GIF)");
         String moRong = layMoRongAnToan(tep.getOriginalFilename(), loai);
         String ten = UUID.randomUUID() + moRong;
         Path thuMuc = Paths.get(thuMucGoc).toAbsolutePath().normalize().resolve("chat");

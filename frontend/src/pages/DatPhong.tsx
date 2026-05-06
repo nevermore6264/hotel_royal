@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { CreditCard, Loader2 } from "lucide-react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import api from "../api/client";
 
 type Phong = {
@@ -66,6 +67,8 @@ export default function DatPhong() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const payosHuyToastKey = useRef<string | null>(null);
   const idPhongTuUrl = useMemo(
     () => parseIdPhongTuQuery(searchParams),
     [searchParams],
@@ -119,6 +122,49 @@ export default function DatPhong() {
       if (nextOut !== checkOut) setCheckOut(nextOut);
     }
   }, [checkIn, checkOut]);
+
+  /** PayOS redirect về cancelUrl: hiện thông báo và gỡ query thừa (code, id, orderCode…). */
+  useEffect(() => {
+    const cancel = searchParams.get("cancel");
+    const status = searchParams.get("status");
+    const orderCode = searchParams.get("orderCode");
+    const isPayOsReturn =
+      searchParams.has("code") &&
+      searchParams.has("id") &&
+      (orderCode != null && orderCode !== "");
+    if (!isPayOsReturn) return;
+
+    const isCancelled =
+      cancel === "true" ||
+      (status != null && status.toUpperCase() === "CANCELLED");
+    if (!isCancelled) return;
+
+    const dedupeKey = orderCode ?? searchParams.get("id") ?? "once";
+    try {
+      if (sessionStorage.getItem(`payos-huy-toast-${dedupeKey}`)) return;
+    } catch {
+      /* ignore */
+    }
+    if (payosHuyToastKey.current === dedupeKey) return;
+    payosHuyToastKey.current = dedupeKey;
+
+    try {
+      sessionStorage.setItem(`payos-huy-toast-${dedupeKey}`, "1");
+    } catch {
+      /* ignore */
+    }
+
+    toast(
+      "Bạn đã hủy thanh toán trên PayOS. Đơn vẫn chờ thanh toán — có thể thử lại hoặc hủy đơn trong mục Đơn của tôi.",
+      "info",
+    );
+
+    const next = new URLSearchParams(searchParams);
+    ["code", "id", "cancel", "status", "orderCode"].forEach((k) =>
+      next.delete(k),
+    );
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, toast]);
 
   /** Giữ idPhong + ngày trên URL khi khách chọn ngày (tránh mất ngữ cảnh / F5). */
   useEffect(() => {

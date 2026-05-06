@@ -19,7 +19,7 @@ public class DichVuChiTietNguoiDung implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String tenDangNhap) throws UsernameNotFoundException {
         NguoiDung nd = nguoiDungRepository.findByTenDangNhap(tenDangNhap)
-                .orElseThrow(() -> new UsernameNotFoundException("Khong tim thay nguoi dung: " + tenDangNhap));
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng: " + tenDangNhap));
         return ChuTheNguoiDung.tao(nd);
     }
 }

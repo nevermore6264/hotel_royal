@@ -40,7 +40,7 @@ public class BangGiaPhongService {
     @Transactional
     public BangGiaPhongDto tao(BangGiaPhongDto dto) {
         LoaiPhong loaiPhong = loaiPhongRepository.findById(dto.getIdLoaiPhong())
-                .orElseThrow(() -> new RuntimeException("Khong tim thay loai phong"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy loại phòng"));
         BangGiaPhong bangGia = BangGiaPhong.builder()
                 .loaiPhong(loaiPhong)
                 .tenChinhSach(dto.getTenChinhSach())
@@ -56,10 +56,10 @@ public class BangGiaPhongService {
     @Transactional
     public BangGiaPhongDto capNhat(Long id, BangGiaPhongDto dto) {
         BangGiaPhong bangGia = bangGiaPhongRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Khong tim thay bang gia"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bảng giá"));
         if (dto.getIdLoaiPhong() != null) {
             LoaiPhong loaiPhong = loaiPhongRepository.findById(dto.getIdLoaiPhong())
-                    .orElseThrow(() -> new RuntimeException("Khong tim thay loai phong"));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy loại phòng"));
             bangGia.setLoaiPhong(loaiPhong);
         }
         bangGia.setTenChinhSach(dto.getTenChinhSach());

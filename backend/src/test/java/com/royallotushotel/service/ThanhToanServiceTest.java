@@ -5,6 +5,7 @@ import com.royallotushotel.entity.DatPhong;
 import com.royallotushotel.entity.ThanhToan;
 import com.royallotushotel.hangso.MaTrangThaiThanhToan;
 import com.royallotushotel.repository.DatPhongRepository;
+import com.royallotushotel.repository.KhachHangRepository;
 import com.royallotushotel.repository.ThanhToanRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +25,8 @@ class ThanhToanServiceTest {
 
     @Mock
     private DatPhongRepository datPhongRepository;
+    @Mock
+    private KhachHangRepository khachHangRepository;
     @Mock
     private ThanhToanRepository thanhToanRepository;
     @Mock

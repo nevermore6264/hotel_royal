@@ -63,6 +63,16 @@ export default function DonCuaToi() {
       .finally(() => setLoading(false));
   }, []);
 
+  /** Sau khi quay lại từ PayOS / tab khác, làm mới danh sách để thấy trạng thái thanh toán mới. */
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState !== "visible") return;
+      api.get("/dat-phong/cua-toi").then((r) => setList(r.data)).catch(() => {});
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
   const runPendingCancel = async () => {
     if (!pendingCancel) return;
     setCancelBusy(true);

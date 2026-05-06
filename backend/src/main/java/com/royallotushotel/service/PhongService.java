@@ -67,18 +67,18 @@ public class PhongService {
 
     @Transactional(readOnly = true)
     public PhongDto layTheoId(Long id) {
-        Phong p = phongRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay phong"));
+        Phong p = phongRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy phòng"));
         return sangDto(p);
     }
 
     @Transactional
     public PhongDto tao(PhongDto dto) {
         if (phongRepository.existsBySoPhong(dto.getSoPhong()))
-            throw new RuntimeException("So phong da ton tai");
+            throw new RuntimeException("Số phòng đã tồn tại");
         Phong p = new Phong();
         p.setSoPhong(dto.getSoPhong());
         p.setTrangThai(dto.getTrangThai() != null ? dto.getTrangThai() : MaTrangThaiPhong.PHONG_TRONG);
-        p.setLoaiPhong(loaiPhongRepository.findById(dto.getIdLoaiPhong()).orElseThrow(() -> new RuntimeException("Khong tim thay loai phong")));
+        p.setLoaiPhong(loaiPhongRepository.findById(dto.getIdLoaiPhong()).orElseThrow(() -> new RuntimeException("Không tìm thấy loại phòng")));
         p.setTrangThaiVeSinh(dto.getTrangThaiVeSinh() != null ? dto.getTrangThaiVeSinh() : MaTrangThaiVeSinh.SACH);
         p.setGhiChuVeSinh(dto.getGhiChuVeSinh());
         p = phongRepository.save(p);
@@ -98,12 +98,12 @@ public class PhongService {
 
     @Transactional
     public PhongDto capNhat(Long id, PhongDto dto) {
-        Phong p = phongRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay phong"));
+        Phong p = phongRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy phòng"));
         String trangThaiCu = p.getTrangThai();
         p.setSoPhong(dto.getSoPhong());
         p.setTrangThai(dto.getTrangThai());
         if (dto.getIdLoaiPhong() != null) {
-            p.setLoaiPhong(loaiPhongRepository.findById(dto.getIdLoaiPhong()).orElseThrow(() -> new RuntimeException("Khong tim thay loai phong")));
+            p.setLoaiPhong(loaiPhongRepository.findById(dto.getIdLoaiPhong()).orElseThrow(() -> new RuntimeException("Không tìm thấy loại phòng")));
         }
         if (dto.getTrangThaiVeSinh() != null) {
             p.setTrangThaiVeSinh(dto.getTrangThaiVeSinh());
@@ -124,7 +124,7 @@ public class PhongService {
 
     @Transactional
     public void capNhatTrangThai(Long id, String trangThai) {
-        Phong p = phongRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay phong"));
+        Phong p = phongRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy phòng"));
         String cu = p.getTrangThai();
         p.setTrangThai(trangThai);
         phongRepository.save(p);
@@ -176,7 +176,7 @@ public class PhongService {
 
     @Transactional
     public void capNhatVeSinh(Long idPhong, String trangThaiVeSinh, String ghiChu) {
-        Phong p = phongRepository.findById(idPhong).orElseThrow(() -> new RuntimeException("Khong tim thay phong"));
+        Phong p = phongRepository.findById(idPhong).orElseThrow(() -> new RuntimeException("Không tìm thấy phòng"));
         p.setTrangThaiVeSinh(trangThaiVeSinh);
         if (ghiChu != null) p.setGhiChuVeSinh(ghiChu);
 

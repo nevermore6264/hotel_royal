@@ -99,7 +99,7 @@ class ChinhSachHuyPhongControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/chinh-sach-huy-phong/7")).andExpect(status().isNoContent());
+        mockMvc.perform(delete("/chinh-sach-huy-phong/7")).andExpect(status().isOk());
         verify(chinhSachHuyPhongService).xoa(7L);
     }
 }

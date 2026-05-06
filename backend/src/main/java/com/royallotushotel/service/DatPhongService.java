@@ -26,7 +26,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,11 +55,11 @@ public class DatPhongService {
 
     @Transactional(readOnly = true)
     public DatPhongDto layTheoId(Long id, ChuTheNguoiDung chuThe) {
-        DatPhong dp = datPhongRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay dat phong"));
+        DatPhong dp = datPhongRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy đặt phòng"));
         if (chuThe != null && chiLaKhachHang(chuThe) && !chiLaNhanVienLeTanHoacQuanTri(chuThe)) {
             Long idKhach = layIdKhachHangTheoIdNguoiDung(chuThe.getId());
             if (idKhach == null || !dp.getKhachHang().getId().equals(idKhach))
-                throw new RuntimeException("Khong co quyen xem dat phong nay");
+                throw new RuntimeException("Không có quyền xem đặt phòng này");
         }
         return sangDto(dp);
     }
@@ -83,14 +86,14 @@ public class DatPhongService {
     @Transactional
     public DatPhongDto tao(YeuCauTaoDatPhong yeuCau) {
         KhachHang kh = khachHangRepository.findById(yeuCau.getIdKhachHang())
-                .orElseThrow(() -> new RuntimeException("Khong tim thay khach hang"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
         int soDem = tinhSoDem(yeuCau);
         List<Phong> dsPhong = new ArrayList<>();
         for (Long idPhong : yeuCau.getIdPhong()) {
             Phong p = phongRepository.findById(idPhong)
-                    .orElseThrow(() -> new RuntimeException("Khong tim thay phong: " + idPhong));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy phòng: " + idPhong));
             if (!MaTrangThaiPhong.PHONG_TRONG.equals(p.getTrangThai())) {
-                throw new RuntimeException("Phong khong trong: " + p.getSoPhong());
+                throw new RuntimeException("Phòng không trống: " + p.getSoPhong());
             }
             dsPhong.add(p);
         }
@@ -150,7 +153,7 @@ public class DatPhongService {
     public void nhanPhong(Long idDatPhong) {
         DatPhong dp = layThucThe(idDatPhong);
         if (!MaTrangThaiDatPhong.DA_XAC_NHAN.equals(dp.getTrangThai())) {
-            throw new RuntimeException("Don phai o trang thai DA_XAC_NHAN de nhan phong");
+            throw new RuntimeException("Đơn phải ở trạng thái DA_XAC_NHAN để nhận phòng");
         }
         dp.setTrangThai(MaTrangThaiDatPhong.DA_NHAN_PHONG);
         for (ChiTietDatPhong d : dp.getChiTiet()) {
@@ -170,7 +173,7 @@ public class DatPhongService {
     public void traPhong(Long idDatPhong) {
         DatPhong dp = layThucThe(idDatPhong);
         if (!MaTrangThaiDatPhong.DA_NHAN_PHONG.equals(dp.getTrangThai())) {
-            throw new RuntimeException("Don phai o trang thai DA_NHAN_PHONG de tra phong");
+            throw new RuntimeException("Đơn phải ở trạng thái DA_NHAN_PHONG để trả phòng");
         }
         dp.setTrangThai(MaTrangThaiDatPhong.DA_TRA_PHONG);
         for (ChiTietDatPhong d : dp.getChiTiet()) {
@@ -210,7 +213,7 @@ public class DatPhongService {
         ChiTietDatPhong chiTiet = dp.getChiTiet().stream()
                 .filter(item -> item.getId().equals(idChiTiet))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Khong tim thay chi tiet dat phong"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết đặt phòng"));
         huyChiTietNoiBo(dp, chiTiet, lyDo != null && !lyDo.isBlank() ? lyDo : "Huy tung phong");
         capNhatTrangThaiDonSauKhiHuy(dp);
         capNhatTongThanhToan(dp);
@@ -250,7 +253,7 @@ public class DatPhongService {
 
     private DatPhong layThucThe(Long idDatPhong) {
         return datPhongRepository.findById(idDatPhong)
-                .orElseThrow(() -> new RuntimeException("Khong tim thay dat phong"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đặt phòng"));
     }
 
     private void capNhatTongThanhToan(DatPhong dp) {
@@ -292,7 +295,7 @@ public class DatPhongService {
 
     private void huyChiTietNoiBo(DatPhong dp, ChiTietDatPhong chiTiet, String lyDo) {
         if (!coTheHuy(chiTiet)) {
-            throw new RuntimeException("Phong nay khong the huy");
+            throw new RuntimeException("Phòng này không thể hủy");
         }
         BigDecimal soTienHoan = dichVuHoanTien.apDungHoanChiTiet(dp, chiTiet, lyDo);
         chiTiet.setTrangThai(MaTrangThaiChiTietDatPhong.DA_HUY);
@@ -338,11 +341,11 @@ public class DatPhongService {
 
     private void kiemTraQuyenChuDon(DatPhong dp, Long idNguoiDung) {
         if (dp.getKhachHang() == null || dp.getKhachHang().getNguoiDung() == null) {
-            throw new RuntimeException("Khong co quyen huy don nay");
+            throw new RuntimeException("Không có quyền hủy đơn này");
         }
         Long chuSoHuu = dp.getKhachHang().getNguoiDung().getId();
         if (chuSoHuu == null || !chuSoHuu.equals(idNguoiDung)) {
-            throw new RuntimeException("Khong co quyen huy don nay");
+            throw new RuntimeException("Không có quyền hủy đơn này");
         }
     }
 
@@ -387,9 +390,27 @@ public class DatPhongService {
         dto.setId(dp.getId());
         dto.setIdKhachHang(dp.getKhachHang().getId());
         dto.setTenKhachHang(dp.getKhachHang().getHoTen());
-        dto.setTenKhach(dp.getTenKhach());
-        dto.setSdtKhach(dp.getSdtKhach());
-        dto.setEmailKhach(dp.getEmailKhach());
+        String tenKhach = dp.getTenKhach();
+        if (tenKhach == null || tenKhach.isBlank()) {
+            tenKhach = dp.getKhachHang().getHoTen();
+        }
+        dto.setTenKhach(tenKhach);
+        String sdt = dp.getSdtKhach();
+        if (sdt == null || sdt.isBlank()) {
+            sdt = dp.getKhachHang().getSoDienThoai();
+        }
+        if ((sdt == null || sdt.isBlank()) && dp.getKhachHang().getNguoiDung() != null) {
+            sdt = dp.getKhachHang().getNguoiDung().getSoDienThoai();
+        }
+        dto.setSdtKhach(sdt);
+        String email = dp.getEmailKhach();
+        if (email == null || email.isBlank()) {
+            email = dp.getKhachHang().getEmail();
+        }
+        if ((email == null || email.isBlank()) && dp.getKhachHang().getNguoiDung() != null) {
+            email = dp.getKhachHang().getNguoiDung().getEmail();
+        }
+        dto.setEmailKhach(email);
         dto.setNgayNhanPhong(dp.getNgayNhanPhong());
         dto.setNgayTraPhong(dp.getNgayTraPhong());
         dto.setTrangThai(dp.getTrangThai());
@@ -437,7 +458,17 @@ public class DatPhongService {
             tt.setTrangThai(dp.getThanhToan().getTrangThai());
             tt.setThoiDiemThanhToan(dp.getThanhToan().getThoiDiemThanhToan());
             tt.setLanCapNhatCuoi(dp.getThanhToan().getLanCapNhatCuoi());
-            tt.setGiaoDich(dp.getThanhToan().getGiaoDich().stream().map(gd -> {
+            List<GiaoDichThanhToan> gdList = new ArrayList<>(dp.getThanhToan().getGiaoDich());
+            gdList.sort(Comparator.comparing(GiaoDichThanhToan::getId, Comparator.nullsLast(Comparator.naturalOrder())));
+            Set<String> daThayMaGiaoDich = new HashSet<>();
+            List<GiaoDichThanhToanDto> gdDtos = new ArrayList<>();
+            for (GiaoDichThanhToan gd : gdList) {
+                String maGd = gd.getMaGiaoDich();
+                if (maGd != null && !maGd.isBlank()) {
+                    if (!daThayMaGiaoDich.add(maGd)) {
+                        continue;
+                    }
+                }
                 GiaoDichThanhToanDto g = new GiaoDichThanhToanDto();
                 g.setId(gd.getId());
                 g.setMaGiaoDich(gd.getMaGiaoDich());
@@ -449,8 +480,9 @@ public class DatPhongService {
                 g.setThamChieuCong(gd.getThamChieuCong());
                 g.setThoiDiemGiaoDich(gd.getThoiDiemGiaoDich());
                 g.setGhiChu(gd.getGhiChu());
-                return g;
-            }).collect(Collectors.toList()));
+                gdDtos.add(g);
+            }
+            tt.setGiaoDich(gdDtos);
             dto.setThanhToan(tt);
         }
         return dto;

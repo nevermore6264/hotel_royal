@@ -108,7 +108,7 @@ class NguoiDungControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/nguoi-dung/6")).andExpect(status().isNoContent());
+        mockMvc.perform(delete("/nguoi-dung/6")).andExpect(status().isOk());
         verify(nguoiDungService).xoa(6L);
     }
 }

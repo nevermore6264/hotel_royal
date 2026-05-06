@@ -179,7 +179,7 @@ class PhongServiceTest {
         PhongDto dto = new PhongDto();
         dto.setSoPhong("101");
         dto.setIdLoaiPhong(10L);
-        assertThatThrownBy(() -> phongService.tao(dto)).hasMessageContaining("ton tai");
+        assertThatThrownBy(() -> phongService.tao(dto)).hasMessageContaining("tồn tại");
     }
 
     @Test
@@ -189,7 +189,7 @@ class PhongServiceTest {
         PhongDto dto = new PhongDto();
         dto.setSoPhong("201");
         dto.setIdLoaiPhong(10L);
-        assertThatThrownBy(() -> phongService.tao(dto)).hasMessageContaining("loai phong");
+        assertThatThrownBy(() -> phongService.tao(dto)).hasMessageContaining("loại phòng");
     }
 
     @Test

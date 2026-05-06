@@ -58,6 +58,7 @@ public class CauHinhBaoMat {
                         .requestMatchers(HttpMethod.POST, "/chinh-sach-huy-phong").hasRole("QUAN_TRI")
                         .requestMatchers(HttpMethod.PUT, "/chinh-sach-huy-phong/**").hasRole("QUAN_TRI")
                         .requestMatchers(HttpMethod.DELETE, "/chinh-sach-huy-phong/**").hasRole("QUAN_TRI")
+                        .requestMatchers(HttpMethod.POST, "/thanh-toan/dong-bo-payos").authenticated()
                         .requestMatchers("/thanh-toan/**").permitAll()
                         .requestMatchers("/chat/**")
                         .hasAnyRole("KHACH_HANG", "LE_TAN", "QUAN_TRI")

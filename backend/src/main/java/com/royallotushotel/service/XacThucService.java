@@ -62,9 +62,9 @@ public class XacThucService {
                             .collect(Collectors.toList()))
                     .build();
         } catch (LockedException e) {
-            throw new RuntimeException("Tài khoản đã bị khoá");
+            throw new RuntimeException("Tài khoản đã bị khóa");
         } catch (DisabledException e) {
-            throw new RuntimeException("Tai khoan đã bị vô hiệu khoá");
+            throw new RuntimeException("Tài khoản đã bị vô hiệu hóa");
         } catch (BadCredentialsException e) {
             throw new RuntimeException("Tài khoản hoặc mật khẩu không chính xác");
         }
@@ -73,9 +73,9 @@ public class XacThucService {
     @Transactional
     public PhanHoiXacThuc dangKy(YeuCauDangKy yeuCau) {
         if (nguoiDungRepository.existsByTenDangNhap(yeuCau.getTenDangNhap()))
-            throw new RuntimeException("Ten dang nhap da ton tai");
+            throw new RuntimeException("Tên đăng nhập đã tồn tại");
         if (nguoiDungRepository.existsByEmail(yeuCau.getEmail()))
-            throw new RuntimeException("Email da duoc dang ky");
+            throw new RuntimeException("Email đã được đăng ký");
 
         String loai = yeuCau.getLoaiTaiKhoan();
         boolean chiVangLai = loai != null && loai.equalsIgnoreCase(MaLoaiTaiKhoan.VANG_LAI);

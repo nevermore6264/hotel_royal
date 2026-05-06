@@ -42,7 +42,7 @@ public class ChinhSachHuyPhongService {
 
     @Transactional
     public ChinhSachHuyPhongDto capNhat(Long id, ChinhSachHuyPhongDto dto) {
-        ChinhSachHuyPhong cs = chinhSachHuyPhongRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay chinh sach"));
+        ChinhSachHuyPhong cs = chinhSachHuyPhongRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy chính sách"));
         cs.setSoGioTruocNhanPhong(dto.getSoGioTruocNhanPhong());
         cs.setTyLeHoanTien(dto.getTyLeHoanTien());
         cs.setMoTa(dto.getMoTa());

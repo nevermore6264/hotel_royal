@@ -106,7 +106,7 @@ class LoaiPhongControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void xoa() throws Exception {
-        mockMvc.perform(delete("/loai-phong/9")).andExpect(status().isNoContent());
+        mockMvc.perform(delete("/loai-phong/9")).andExpect(status().isOk());
         verify(loaiPhongService).xoa(9L);
     }
 }
