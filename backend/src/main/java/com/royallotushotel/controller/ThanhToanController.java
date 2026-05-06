@@ -37,7 +37,6 @@ public class ThanhToanController {
         return ResponseEntity.ok(Map.of("message", "OK"));
     }
 
-    /** Khách đăng nhập, quay lại từ PayOS — đồng bộ trạng thái khi webhook chưa/chưa tới được server. */
     @PostMapping("/dong-bo-payos")
     public ResponseEntity<Map<String, Object>> dongBoPayOs(
             @RequestBody Map<String, Object> body,

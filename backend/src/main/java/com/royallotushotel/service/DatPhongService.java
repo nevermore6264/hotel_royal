@@ -47,7 +47,6 @@ public class DatPhongService {
     private final DichVuHoanTien dichVuHoanTien;
     private final GuiEmailService guiEmailService;
 
-    /** Số phút giữ chỗ thanh toán cho đơn CHO_DUYET; ≤ 0 = không tự hủy. */
     @Value("${app.dat-phong.phut-giu-cho-thanh-toan:30}")
     private int phutGiuChoThanhToan;
 
@@ -96,10 +95,6 @@ public class DatPhongService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Hủy đơn CHO_DUYET chưa thu tiền nếu đã quá thời gian giữ chờ thanh toán.
-     * Dùng khóa pessimistic để tránh xung đột với ghi nhận PayOS.
-     */
     @Transactional
     public void huyTuDongNeuCanTheoId(Long idDatPhong) {
         if (phutGiuChoThanhToan <= 0) {

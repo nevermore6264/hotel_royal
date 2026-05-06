@@ -103,7 +103,6 @@ const US = (photoPath: string) =>
 const US_SLIDE = (photoPath: string) =>
   `https://images.unsplash.com/${photoPath}?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=85`;
 
-/** Cùng ảnh Unsplash, tăng chiều rộng crop để xem lớn trong lightbox */
 function galleryLargeSrc(url: string) {
   return url.replace(/w=\d+/, "w=1920").replace(/q=\d+/, "q=88");
 }
@@ -244,7 +243,6 @@ type SlideItem = {
   fallback?: string;
 };
 
-/** Ảnh full-width cho slideshow (khác kích thước crop với grid gallery) */
 const SLIDESHOW: SlideItem[] = [
   {
     label: "Sảnh & lễ tân",

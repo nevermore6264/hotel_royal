@@ -17,7 +17,6 @@ import java.util.Optional;
 
 @Repository
 public interface DatPhongRepository extends JpaRepository<DatPhong, Long> {
-    /** Khóa hàng đặt phòng để tránh ghi nhận PayOS trùng (webhook + đồng bộ redirect). */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT d FROM DatPhong d WHERE d.id = :id")
     Optional<DatPhong> timVaKhoaTheoId(@Param("id") Long id);

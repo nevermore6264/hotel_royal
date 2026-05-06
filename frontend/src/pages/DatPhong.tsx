@@ -29,7 +29,6 @@ function soDemLuuTru(ngayNhan: string, ngayTra: string): number | null {
   return days > 0 ? days : null;
 }
 
-/** Hôm nay theo lịch máy, yyyy-MM-dd (dùng cho input type=date và so sánh chuỗi). */
 function ngayHomNayYyyyMmDd(): string {
   const d = new Date();
   const y = d.getFullYear();
@@ -47,7 +46,6 @@ function congNgay(yyyyMmDd: string, soNgay: number): string {
   return `${y}-${m}-${day}`;
 }
 
-/** Hiển thị ngày theo kiểu Việt Nam: dd/MM/yyyy (từ chuỗi yyyy-MM-dd của input type=date). */
 function formatNgayVietNam(yyyyMmDd: string): string {
   if (!yyyyMmDd) return "";
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(yyyyMmDd.trim());
@@ -60,7 +58,6 @@ function chuanHoaPhong(p: Phong): Phong {
   return { ...p, id: Number(p.id) };
 }
 
-/** Khớp mặc định backend `payment.payos.ty-le-coc-phan-tram` (30). */
 const TY_LE_COC_PAYOS = 30;
 
 export default function DatPhong() {
@@ -102,7 +99,6 @@ export default function DatPhong() {
       ? congNgay(checkIn, 1)
       : congNgay(homNayStr, 1);
 
-  /** Chuẩn hoá ngày từ URL / trạng thái: không nhận/trả trước hôm nay; trả sau ≥ nhận + 1 đêm. */
   useEffect(() => {
     const homNay = ngayHomNayYyyyMmDd();
     let nextIn = checkIn;
@@ -123,7 +119,6 @@ export default function DatPhong() {
     }
   }, [checkIn, checkOut]);
 
-  /** PayOS redirect về cancelUrl: hiện thông báo và gỡ query thừa (code, id, orderCode…). */
   useEffect(() => {
     const cancel = searchParams.get("cancel");
     const status = searchParams.get("status");
@@ -142,17 +137,13 @@ export default function DatPhong() {
     const dedupeKey = orderCode ?? searchParams.get("id") ?? "once";
     try {
       if (sessionStorage.getItem(`payos-huy-toast-${dedupeKey}`)) return;
-    } catch {
-      /* ignore */
-    }
+    } catch {}
     if (payosHuyToastKey.current === dedupeKey) return;
     payosHuyToastKey.current = dedupeKey;
 
     try {
       sessionStorage.setItem(`payos-huy-toast-${dedupeKey}`, "1");
-    } catch {
-      /* ignore */
-    }
+    } catch {}
 
     toast(
       "Bạn đã hủy thanh toán trên PayOS. Đơn vẫn chờ thanh toán — có thể thử lại hoặc hủy đơn trong mục Đơn của tôi.",
@@ -166,7 +157,6 @@ export default function DatPhong() {
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams, toast]);
 
-  /** Giữ idPhong + ngày trên URL khi khách chọn ngày (tránh mất ngữ cảnh / F5). */
   useEffect(() => {
     if (!datesOk) return;
     const idStr = idPhongTuUrl != null ? String(idPhongTuUrl) : null;
@@ -240,7 +230,6 @@ export default function DatPhong() {
       .finally(() => setRoomsLoading(false));
   }, [checkIn, checkOut, searchParams]);
 
-  /** Luôn giữ phòng từ URL trong danh sách chọn nếu còn trống theo ngày. */
   useEffect(() => {
     if (idPhongTuUrl == null || !datesOk || roomsLoading) return;
     const con = rooms.some((r) => r.id === idPhongTuUrl);

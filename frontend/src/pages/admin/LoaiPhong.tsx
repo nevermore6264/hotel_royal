@@ -198,9 +198,7 @@ export default function AdminLoaiPhong() {
         }));
         return;
       }
-    } catch {
-      // Bỏ qua lỗi kiểm tra trùng để không chặn thao tác lưu.
-    }
+    } catch {}
 
     const gia = parseVndIntegerInput(form.giaStr);
     const payload = {

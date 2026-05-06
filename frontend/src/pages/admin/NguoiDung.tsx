@@ -206,9 +206,7 @@ export default function AdminNguoiDung() {
         }));
         return;
       }
-    } catch {
-      // Không chặn lưu nếu lỗi mạng khi kiểm tra trùng; backend vẫn kiểm tra.
-    }
+    } catch {}
 
     setSaveBusy(true);
     try {

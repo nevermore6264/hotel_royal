@@ -24,7 +24,6 @@ public class DatPhongDto {
     private BigDecimal tienHoan;
     private BigDecimal tongTien;
     private LocalDateTime thoiGianTao;
-    /** Hết hạn thanh toán giữ chỗ (chỉ với đơn CHO_DUYET chưa thu tiền); sau thời điểm này hệ thống có thể tự hủy. */
     private LocalDateTime thoiDiemHetHanThanhToan;
     private Integer soGioHuyApDung;
     private BigDecimal tyLeHoanTienApDung;

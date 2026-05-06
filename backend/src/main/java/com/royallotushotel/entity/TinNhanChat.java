@@ -30,7 +30,6 @@ public class TinNhanChat {
     @Column(name = "noi_dung", nullable = false, columnDefinition = "TEXT")
     private String noiDung;
 
-    /** MaKieuTinChat — null trên dữ liệu cũ được coi là VAN_BAN */
     @Column(name = "kieu_tin", length = 20)
     private String kieuTin;
 

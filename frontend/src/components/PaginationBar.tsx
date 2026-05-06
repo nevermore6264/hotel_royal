@@ -8,7 +8,6 @@ type PaginationBarProps = {
   className?: string;
 };
 
-/** Thanh Trước / Sau + chỉ số trang (Spring Page: totalPages ≥ 1). */
 export default function PaginationBar({
   page,
   totalPages,
@@ -50,7 +49,6 @@ export default function PaginationBar({
     pagingStartedAtRef.current = Date.now();
     setPaging(true);
     onPageChange(nextPage);
-    // Fallback để tránh kẹt trạng thái loading nếu request lỗi.
     resetTimerRef.current = window.setTimeout(() => {
       setPaging(false);
       resetTimerRef.current = null;

@@ -12,7 +12,6 @@ public class TinNhanChatDto {
     private Long idNguoiGui;
     private String tenHienThiNguoiGui;
     private String noiDung;
-    /** VAN_BAN hoặc ANH */
     private String kieuTin;
     private LocalDateTime thoiDiem;
 }

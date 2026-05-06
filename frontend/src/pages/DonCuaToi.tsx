@@ -55,11 +55,9 @@ type DatPhong = {
       thoiDiemGiaoDich: string;
     }[];
   };
-  /** ISO từ backend: hết thời điểm này mà chưa thu tiền → đơn CHO_DUYET có thể bị hủy tự động. */
   thoiDiemHetHanThanhToan?: string;
 };
 
-/** Khớp backend `payment.payos.ty-le-coc-phan-tram` (mặc định 30). */
 const TY_LE_COC_PAYOS = 30;
 
 function formatThoiGianConLai(ms: number): string {
@@ -181,7 +179,6 @@ export default function DonCuaToi() {
     refreshList().finally(() => setLoading(false));
   }, [refreshList]);
 
-  /** PayOS redirect về /don-cua-toi khi hủy cổng thanh toán. */
   useEffect(() => {
     const cancel = searchParams.get("cancel");
     const status = searchParams.get("status");
@@ -201,17 +198,13 @@ export default function DonCuaToi() {
     const dedupeKey = orderCode ?? searchParams.get("id") ?? "once";
     try {
       if (sessionStorage.getItem(`payos-huy-toast-don-${dedupeKey}`)) return;
-    } catch {
-      /* ignore */
-    }
+    } catch {}
     if (payosHuyToastKey.current === dedupeKey) return;
     payosHuyToastKey.current = dedupeKey;
 
     try {
       sessionStorage.setItem(`payos-huy-toast-don-${dedupeKey}`, "1");
-    } catch {
-      /* ignore */
-    }
+    } catch {}
 
     toast(
       "Bạn đã hủy thanh toán trên PayOS. Đơn vẫn giữ nguyên — có thể thử thanh toán lại.",
@@ -226,7 +219,6 @@ export default function DonCuaToi() {
     void refreshList();
   }, [searchParams, setSearchParams, toast, refreshList]);
 
-  /** Sau khi quay lại từ PayOS / tab khác, làm mới danh sách để thấy trạng thái thanh toán mới. */
   useEffect(() => {
     const onVis = () => {
       if (document.visibilityState !== "visible") return;

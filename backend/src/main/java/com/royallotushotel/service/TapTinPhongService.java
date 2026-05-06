@@ -32,7 +32,6 @@ public class TapTinPhongService {
         return "/api/uploads/phong/" + ten;
     }
 
-    /** Ảnh đính kèm tin nhắn chat — thư mục uploads/chat */
     public String luuAnhChat(MultipartFile tep) throws IOException {
         if (tep == null || tep.isEmpty()) throw new IllegalArgumentException("Tệp trống");
         String loai = tep.getContentType();

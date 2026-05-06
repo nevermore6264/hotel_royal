@@ -76,7 +76,6 @@ function tenLoaiGiaoDich(ma?: string): string {
   return m[ma] ?? ma;
 }
 
-/** Một dòng ghi chú, tránh lặp chữ «PayOS» khi ghiChu đã nhắc cổng thanh toán. */
 function ghiChuHienThi(g: GiaoDich): string {
   const note = g.ghiChu?.trim();
   const quaPayOs = g.congThanhToan === "CONG_PAYOS";

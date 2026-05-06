@@ -113,7 +113,6 @@ export default function AdminDichVu() {
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
-    // Check trùng tên cho cả thêm và sửa (bỏ qua chính bản ghi đang sửa).
     try {
       const { data } = await api.get("/dich-vu", {
         params: { q: ten, page: 0, size: 200 },
@@ -131,9 +130,7 @@ export default function AdminDichVu() {
         }));
         return;
       }
-    } catch {
-      // Không chặn lưu nếu lỗi mạng trong bước check trùng.
-    }
+    } catch {}
 
     setSaveBusy(true);
     try {

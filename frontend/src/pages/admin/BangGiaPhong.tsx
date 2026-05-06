@@ -187,7 +187,6 @@ export default function AdminBangGiaPhong() {
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    // Một loại phòng không thể có 2 chính sách giao nhau theo ngày.
     try {
       const { data } = await api.get("/bang-gia-phong", {
         params: { idLoaiPhong: Number(form.idLoaiPhong), page: 0, size: 200 },
@@ -211,9 +210,7 @@ export default function AdminBangGiaPhong() {
         }));
         return;
       }
-    } catch {
-      // Không chặn thao tác lưu nếu lỗi mạng lúc kiểm tra giao nhau.
-    }
+    } catch {}
 
     const payload = {
       tenChinhSach: ten,

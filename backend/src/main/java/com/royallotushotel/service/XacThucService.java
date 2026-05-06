@@ -144,9 +144,6 @@ public class XacThucService {
         return map;
     }
 
-    /**
-     * Tài khoản có ROLE_KHACH_HANG nhưng chưa có bản ghi khách (vd. do quản trị tạo user) — tạo hồ sơ để đặt phòng/thanh toán.
-     */
     private Long taoKhachHangNeuCan(NguoiDung nd) {
         boolean laKhach = nd.getVaiTro().stream().map(VaiTro::getTen).anyMatch(MaVaiTro.KHACH_HANG::equals);
         if (!laKhach) {

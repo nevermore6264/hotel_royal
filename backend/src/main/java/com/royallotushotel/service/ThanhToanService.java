@@ -52,13 +52,9 @@ public class ThanhToanService {
     private String payOsApiUrl;
     @Value("${payment.payos.che-do-thu:false}")
     private boolean payOsCheDoThu;
-    /** Tỷ lệ đặt cọc so với tổng tiền kỳ lưu trú (1–99). */
     @Value("${payment.payos.ty-le-coc-phan-tram:30}")
     private int tyLeCocPhanTram;
 
-    /**
-     * @param cheDoThanhToan {@code TOAN_BO} — thu toàn bộ số còn lại; {@code DAT_COC} — thu cọc theo tỷ lệ cấu hình (tối đa bằng số còn lại).
-     */
     @Transactional
     public String taoUrlThanhToanPayOs(
             Long idDatPhong,
@@ -198,7 +194,6 @@ public class ThanhToanService {
         return s.length() <= 9 ? s : s.substring(0, 9);
     }
 
-    /** Ghi nhận một lần thu (đủ hoặc cọc); dùng cho webhook PayOS theo {@code amount} thực tế. */
     @Transactional
     public void ghiNhanThanhToan(
             Long idDatPhong,
@@ -270,7 +265,6 @@ public class ThanhToanService {
         datPhongService.xacNhanDatPhong(idDatPhong);
     }
 
-    /** Thu một lần toàn bộ số tiền còn lại (chế độ thử / tương thích cũ). */
     @Transactional
     public void xacNhanThanhToan(Long idDatPhong, String cong, String maGiaoDich) {
         ThanhToan tt0 = thanhToanRepository.findByDatPhong_Id(idDatPhong).orElse(null);
@@ -323,10 +317,6 @@ public class ThanhToanService {
                 BigDecimal.valueOf(amountVnd));
     }
 
-    /**
-     * Sau khi khách quay lại từ PayOS (returnUrl), gọi API PayOS để lấy {@code amountPaid} và ghi nhận
-     * giống webhook — cần thiết khi webhook không tới được (vd. chạy local).
-     */
     @Transactional
     public Map<String, Object> dongBoSauRedirectPayOs(
             Long idDatPhong,

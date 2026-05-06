@@ -36,9 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const t = localStorage.getItem("tokenTruyCap");
       const u = localStorage.getItem("nguoiDung");
       if (t && u) return JSON.parse(u) as NguoiDungSession;
-    } catch {
-      // Dữ liệu localStorage lỗi định dạng thì bỏ qua, coi như chưa đăng nhập.
-    }
+    } catch {}
     return null;
   });
 

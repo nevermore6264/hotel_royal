@@ -208,9 +208,7 @@ export default function AdminPhong() {
         }));
         return;
       }
-    } catch {
-      // Không chặn lưu nếu lỗi mạng ở bước kiểm tra trùng.
-    }
+    } catch {}
 
     setDangLuu(true);
     try {

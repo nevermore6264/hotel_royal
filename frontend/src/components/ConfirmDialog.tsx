@@ -7,7 +7,6 @@ type ConfirmDialogProps = {
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  /** Nút xác nhận dùng style cảnh báo (ví dụ xóa). */
   danger?: boolean;
   busy?: boolean;
   onConfirm: () => void;

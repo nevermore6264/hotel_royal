@@ -66,7 +66,6 @@ export function classBadgeThanhToan(ma?: string): string {
   }
 }
 
-/** Trạng thái vật lý phòng (bảng phòng quản trị). */
 export function tenTrangThaiPhong(ma?: string): string {
   const m: Record<string, string> = {
     PHONG_TRONG: "Trống",
