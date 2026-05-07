@@ -6,11 +6,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/bang-gia-phong")
@@ -47,9 +46,9 @@ public class BangGiaPhongController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('QUAN_TRI')")
-    public ResponseEntity<Void> xoa(@PathVariable Long id) {
+    public void xoa(@PathVariable Long id) {
         bangGiaPhongService.xoa(id);
-        return ResponseEntity.noContent().build();
     }
 }

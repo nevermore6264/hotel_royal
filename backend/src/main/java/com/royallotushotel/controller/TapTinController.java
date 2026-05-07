@@ -38,7 +38,8 @@ public class TapTinController {
 
     @PostMapping("/phong-anh-nhieu")
     @PreAuthorize("hasRole('QUAN_TRI')")
-    public ResponseEntity<?> taiLenNhieu(@RequestParam("files") MultipartFile[] files) {
+    public ResponseEntity<?> taiLenNhieu(
+            @RequestParam(value = "files", required = false) MultipartFile[] files) {
         boolean coTepThucSu = files != null
                 && Arrays.stream(files).anyMatch(f -> f != null && !f.isEmpty());
         if (!coTepThucSu)

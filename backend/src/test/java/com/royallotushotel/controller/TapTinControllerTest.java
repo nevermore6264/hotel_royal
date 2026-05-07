@@ -60,11 +60,6 @@ class TapTinControllerTest extends WebMvcAuditMockSupport {
     @Test
     @WithMockUser(roles = "QUAN_TRI")
     void taiLenNhieu_khongCoTep_400() throws Exception {
-        MockMultipartFile trong = new MockMultipartFile(
-                "files",
-                "trong.bin",
-                MediaType.APPLICATION_OCTET_STREAM_VALUE,
-                new byte[0]);
-        mockMvc.perform(multipart("/tap-tin/phong-anh-nhieu").file(trong)).andExpect(status().isBadRequest());
+        mockMvc.perform(multipart("/tap-tin/phong-anh-nhieu")).andExpect(status().isBadRequest());
     }
 }

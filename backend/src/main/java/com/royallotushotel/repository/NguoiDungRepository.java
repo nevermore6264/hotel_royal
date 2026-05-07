@@ -28,6 +28,9 @@ public interface NguoiDungRepository extends JpaRepository<NguoiDung, Long> {
     @Query("SELECT DISTINCT n FROM NguoiDung n JOIN n.vaiTro v WHERE v.ten IN ('ROLE_LE_TAN','ROLE_QUAN_TRI') AND n.trangThai = :tt ORDER BY n.hoTen ASC, n.tenDangNhap ASC")
     List<NguoiDung> timNhanVienHoTroChat(@Param("tt") String trangThai);
 
+    @Query("SELECT DISTINCT n FROM NguoiDung n JOIN n.vaiTro v WHERE v.ten = 'ROLE_KHACH_HANG' AND n.trangThai = :tt ORDER BY n.hoTen ASC, n.tenDangNhap ASC")
+    List<NguoiDung> timKhachHangChat(@Param("tt") String trangThai);
+
     @Query("SELECT DISTINCT n FROM NguoiDung n WHERE " +
             "(:q IS NULL OR :q = '' OR LOWER(n.tenDangNhap) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
             "LOWER(n.email) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(n.hoTen,'')) LIKE LOWER(CONCAT('%', :q, '%'))) " +

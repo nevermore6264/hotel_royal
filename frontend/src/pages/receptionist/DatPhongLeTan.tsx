@@ -14,7 +14,9 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../../api/client";
-import HoaDonDocument, { type HoaDonDuLieu } from "../../components/HoaDonDocument";
+import HoaDonDocument, {
+  type HoaDonDuLieu,
+} from "../../components/HoaDonDocument";
 import AlertDialog from "../../components/AlertDialog";
 import PaginationBar from "../../components/PaginationBar";
 import { apiErrorMessage } from "../../lib/apiError";
@@ -87,6 +89,36 @@ function emptyCounterForm() {
   };
 }
 
+type CounterForm = ReturnType<typeof emptyCounterForm>;
+type CounterErrors = Partial<Record<keyof CounterForm | "dateRange", string>>;
+
+function validateCounterForm(
+  form: CounterForm,
+  availableRooms: { id: number }[],
+): CounterErrors {
+  const errors: CounterErrors = {};
+  const email = form.customerEmail.trim();
+  const fullName = form.fullName.trim();
+  const phone = form.phone.trim();
+  const reEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const rePhone = /^(0|\+84)\d{9,10}$/;
+
+  if (fullName.length < 2) errors.fullName = "Họ tên tối thiểu 2 ký tự.";
+  if (!rePhone.test(phone)) errors.phone = "Số điện thoại chưa đúng định dạng.";
+  if (!reEmail.test(email)) errors.customerEmail = "Email chưa đúng định dạng.";
+  if (!form.checkInDate) errors.checkInDate = "Chọn ngày nhận phòng.";
+  if (!form.checkOutDate) errors.checkOutDate = "Chọn ngày trả phòng.";
+  if (form.checkInDate && form.checkOutDate && form.checkOutDate <= form.checkInDate) {
+    errors.dateRange = "Ngày trả phải sau ngày nhận.";
+  }
+  if (!form.selectedRoomId) {
+    errors.selectedRoomId = "Vui lòng chọn phòng trống.";
+  } else if (availableRooms.length > 0 && !availableRooms.some((r) => r.id === form.selectedRoomId)) {
+    errors.selectedRoomId = "Phòng đã chọn không còn khả dụng, vui lòng chọn lại.";
+  }
+  return errors;
+}
+
 export default function DatPhongLeTan() {
   const [list, setList] = useState<{
     content: DatPhong[];
@@ -110,21 +142,23 @@ export default function DatPhongLeTan() {
   });
   const invoiceRootRef = useRef<HTMLElement | null>(null);
   const [invoicePdfBusy, setInvoicePdfBusy] = useState(false);
-  const [notice, setNotice] = useState<{ title: string; message: string } | null>(
-    null,
-  );
+  const [notice, setNotice] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
 
   const [counterModalOpen, setCounterModalOpen] = useState(false);
   const [createBusy, setCreateBusy] = useState(false);
   const [createForm, setCreateForm] = useState(() => emptyCounterForm());
+  const [counterErrors, setCounterErrors] = useState<CounterErrors>({});
 
   const closeCounterModal = () => {
     setCounterModalOpen(false);
     setCreateForm(emptyCounterForm());
+    setCounterErrors({});
+    setAvailableRooms([]);
   };
-  const [roomTypes, setRoomTypes] = useState<{ id: number; ten: string }[]>(
-    [],
-  );
+  const [roomTypes, setRoomTypes] = useState<{ id: number; ten: string }[]>([]);
   const [availableRooms, setAvailableRooms] = useState<
     {
       id: number;
@@ -194,7 +228,9 @@ export default function DatPhongLeTan() {
         .from(el)
         .save();
     } catch {
-      window.alert("Không tạo được PDF. Thử nút In hoặc mở toàn màn hình để tải PDF.");
+      window.alert(
+        "Không tạo được PDF. Thử nút In hoặc mở toàn màn hình để tải PDF.",
+      );
     } finally {
       el.classList.remove("invoice-doc--paper");
       setInvoicePdfBusy(false);
@@ -211,7 +247,10 @@ export default function DatPhongLeTan() {
 
   useEffect(() => {
     const { checkInDate, checkOutDate, roomTypeId } = createForm;
-    if (!checkInDate || !checkOutDate) return;
+    if (!checkInDate || !checkOutDate) {
+      setAvailableRooms([]);
+      return;
+    }
     api
       .get("/phong/con-trong", {
         params: {
@@ -259,9 +298,12 @@ export default function DatPhongLeTan() {
 
   const cancelRoom = async (bookingId: number, detailId: number) => {
     try {
-      const res = await api.post(`/dat-phong/${bookingId}/chi-tiet/${detailId}/huy`, {
-        lyDo: "Le tan huy mot phong trong booking",
-      });
+      const res = await api.post(
+        `/dat-phong/${bookingId}/chi-tiet/${detailId}/huy`,
+        {
+          lyDo: "Le tan huy mot phong trong booking",
+        },
+      );
       setList((prev) => ({
         ...prev,
         content: prev.content.map((booking) =>
@@ -277,13 +319,12 @@ export default function DatPhongLeTan() {
   };
 
   const createBookingAtCounter = async () => {
+    const errors = validateCounterForm(createForm, availableRooms);
+    if (Object.keys(errors).length > 0) {
+      setCounterErrors(errors);
+      return;
+    }
     const email = createForm.customerEmail.trim();
-    if (!email) throw new Error("Vui lòng nhập email khách.");
-    if (!createForm.fullName) throw new Error("Vui lòng nhập họ tên.");
-    if (!createForm.phone) throw new Error("Vui lòng nhập số điện thoại.");
-    if (!createForm.checkInDate || !createForm.checkOutDate)
-      throw new Error("Vui lòng chọn ngày nhận/trả.");
-    if (!createForm.selectedRoomId) throw new Error("Vui lòng chọn phòng.");
 
     setCreateBusy(true);
     try {
@@ -356,7 +397,8 @@ export default function DatPhongLeTan() {
     <div className="container page-shell">
       <h1 className="page-title">Quản lý đặt phòng</h1>
       <p className="page-subtitle page-subtitle--tight">
-        Xác nhận đơn, nhận — trả phòng, dịch vụ. Trả phòng chỉ khi đã thu đủ (còn nợ theo cột “Còn lại” = 0). Xuất hóa đơn kỳ lưu trú khi cần.
+        Xác nhận đơn, nhận — trả phòng, dịch vụ. Trả phòng chỉ khi đã thu đủ
+        (còn nợ theo cột “Còn lại” = 0). Xuất hóa đơn kỳ lưu trú khi cần.
       </p>
       <div className="card mb-section">
         <div
@@ -437,218 +479,231 @@ export default function DatPhongLeTan() {
             Danh sách đặt phòng
           </h3>
           <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Mã</th>
-                <th>Khách</th>
-                <th>Ngày nhận / trả</th>
-                <th>Phòng</th>
-                <th>Trạng thái</th>
-                <th>Tổng tiền</th>
-                <th>Thanh toán</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.content.map((b) => (
-                <tr key={b.id}>
-                  <td>#{b.id}</td>
-                  <td>{b.tenKhachHang || b.tenKhach || "-"}</td>
-                  <td>
-                    {formatNgayVN(b.ngayNhanPhong)} → {formatNgayVN(b.ngayTraPhong)}
-                  </td>
-                  <td>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "0.4rem",
-                      }}
-                    >
-                      {b.chiTiet?.map((d) => (
-                        <div
-                          key={d.id}
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            gap: "0.75rem",
-                            alignItems: "center",
-                          }}
-                        >
-                          <span>
-                            {d.soPhong}{" "}
-                            <span className="text-muted text-sm">
-                              ({tenTrangThaiChiTietPhong(d.trangThai)})
-                            </span>
-                          </span>
-                          {(b.trangThai === "CHO_DUYET" ||
-                            b.trangThai === "DA_XAC_NHAN") &&
-                            d.trangThai !== "DA_HUY" && (
-                              <button
-                                type="button"
-                                className="btn btn-danger btn-sm"
-                                onClick={() => cancelRoom(b.id, d.id)}
-                              >
-                                <LogOut className="btn-ico" aria-hidden />
-                                Hủy phòng
-                              </button>
-                            )}
-                        </div>
-                      )) || "-"}
-                    </div>
-                  </td>
-                  <td>
-                    <span className={classBadgeDatPhong(b.trangThai)}>
-                      {tenTrangThaiDatPhong(b.trangThai)}
-                    </span>
-                  </td>
-                  <td>{Number(b.tongTien).toLocaleString("vi-VN")} VND</td>
-                  <td>
-                    {b.thanhToan ? (
-                      <div>
-                        <div className="text-sm">
-                          <span
-                            className={classBadgeThanhToan(
-                              b.thanhToan.trangThai,
-                            )}
+            <table>
+              <thead>
+                <tr>
+                  <th>Mã</th>
+                  <th>Khách</th>
+                  <th>Ngày nhận / trả</th>
+                  <th>Phòng</th>
+                  <th>Trạng thái</th>
+                  <th>Tổng tiền</th>
+                  <th>Thanh toán</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {list.content.map((b) => (
+                  <tr key={b.id}>
+                    <td>#{b.id}</td>
+                    <td>{b.tenKhachHang || b.tenKhach || "-"}</td>
+                    <td>
+                      {formatNgayVN(b.ngayNhanPhong)} →{" "}
+                      {formatNgayVN(b.ngayTraPhong)}
+                    </td>
+                    <td>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "0.4rem",
+                        }}
+                      >
+                        {b.chiTiet?.map((d) => (
+                          <div
+                            key={d.id}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: "0.75rem",
+                              alignItems: "center",
+                            }}
                           >
-                            {tenTrangThaiThanhToan(b.thanhToan.trangThai)}
-                          </span>
-                        </div>
-                        <div className="text-muted text-sm">
-                          Đã thu:{" "}
-                          {Number(b.thanhToan.tongDaThu || 0).toLocaleString(
-                            "vi-VN",
-                          )}{" "}
-                          VND
-                        </div>
-                        <div className="text-muted text-sm">
-                          Còn lại:{" "}
-                          {Number(b.thanhToan.conPhaiThu || 0).toLocaleString(
-                            "vi-VN",
-                          )}{" "}
-                          VND
-                        </div>
+                            <span>
+                              {d.soPhong}{" "}
+                              <span className="text-muted text-sm">
+                                ({tenTrangThaiChiTietPhong(d.trangThai)})
+                              </span>
+                            </span>
+                            {(b.trangThai === "CHO_DUYET" ||
+                              b.trangThai === "DA_XAC_NHAN") &&
+                              d.trangThai !== "DA_HUY" && (
+                                <button
+                                  type="button"
+                                  className="btn btn-danger btn-sm"
+                                  onClick={() => cancelRoom(b.id, d.id)}
+                                >
+                                  <LogOut className="btn-ico" aria-hidden />
+                                  Hủy phòng
+                                </button>
+                              )}
+                          </div>
+                        )) || "-"}
                       </div>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td>
-                    {b.trangThai === "CHO_DUYET" && (
-                      <button
-                        type="button"
-                        className="btn btn-sm"
-                        style={{ marginRight: "0.5rem" }}
-                        onClick={() => confirmBooking(b.id)}
-                      >
-                        <BadgeCheck className="btn-ico" aria-hidden />
-                        Xác nhận
-                      </button>
-                    )}
-                    {b.trangThai === "DA_XAC_NHAN" && (
-                      <button
-                        type="button"
-                        className="btn btn-sm"
-                        style={{ marginRight: "0.5rem" }}
-                        onClick={() => checkIn(b.id)}
-                      >
-                        <KeyRound className="btn-ico" aria-hidden />
-                        Nhận phòng
-                      </button>
-                    )}
-                    {b.trangThai === "DA_NHAN_PHONG" && (
-                      <>
+                    </td>
+                    <td>
+                      <span className={classBadgeDatPhong(b.trangThai)}>
+                        {tenTrangThaiDatPhong(b.trangThai)}
+                      </span>
+                    </td>
+                    <td>{Number(b.tongTien).toLocaleString("vi-VN")} VND</td>
+                    <td>
+                      {b.thanhToan ? (
+                        <div>
+                          <div className="text-sm">
+                            <span
+                              className={classBadgeThanhToan(
+                                b.thanhToan.trangThai,
+                              )}
+                            >
+                              {tenTrangThaiThanhToan(b.thanhToan.trangThai)}
+                            </span>
+                          </div>
+                          <div className="text-muted text-sm">
+                            Đã thu:{" "}
+                            {Number(b.thanhToan.tongDaThu || 0).toLocaleString(
+                              "vi-VN",
+                            )}{" "}
+                            VND
+                          </div>
+                          <div className="text-muted text-sm">
+                            Còn lại:{" "}
+                            {Number(b.thanhToan.conPhaiThu || 0).toLocaleString(
+                              "vi-VN",
+                            )}{" "}
+                            VND
+                          </div>
+                        </div>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td>
+                      {b.trangThai === "CHO_DUYET" && (
                         <button
                           type="button"
                           className="btn btn-sm"
                           style={{ marginRight: "0.5rem" }}
-                          disabled={conNoTheoHeThong(b)}
-                          title={
-                            conNoTheoHeThong(b)
-                              ? `Còn ${Number(
-                                  b.thanhToan?.conPhaiThu ?? 0,
-                                ).toLocaleString("vi-VN")} VND chưa thu — thu đủ rồi mới trả phòng`
-                              : "Ghi nhận trả phòng khi đã thu đủ"
-                          }
-                          onClick={() => checkOut(b.id)}
+                          onClick={() => confirmBooking(b.id)}
                         >
-                          <LogOut className="btn-ico" aria-hidden />
-                          Trả phòng
+                          <BadgeCheck className="btn-ico" aria-hidden />
+                          Xác nhận
                         </button>
-                        {conNoTheoHeThong(b) && (
-                          <p
-                            className="text-muted text-sm"
-                            style={{ margin: "0.35rem 0 0", maxWidth: 280, lineHeight: 1.35 }}
-                          >
-                            Còn phải thu{" "}
-                            <strong>
-                              {Number(b.thanhToan?.conPhaiThu ?? 0).toLocaleString("vi-VN")} VND
-                            </strong>
-                            . Thu đủ (PayOS / quy trình khách sạn) trước khi bấm Trả phòng.
-                          </p>
-                        )}
-                        <div className="inline-actions inline-actions--stack">
-                          <select
-                            className="input-compact"
-                            value={
-                              serviceIdByBooking[b.id] ?? services[0]?.id ?? ""
-                            }
-                            onChange={(e) =>
-                              setServiceIdByBooking((prev) => ({
-                                ...prev,
-                                [b.id]: Number(e.target.value),
-                              }))
-                            }
-                          >
-                            {services.map((s) => (
-                              <option key={s.id} value={s.id}>
-                                {s.ten}
-                              </option>
-                            ))}
-                          </select>
-                          <input
-                            className="input-compact"
-                            type="number"
-                            min={1}
-                            value={qtyByBooking[b.id] ?? 1}
-                            onChange={(e) =>
-                              setQtyByBooking((prev) => ({
-                                ...prev,
-                                [b.id]: Number(e.target.value),
-                              }))
-                            }
-                            style={{ width: 90 }}
-                            placeholder="SL"
-                            title="Số lượng"
-                          />
+                      )}
+                      {b.trangThai === "DA_XAC_NHAN" && (
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          style={{ marginRight: "0.5rem" }}
+                          onClick={() => checkIn(b.id)}
+                        >
+                          <KeyRound className="btn-ico" aria-hidden />
+                          Nhận phòng
+                        </button>
+                      )}
+                      {b.trangThai === "DA_NHAN_PHONG" && (
+                        <>
                           <button
                             type="button"
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => addService(b.id)}
+                            className="btn btn-sm"
+                            style={{ marginRight: "0.5rem" }}
+                            disabled={conNoTheoHeThong(b)}
+                            title={
+                              conNoTheoHeThong(b)
+                                ? `Còn ${Number(
+                                    b.thanhToan?.conPhaiThu ?? 0,
+                                  ).toLocaleString(
+                                    "vi-VN",
+                                  )} VND chưa thu — thu đủ rồi mới trả phòng`
+                                : "Ghi nhận trả phòng khi đã thu đủ"
+                            }
+                            onClick={() => checkOut(b.id)}
                           >
-                            <PackagePlus className="btn-ico" aria-hidden />
-                            Thêm dịch vụ
+                            <LogOut className="btn-ico" aria-hidden />
+                            Trả phòng
                           </button>
-                        </div>
-                      </>
-                    )}
+                          {conNoTheoHeThong(b) && (
+                            <p
+                              className="text-muted text-sm"
+                              style={{
+                                margin: "0.35rem 0 0",
+                                maxWidth: 280,
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              Còn phải thu{" "}
+                              <strong>
+                                {Number(
+                                  b.thanhToan?.conPhaiThu ?? 0,
+                                ).toLocaleString("vi-VN")}{" "}
+                                VND
+                              </strong>
+                              . Thu đủ (PayOS / quy trình khách sạn) trước khi
+                              bấm Trả phòng.
+                            </p>
+                          )}
+                          <div className="inline-actions inline-actions--stack">
+                            <select
+                              className="input-compact"
+                              value={
+                                serviceIdByBooking[b.id] ??
+                                services[0]?.id ??
+                                ""
+                              }
+                              onChange={(e) =>
+                                setServiceIdByBooking((prev) => ({
+                                  ...prev,
+                                  [b.id]: Number(e.target.value),
+                                }))
+                              }
+                            >
+                              {services.map((s) => (
+                                <option key={s.id} value={s.id}>
+                                  {s.ten}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              className="input-compact"
+                              type="number"
+                              min={1}
+                              value={qtyByBooking[b.id] ?? 1}
+                              onChange={(e) =>
+                                setQtyByBooking((prev) => ({
+                                  ...prev,
+                                  [b.id]: Number(e.target.value),
+                                }))
+                              }
+                              style={{ width: 90 }}
+                              placeholder="SL"
+                              title="Số lượng"
+                            />
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => addService(b.id)}
+                            >
+                              <PackagePlus className="btn-ico" aria-hidden />
+                              Thêm dịch vụ
+                            </button>
+                          </div>
+                        </>
+                      )}
 
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      style={{ marginTop: "0.5rem", display: "block" }}
-                      onClick={() => void issueInvoice(b.id)}
-                    >
-                      <FileText className="btn-ico" aria-hidden />
-                      Hóa đơn kỳ lưu trú
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        style={{ marginTop: "0.5rem", display: "block" }}
+                        onClick={() => void issueInvoice(b.id)}
+                      >
+                        <FileText className="btn-ico" aria-hidden />
+                        Hóa đơn kỳ lưu trú
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
           <PaginationBar
             page={page}
@@ -669,21 +724,35 @@ export default function DatPhongLeTan() {
         >
           <div
             className="card modal-panel invoice-page invoice-modal-panel"
-            style={{ maxWidth: "min(920px, calc(100vw - 2rem))", width: "100%" }}
+            style={{
+              maxWidth: "min(920px, calc(100vw - 2rem))",
+              width: "100%",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div
               className="invoice-toolbar no-print"
-              style={{ margin: "0 0 1rem", padding: 0, background: "transparent" }}
+              style={{
+                margin: "0 0 1rem",
+                padding: 0,
+                background: "transparent",
+              }}
             >
               <div
                 className="invoice-toolbar__inner"
                 style={{ flexWrap: "wrap", gap: "0.5rem" }}
               >
-                <h2 id="letan-invoice-title" className="card-title" style={{ margin: 0, flex: "1 1 12rem" }}>
+                <h2
+                  id="letan-invoice-title"
+                  className="card-title"
+                  style={{ margin: 0, flex: "1 1 12rem" }}
+                >
                   Hóa đơn kỳ lưu trú · Đơn #{invoiceModal.data.id}
                 </h2>
-                <div className="invoice-toolbar__actions" style={{ flexWrap: "wrap" }}>
+                <div
+                  className="invoice-toolbar__actions"
+                  style={{ flexWrap: "wrap" }}
+                >
                   <button
                     type="button"
                     className="btn btn-sm"
@@ -765,11 +834,19 @@ export default function DatPhongLeTan() {
               style={{ alignItems: "flex-start", gap: "1rem", flexShrink: 0 }}
             >
               <div>
-                <h2 id="counter-booking-title" className="card-title" style={{ margin: 0 }}>
+                <h2
+                  id="counter-booking-title"
+                  className="card-title"
+                  style={{ margin: 0 }}
+                >
                   Đặt phòng tại quầy
                 </h2>
-                <p className="text-muted text-sm" style={{ margin: "0.35rem 0 0", lineHeight: 1.45 }}>
-                  Nhập khách, kỳ lưu trú và chọn phòng trống. Đơn được xác nhận ngay sau khi tạo.
+                <p
+                  className="text-muted text-sm"
+                  style={{ margin: "0.35rem 0 0", lineHeight: 1.45 }}
+                >
+                  Nhập khách, kỳ lưu trú và chọn phòng trống. Đơn được xác nhận
+                  ngay sau khi tạo.
                 </p>
               </div>
               <button
@@ -780,37 +857,56 @@ export default function DatPhongLeTan() {
                 aria-label="Đóng"
               >
                 <X className="btn-ico" aria-hidden />
+                Đóng
               </button>
             </div>
 
-            <div className="counter-form-grid mt-4" style={{ overflowY: "auto", flex: 1, minHeight: 0 }}>
+            <div
+              className="counter-form-grid mt-4"
+              style={{ overflowY: "auto", flex: 1, minHeight: 0 }}
+            >
+              {counterErrors.dateRange ? (
+                <div className="g12">
+                  <p className="counter-form-error">{counterErrors.dateRange}</p>
+                </div>
+              ) : null}
               <div className="g4">
                 <label className="form-group">
                   <span>Họ tên</span>
                   <input
+                    className={counterErrors.fullName ? "counter-input counter-input--error" : "counter-input"}
                     value={createForm.fullName}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setCreateForm((p) => ({
                         ...p,
                         fullName: e.target.value,
-                      }))
-                    }
+                      }));
+                      setCounterErrors((prev) => ({ ...prev, fullName: undefined }));
+                    }}
                     placeholder="Họ và tên khách"
                     autoComplete="name"
                   />
+                  {counterErrors.fullName ? (
+                    <small className="counter-field-error">{counterErrors.fullName}</small>
+                  ) : null}
                 </label>
               </div>
               <div className="g4">
                 <label className="form-group">
                   <span>Số điện thoại</span>
                   <input
+                    className={counterErrors.phone ? "counter-input counter-input--error" : "counter-input"}
                     value={createForm.phone}
-                    onChange={(e) =>
-                      setCreateForm((p) => ({ ...p, phone: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      setCreateForm((p) => ({ ...p, phone: e.target.value }));
+                      setCounterErrors((prev) => ({ ...prev, phone: undefined }));
+                    }}
                     placeholder="09xx xxx xxx"
                     autoComplete="tel"
                   />
+                  {counterErrors.phone ? (
+                    <small className="counter-field-error">{counterErrors.phone}</small>
+                  ) : null}
                 </label>
               </div>
               <div className="g4">
@@ -818,60 +914,92 @@ export default function DatPhongLeTan() {
                   <span>Email</span>
                   <input
                     type="email"
+                    className={counterErrors.customerEmail ? "counter-input counter-input--error" : "counter-input"}
                     value={createForm.customerEmail}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setCreateForm((p) => ({
                         ...p,
                         customerEmail: e.target.value,
-                      }))
-                    }
+                      }));
+                      setCounterErrors((prev) => ({ ...prev, customerEmail: undefined }));
+                    }}
                     placeholder="email@example.com"
                     autoComplete="email"
                   />
+                  {counterErrors.customerEmail ? (
+                    <small className="counter-field-error">{counterErrors.customerEmail}</small>
+                  ) : null}
                 </label>
               </div>
 
-              <div className="g3">
+              <div className="g4">
                 <label className="form-group">
                   <span>Ngày nhận</span>
                   <input
                     type="date"
+                    className={counterErrors.checkInDate ? "counter-input counter-input--error" : "counter-input"}
                     value={createForm.checkInDate}
-                    onChange={(e) =>
+                    min={new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => {
                       setCreateForm((p) => ({
                         ...p,
                         checkInDate: e.target.value,
-                      }))
-                    }
+                        selectedRoomId: null,
+                      }));
+                      setCounterErrors((prev) => ({
+                        ...prev,
+                        checkInDate: undefined,
+                        dateRange: undefined,
+                        selectedRoomId: undefined,
+                      }));
+                    }}
                   />
+                  {counterErrors.checkInDate ? (
+                    <small className="counter-field-error">{counterErrors.checkInDate}</small>
+                  ) : null}
                 </label>
               </div>
-              <div className="g3">
+              <div className="g4">
                 <label className="form-group">
                   <span>Ngày trả</span>
                   <input
                     type="date"
+                    className={counterErrors.checkOutDate ? "counter-input counter-input--error" : "counter-input"}
                     value={createForm.checkOutDate}
-                    onChange={(e) =>
+                    min={createForm.checkInDate || new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => {
                       setCreateForm((p) => ({
                         ...p,
                         checkOutDate: e.target.value,
-                      }))
-                    }
+                        selectedRoomId: null,
+                      }));
+                      setCounterErrors((prev) => ({
+                        ...prev,
+                        checkOutDate: undefined,
+                        dateRange: undefined,
+                        selectedRoomId: undefined,
+                      }));
+                    }}
                   />
+                  {counterErrors.checkOutDate ? (
+                    <small className="counter-field-error">{counterErrors.checkOutDate}</small>
+                  ) : null}
                 </label>
               </div>
-              <div className="g3">
+              <div className="g4">
                 <label className="form-group">
                   <span>Loại phòng</span>
                   <select
+                    className={counterErrors.selectedRoomId ? "counter-input counter-input--error" : "counter-input"}
                     value={createForm.roomTypeId}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setCreateForm((p) => ({
                         ...p,
                         roomTypeId: e.target.value,
-                      }))
-                    }
+                        selectedRoomId: null,
+                      }));
+                      setCounterErrors((prev) => ({ ...prev, selectedRoomId: undefined }));
+                    }}
                   >
                     <option value="">(Tất cả)</option>
                     {roomTypes.map((rt) => (
@@ -884,56 +1012,68 @@ export default function DatPhongLeTan() {
               </div>
 
               <div className="g12">
-                <div className="text-muted text-sm" style={{ marginBottom: "0.5rem" }}>
+                <div
+                  className="text-muted text-sm"
+                  style={{ marginBottom: "0.5rem" }}
+                >
                   {availableRooms.length > 0
                     ? "Chọn một phòng trống:"
                     : "Chọn ngày nhận và trả để xem phòng trống."}
                 </div>
                 <div
-                  className="form-row"
+                  className="room-pick-grid"
                   style={{
-                    gap: "0.75rem",
-                    flexWrap: "wrap",
                     maxHeight: "min(240px, 38vh)",
                     overflowY: "auto",
-                    paddingBottom: "0.25rem",
+                    padding: "0.1rem 0.2rem 0.25rem",
                   }}
                 >
                   {availableRooms.map((rm) => (
-                    <label key={rm.id} className="room-pick-label">
+                    <label
+                      key={rm.id}
+                      className={`room-pick-label${createForm.selectedRoomId === rm.id ? " room-pick-label--on" : ""}`}
+                    >
                       <input
                         type="radio"
                         name="counter-room-pick"
                         checked={createForm.selectedRoomId === rm.id}
-                        onChange={() =>
+                        onChange={() => {
                           setCreateForm((p) => ({
                             ...p,
                             selectedRoomId: rm.id,
-                          }))
-                        }
+                          }));
+                          setCounterErrors((prev) => ({ ...prev, selectedRoomId: undefined }));
+                        }}
                       />
-                      <div>
-                        <div style={{ fontWeight: 700 }}>{rm.soPhong}</div>
-                        <div className="text-muted text-sm">
-                          {rm.tenLoaiPhong}{" "}
-                          <span>
-                            {Number(rm.giaChoKyLuuTru || rm.giaLoaiPhong).toLocaleString("vi-VN")}{" "}
-                            VND
-                          </span>
+                      <div className="room-pick-card">
+                        <div className="room-pick-card__head">
+                          <strong>{rm.soPhong}</strong>
+                        </div>
+                        <div className="room-pick-card__sub">
+                          {rm.tenLoaiPhong}
+                        </div>
+                        <div className="room-pick-card__price">
+                          {Number(
+                            rm.giaChoKyLuuTru || rm.giaLoaiPhong,
+                          ).toLocaleString("vi-VN")}{" "}
+                          VND
                         </div>
                       </div>
                     </label>
                   ))}
                 </div>
+                {counterErrors.selectedRoomId ? (
+                  <small className="counter-field-error">{counterErrors.selectedRoomId}</small>
+                ) : null}
               </div>
             </div>
 
             <div
-              className="form-row form-row--between mt-4 pt-3"
+              className="form-row mt-4 pt-3"
               style={{
                 gap: "0.75rem",
                 flexWrap: "wrap",
-                borderTop: "1px solid var(--border-subtle, #e2e8f0)",
+                justifyContent: "flex-end",
                 flexShrink: 0,
               }}
             >
@@ -965,7 +1105,7 @@ export default function DatPhongLeTan() {
                 ) : (
                   <UserPlus className="btn-ico" aria-hidden />
                 )}
-                Tạo đặt phòng
+                Lưu
               </button>
             </div>
           </div>

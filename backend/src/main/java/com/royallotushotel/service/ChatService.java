@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -187,7 +188,28 @@ public class ChatService {
         } else {
             ds = cuocTroChuyenRepository.findByNguoiHoTro_IdOrderByThoiDiemCapNhatDesc(user.getId());
         }
-        return ds.stream().map(this::sangTomTat).collect(Collectors.toList());
+        List<CuocTroChuyenTomTatDto> ketQua = new ArrayList<>();
+        List<NguoiDung> khach = nguoiDungRepository.timKhachHangChat(MaTrangThaiNguoiDung.HOAT_DONG);
+        for (NguoiDung k : khach) {
+            CuocTroChuyen cuoc = ds.stream()
+                    .filter(c -> c.getNguoiDungKhach() != null && k.getId().equals(c.getNguoiDungKhach().getId()))
+                    .findFirst()
+                    .orElse(null);
+            if (cuoc != null) {
+                ketQua.add(sangTomTat(cuoc));
+                continue;
+            }
+            ketQua.add(CuocTroChuyenTomTatDto.builder()
+                    .id(null)
+                    .idNguoiDungKhach(k.getId())
+                    .tenDangNhapKhach(k.getTenDangNhap())
+                    .hoTenKhach(k.getHoTen())
+                    .idNguoiHoTro(null)
+                    .tenNguoiHoTro(null)
+                    .thoiDiemCapNhat(null)
+                    .build());
+        }
+        return ketQua;
     }
 
     private CuocTroChuyenTomTatDto sangTomTat(CuocTroChuyen c) {
@@ -243,6 +265,46 @@ public class ChatService {
         cuoc.setThoiDiemCapNhat(LocalDateTime.now());
         cuocTroChuyenRepository.save(cuoc);
 
+        return sangDto(tin);
+    }
+
+    @Transactional
+    public TinNhanChatDto guiTinNhanVienTheoKhach(ChuTheNguoiDung user, Long idNguoiDungKhach, String noiDung, String kieuTin) {
+        if (!laNhanVienHoTro(user)) {
+            throw new RuntimeException("Không có quyền gửi tin");
+        }
+        if (idNguoiDungKhach == null) {
+            throw new RuntimeException("Thiếu khách hàng");
+        }
+        NoiDungVaKieu nk = chuanHoaNoiDung(noiDung, kieuTin);
+
+        NguoiDung nguoiGui = nguoiDungRepository.findById(user.getId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+        NguoiDung nguoiKhach = nguoiDungRepository.findById(idNguoiDungKhach)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
+        boolean laTaiKhoanKhach = nguoiKhach.getVaiTro().stream().anyMatch(v -> MaVaiTro.KHACH_HANG.equals(v.getTen()));
+        if (!laTaiKhoanKhach) {
+            throw new RuntimeException("Người nhận không phải khách hàng");
+        }
+
+        CuocTroChuyen cuoc = cuocTroChuyenRepository
+                .findByNguoiDungKhach_IdAndNguoiHoTro_Id(idNguoiDungKhach, user.getId())
+                .orElseGet(() -> cuocTroChuyenRepository.save(CuocTroChuyen.builder()
+                        .nguoiDungKhach(nguoiKhach)
+                        .nguoiHoTro(nguoiGui)
+                        .thoiDiemCapNhat(LocalDateTime.now())
+                        .build()));
+
+        TinNhanChat tin = TinNhanChat.builder()
+                .cuocTroChuyen(cuoc)
+                .nguoiGui(nguoiGui)
+                .noiDung(nk.noiDung())
+                .kieuTin(nk.kieuTin())
+                .thoiDiem(LocalDateTime.now())
+                .build();
+        tin = tinNhanChatRepository.save(tin);
+        cuoc.setThoiDiemCapNhat(LocalDateTime.now());
+        cuocTroChuyenRepository.save(cuoc);
         return sangDto(tin);
     }
 }

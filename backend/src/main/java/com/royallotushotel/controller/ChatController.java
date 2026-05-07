@@ -5,6 +5,7 @@ import com.royallotushotel.dto.NguoiDungHoTroChatDto;
 import com.royallotushotel.dto.TinNhanChatDto;
 import com.royallotushotel.dto.YeuCauGuiTinChat;
 import com.royallotushotel.dto.YeuCauGuiTinKhach;
+import com.royallotushotel.dto.YeuCauGuiTinNhanVienChoKhach;
 import com.royallotushotel.security.ChuTheNguoiDung;
 import com.royallotushotel.service.ChatService;
 import com.royallotushotel.service.TapTinPhongService;
@@ -90,5 +91,14 @@ public class ChatController {
             @Valid @RequestBody YeuCauGuiTinChat body) {
         return ResponseEntity.ok(chatService.guiTinNhanVien(
                 user, id, body.getNoiDung(), body.getKieuTin()));
+    }
+
+    @PostMapping("/nhan-vien/tin-nhan")
+    @PreAuthorize("hasAnyRole('LE_TAN','QUAN_TRI')")
+    public ResponseEntity<TinNhanChatDto> guiTinNhanVienTheoKhach(
+            @AuthenticationPrincipal ChuTheNguoiDung user,
+            @Valid @RequestBody YeuCauGuiTinNhanVienChoKhach body) {
+        return ResponseEntity.ok(chatService.guiTinNhanVienTheoKhach(
+                user, body.getIdNguoiDungKhach(), body.getNoiDung(), body.getKieuTin()));
     }
 }

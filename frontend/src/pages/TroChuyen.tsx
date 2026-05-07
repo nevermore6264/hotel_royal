@@ -30,7 +30,7 @@ type NguoiHoTro = {
 };
 
 type CuocTomTat = {
-  id: number;
+  id: number | null;
   idNguoiDungKhach: number;
   tenDangNhapKhach: string;
   hoTenKhach?: string | null;
@@ -516,7 +516,7 @@ function ChatStaff() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [cuocs, setCuocs] = useState<CuocTomTat[]>([]);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedKhachId, setSelectedKhachId] = useState<number | null>(null);
   const [tin, setTin] = useState<TinNhan[]>([]);
   const [draft, setDraft] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -542,27 +542,38 @@ function ChatStaff() {
     return () => window.clearInterval(id);
   }, []);
 
+  const cuocChon = cuocs.find((c) => c.idNguoiDungKhach === selectedKhachId);
+
   useEffect(() => {
-    if (selectedId == null) return;
-    loadTin(selectedId);
-    const id = window.setInterval(() => loadTin(selectedId!), 4000);
+    if (cuocChon?.id == null) {
+      setTin([]);
+      return;
+    }
+    loadTin(cuocChon.id);
+    const id = window.setInterval(() => loadTin(cuocChon.id!), 4000);
     return () => window.clearInterval(id);
-  }, [selectedId]);
+  }, [cuocChon?.id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [tin.length, selectedId]);
+  }, [tin.length, selectedKhachId]);
 
   const guiTinNhanVien = async () => {
-    if (selectedId == null) return;
+    if (selectedKhachId == null) return;
     const text = draft.trim();
     if (!text) return;
     try {
-      await api.post(`/chat/cuoc-tro-chuyen/${selectedId}/tin-nhan`, {
-        noiDung: text,
-      });
+      if (cuocChon?.id != null) {
+        await api.post(`/chat/cuoc-tro-chuyen/${cuocChon.id}/tin-nhan`, {
+          noiDung: text,
+        });
+      } else {
+        await api.post("/chat/nhan-vien/tin-nhan", {
+          idNguoiDungKhach: selectedKhachId,
+          noiDung: text,
+        });
+      }
       setDraft("");
-      loadTin(selectedId);
       loadCuocs();
     } catch (err) {
       toast(
@@ -574,7 +585,7 @@ function ChatStaff() {
   };
 
   const guiAnhNhanVien = async (file: File) => {
-    if (selectedId == null) return;
+    if (selectedKhachId == null) return;
     setUploading(true);
     try {
       const fd = new FormData();
@@ -583,11 +594,18 @@ function ChatStaff() {
         "/chat/tai-anh",
         fd,
       );
-      await api.post(`/chat/cuoc-tro-chuyen/${selectedId}/tin-nhan`, {
-        noiDung: data.duongDan,
-        kieuTin: KIEU_ANH,
-      });
-      loadTin(selectedId);
+      if (cuocChon?.id != null) {
+        await api.post(`/chat/cuoc-tro-chuyen/${cuocChon.id}/tin-nhan`, {
+          noiDung: data.duongDan,
+          kieuTin: KIEU_ANH,
+        });
+      } else {
+        await api.post("/chat/nhan-vien/tin-nhan", {
+          idNguoiDungKhach: selectedKhachId,
+          noiDung: data.duongDan,
+          kieuTin: KIEU_ANH,
+        });
+      }
       loadCuocs();
     } finally {
       setUploading(false);
@@ -601,8 +619,6 @@ function ChatStaff() {
 
   const tenKhach = (c: CuocTomTat) =>
     c.hoTenKhach?.trim() || c.tenDangNhapKhach;
-
-  const cuocChon = cuocs.find((c) => c.id === selectedId);
 
   const onKeyDownStaff = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -620,15 +636,15 @@ function ChatStaff() {
             <span className="messenger-sidebar__count">{cuocs.length}</span>
           </div>
           {cuocs.length === 0 ? (
-            <p className="messenger-sidebar__empty">Chưa có cuộc hội thoại.</p>
+            <p className="messenger-sidebar__empty">Chưa có khách hàng khả dụng.</p>
           ) : (
             <ul className="messenger-roster">
               {cuocs.map((c) => (
-                <li key={c.id}>
+                <li key={c.idNguoiDungKhach}>
                   <button
                     type="button"
-                    className={`messenger-roster-item${selectedId === c.id ? " messenger-roster-item--active" : ""}`}
-                    onClick={() => setSelectedId(c.id)}
+                    className={`messenger-roster-item${selectedKhachId === c.idNguoiDungKhach ? " messenger-roster-item--active" : ""}`}
+                    onClick={() => setSelectedKhachId(c.idNguoiDungKhach)}
                   >
                     <BadgeHoTen ten={tenKhach(c)} />
                     <span className="messenger-roster-item__main">
@@ -639,7 +655,9 @@ function ChatStaff() {
                         {c.tenNguoiHoTro
                           ? `Hỗ trợ: ${c.tenNguoiHoTro} · `
                           : ""}
-                        {formatTime(c.thoiDiemCapNhat)}
+                        {c.thoiDiemCapNhat
+                          ? formatTime(c.thoiDiemCapNhat)
+                          : "Chưa có hội thoại"}
                       </span>
                     </span>
                   </button>
@@ -650,12 +668,13 @@ function ChatStaff() {
         </aside>
 
         <section className="messenger-main">
-          {selectedId == null ? (
+          {selectedKhachId == null ? (
             <div className="messenger-placeholder">
               <p className="messenger-placeholder__title">Chọn một khách</p>
               <p className="messenger-placeholder__sub">
-                Mỗi dòng là một cuộc chat 1-1 với khách. Chọn bên trái để đọc và
-                trả lời — có thể gửi ảnh và emoji.
+                Danh sách bên trái gồm tất cả khách hàng đang hoạt động. Chọn
+                khách để đọc và trả lời; nếu chưa có hội thoại, tin nhắn đầu
+                tiên sẽ tự tạo kênh chat.
               </p>
             </div>
           ) : !cuocChon ? (

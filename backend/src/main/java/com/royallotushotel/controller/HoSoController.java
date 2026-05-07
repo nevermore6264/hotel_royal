@@ -6,6 +6,7 @@ import com.royallotushotel.dto.YeuCauDoiMatKhau;
 import com.royallotushotel.security.ChuTheNguoiDung;
 import com.royallotushotel.service.NguoiDungService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -31,10 +32,10 @@ public class HoSoController {
     }
 
     @PostMapping("/doi-mat-khau")
-    public ResponseEntity<Void> doiMatKhau(
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void doiMatKhau(
             @AuthenticationPrincipal ChuTheNguoiDung chuThe,
             @RequestBody YeuCauDoiMatKhau body) {
         nguoiDungService.doiMatKhau(chuThe.getId(), body.getMatKhauCu(), body.getMatKhauMoi());
-        return ResponseEntity.noContent().build();
     }
 }

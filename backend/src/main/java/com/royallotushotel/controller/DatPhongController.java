@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -58,17 +59,17 @@ public class DatPhongController {
     }
 
     @PostMapping("/{id}/nhan-phong")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN')")
-    public ResponseEntity<Void> nhanPhong(@PathVariable Long id) {
+    public void nhanPhong(@PathVariable Long id) {
         datPhongService.nhanPhong(id);
-        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/tra-phong")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN')")
-    public ResponseEntity<Void> traPhong(@PathVariable Long id) {
+    public void traPhong(@PathVariable Long id) {
         datPhongService.traPhong(id);
-        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/huy")
@@ -93,10 +94,10 @@ public class DatPhongController {
     }
 
     @PostMapping("/{id}/xac-nhan")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN')")
-    public ResponseEntity<Void> xacNhan(@PathVariable Long id) {
+    public void xacNhan(@PathVariable Long id) {
         datPhongService.xacNhanDatPhong(id);
-        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/hoa-don")

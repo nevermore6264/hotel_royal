@@ -41,19 +41,19 @@ class YeuCauDangKyValidationParameterizedTest {
                 Arguments.of("emailCongTy", "staff01", "secret12", "contact@royal-lotus.vn", "NV", null, null),
                 Arguments.of("tenGachDuoi", "user_name", "123456", "e@e.co", "Ten", null, null),
                 Arguments.of("tenSo", "user99", "123456", "e@e.co", "Ten", null, null),
-                Arguments.of("sdtRong", "u", "123456", "e@e.co", "Ten", "", null),
-                Arguments.of("sdtMotSo", "u", "123456", "e@e.co", "Ten", "0", null),
-                Arguments.of("mkDai", "u", "p".repeat(80), "e@e.co", "Ten", null, null),
+                Arguments.of("sdtRong", "user", "123456", "e@e.co", "Ten", "", null),
+                Arguments.of("sdtMotSo", "user", "123456", "e@e.co", "Ten", "0", null),
+                Arguments.of("mkDai", "user", "p".repeat(80), "e@e.co", "Ten", null, null),
                 Arguments.of("ten100", "a".repeat(100), "123456", "e@e.co", "Ten", null, null),
-                Arguments.of("emailPlus", "u", "123456", "name+tag@domain.com", "Ten", null, null),
-                Arguments.of("emailSubdomain", "u", "123456", "a@sub.domain.co.uk", "Ten", null, null),
-                Arguments.of("hoTenUnicode", "u", "123456", "e@e.co", "Trần Thị Hà", null, null),
-                Arguments.of("sdtKhoang", "u", "123456", "e@e.co", "Ten", "090 111 2222", null),
-                Arguments.of("loaiTk", "u", "123456", "e@e.co", "Ten", null, "VANG_LAI"),
-                Arguments.of("emailDauCham", "u", "123456", "first.last@company.com", "Ten", null, null),
+                Arguments.of("emailPlus", "user", "123456", "name+tag@domain.com", "Ten", null, null),
+                Arguments.of("emailSubdomain", "user", "123456", "a@sub.domain.co.uk", "Ten", null, null),
+                Arguments.of("hoTenUnicode", "user", "123456", "e@e.co", "Trần Thị Hà", null, null),
+                Arguments.of("sdtKhoang", "user", "123456", "e@e.co", "Ten", "090 111 2222", null),
+                Arguments.of("loaiTk", "user", "123456", "e@e.co", "Ten", null, "VANG_LAI"),
+                Arguments.of("emailDauCham", "user", "123456", "first.last@company.com", "Ten", null, null),
                 Arguments.of("tenCham", "user.name", "123456", "e@e.co", "Ten", null, null),
-                Arguments.of("emailSoTenMien", "u", "123456", "admin@123.com", "Ten", null, null),
-                Arguments.of("sdtDayDu", "u", "123456", "e@e.co", "Ten", "+84901234567", null)
+                Arguments.of("emailSoTenMien", "user", "123456", "admin@123.com", "Ten", null, null),
+                Arguments.of("sdtDayDu", "user", "123456", "e@e.co", "Ten", "+84901234567", null)
         );
     }
 

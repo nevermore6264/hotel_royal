@@ -2621,6 +2621,64 @@ a.layout-nav-link.layout-nav-link--active {
   gap: 0.75rem;
 }
 
+.counter-booking-modal {
+  max-width: min(700px, calc(100vw - 2rem)) !important;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, #2dd4bf 20%);
+  box-shadow:
+    0 18px 56px rgba(2, 6, 23, 0.56),
+    0 0 0 1px rgba(45, 212, 191, 0.12) inset;
+}
+
+.counter-booking-modal .form-group > span {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.counter-input {
+  border-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+.counter-input:focus {
+  border-color: rgba(45, 212, 191, 0.7) !important;
+}
+
+.counter-input--error {
+  border-color: color-mix(in srgb, var(--danger) 78%, #ffffff 22%) !important;
+  box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.14);
+}
+
+.counter-form-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.counter-field-error {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--danger);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.invoice-modal-panel .invoice-print-wrap {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(45, 212, 191, 0.42) rgba(15, 23, 42, 0.35);
+}
+.invoice-modal-panel .invoice-print-wrap::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.invoice-modal-panel .invoice-print-wrap::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.28);
+  border-radius: 999px;
+}
+.invoice-modal-panel .invoice-print-wrap::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 1px solid rgba(11, 15, 20, 0.55);
+}
+
 .counter-form-grid .g4 {
   grid-column: span 4;
 }
@@ -2645,21 +2703,89 @@ a.layout-nav-link.layout-nav-link--active {
 }
 
 .room-pick-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 0.85rem;
+  display: block;
+  min-width: 0;
+  padding: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition:
     border-color 0.2s ease,
-    background 0.2s ease;
+    background 0.2s ease,
+    transform 0.14s ease;
 }
 
 .room-pick-label:hover {
   border-color: rgba(45, 212, 191, 0.35);
   background: rgba(45, 212, 191, 0.06);
+  transform: translateY(-1px);
+}
+
+.room-pick-label--on {
+  border-color: rgba(45, 212, 191, 0.58);
+  background: rgba(45, 212, 191, 0.12);
+}
+
+.room-pick-label input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.room-pick-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.counter-booking-modal .room-pick-grid {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(45, 212, 191, 0.42) rgba(15, 23, 42, 0.35);
+}
+
+.counter-booking-modal .room-pick-grid::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.counter-booking-modal .room-pick-grid::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.28);
+  border-radius: 999px;
+}
+
+.counter-booking-modal .room-pick-grid::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 1px solid rgba(11, 15, 20, 0.55);
+}
+
+.room-pick-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.62rem 0.72rem;
+}
+
+.room-pick-card__head {
+  color: #f8fafc;
+  font-size: 1.02rem;
+  line-height: 1.2;
+}
+
+.room-pick-card__sub {
+  color: #9fb0c7;
+  font-size: 0.86rem;
+}
+
+.room-pick-card__price {
+  color: #d4f8f3;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .room-pick-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .toast-host {

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -47,18 +48,18 @@ public class DichVuController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('QUAN_TRI')")
-    public ResponseEntity<Void> xoa(@PathVariable Long id) {
+    public void xoa(@PathVariable Long id) {
         quanLyDichVuService.xoa(id);
-        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/dat-phong/{idDatPhong}/them")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN','BUONG_PHONG')")
-    public ResponseEntity<Void> themVaoDatPhong(@PathVariable Long idDatPhong, @RequestBody Map<String, Object> body) {
+    public void themVaoDatPhong(@PathVariable Long idDatPhong, @RequestBody Map<String, Object> body) {
         Long idDichVu = Long.valueOf(body.get("idDichVu").toString());
         int soLuong = body.containsKey("soLuong") ? ((Number) body.get("soLuong")).intValue() : 1;
         quanLyDichVuService.themVaoDatPhong(idDatPhong, idDichVu, soLuong);
-        return ResponseEntity.noContent().build();
     }
 }
