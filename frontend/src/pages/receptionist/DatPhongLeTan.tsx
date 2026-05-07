@@ -1,15 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   BadgeCheck,
+  Download,
+  ExternalLink,
   FileText,
   KeyRound,
-  ListPlus,
+  Loader2,
   LogOut,
   PackagePlus,
+  Printer,
   UserPlus,
   X,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import api from "../../api/client";
+import HoaDonDocument, { type HoaDonDuLieu } from "../../components/HoaDonDocument";
 import AlertDialog from "../../components/AlertDialog";
 import PaginationBar from "../../components/PaginationBar";
 import { apiErrorMessage } from "../../lib/apiError";
@@ -61,6 +66,27 @@ type DichVu = {
   gia: number;
 };
 
+function conPhaiThuSo(b: DatPhong): number {
+  return Number(b.thanhToan?.conPhaiThu ?? 0);
+}
+
+/** Còn số phải thu (VND) — chặn trả phòng tại quầy khi chưa thu đủ. */
+function conNoTheoHeThong(b: DatPhong): boolean {
+  return conPhaiThuSo(b) > 0.5;
+}
+
+function emptyCounterForm() {
+  return {
+    customerEmail: "",
+    fullName: "",
+    phone: "",
+    checkInDate: "",
+    checkOutDate: "",
+    roomTypeId: "" as string,
+    selectedRoomId: null as number | null,
+  };
+}
+
 export default function DatPhongLeTan() {
   const [list, setList] = useState<{
     content: DatPhong[];
@@ -77,25 +103,25 @@ export default function DatPhongLeTan() {
 
   const [invoiceModal, setInvoiceModal] = useState<{
     open: boolean;
-    data: unknown | null;
+    data: HoaDonDuLieu | null;
   }>({
     open: false,
     data: null,
   });
+  const invoiceRootRef = useRef<HTMLElement | null>(null);
+  const [invoicePdfBusy, setInvoicePdfBusy] = useState(false);
   const [notice, setNotice] = useState<{ title: string; message: string } | null>(
     null,
   );
 
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState({
-    customerEmail: "",
-    fullName: "",
-    phone: "",
-    checkInDate: "",
-    checkOutDate: "",
-    roomTypeId: "" as string,
-    selectedRoomId: null as number | null,
-  });
+  const [counterModalOpen, setCounterModalOpen] = useState(false);
+  const [createBusy, setCreateBusy] = useState(false);
+  const [createForm, setCreateForm] = useState(() => emptyCounterForm());
+
+  const closeCounterModal = () => {
+    setCounterModalOpen(false);
+    setCreateForm(emptyCounterForm());
+  };
   const [roomTypes, setRoomTypes] = useState<{ id: number; ten: string }[]>(
     [],
   );
@@ -134,6 +160,46 @@ export default function DatPhongLeTan() {
     const t = setTimeout(() => setQDebounced(searchQuick.trim()), 350);
     return () => clearTimeout(t);
   }, [searchQuick]);
+
+  useEffect(() => {
+    if (!invoiceModal.open) return;
+    document.body.classList.add("invoice-modal-print-mode");
+    return () => document.body.classList.remove("invoice-modal-print-mode");
+  }, [invoiceModal.open]);
+
+  const taiPdfTuModal = useCallback(async () => {
+    const el = invoiceRootRef.current;
+    const id = invoiceModal.data?.id;
+    if (!el || id == null) return;
+    setInvoicePdfBusy(true);
+    el.classList.add("invoice-doc--paper");
+    try {
+      const mod = await import("html2pdf.js");
+      const html2pdf = mod.default;
+      await html2pdf()
+        .set({
+          margin: [8, 8, 8, 8],
+          filename: `hoa-don-${id}.pdf`,
+          image: { type: "jpeg", quality: 0.92 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: "#ffffff",
+            scrollY: 0,
+            scrollX: 0,
+          },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        })
+        .from(el)
+        .save();
+    } catch {
+      window.alert("Không tạo được PDF. Thử nút In hoặc mở toàn màn hình để tải PDF.");
+    } finally {
+      el.classList.remove("invoice-doc--paper");
+      setInvoicePdfBusy(false);
+    }
+  }, [invoiceModal.data?.id]);
 
   useEffect(() => {
     api.get("/dich-vu").then((r) => setServices(r.data));
@@ -180,8 +246,15 @@ export default function DatPhongLeTan() {
   };
 
   const issueInvoice = async (id: number) => {
-    const res = await api.get(`/dat-phong/${id}/hoa-don`);
-    setInvoiceModal({ open: true, data: res.data });
+    try {
+      const res = await api.get<HoaDonDuLieu>(`/dat-phong/${id}/hoa-don`);
+      setInvoiceModal({ open: true, data: res.data });
+    } catch (err) {
+      setNotice({
+        title: "Lỗi",
+        message: apiErrorMessage(err, "Không tải được dữ liệu hóa đơn"),
+      });
+    }
   };
 
   const cancelRoom = async (bookingId: number, detailId: number) => {
@@ -212,33 +285,38 @@ export default function DatPhongLeTan() {
       throw new Error("Vui lòng chọn ngày nhận/trả.");
     if (!createForm.selectedRoomId) throw new Error("Vui lòng chọn phòng.");
 
-    const found = await api.get("/khach-hang", { params: { q: email } });
-    let idKhachHang: number;
-    if (found.data && found.data.length > 0) {
-      idKhachHang = found.data[0].id;
-    } else {
-      const created = await api.post("/khach-hang", {
-        hoTen: createForm.fullName,
-        soDienThoai: createForm.phone,
-        email: createForm.customerEmail,
-        soCanCuoc: "",
+    setCreateBusy(true);
+    try {
+      const found = await api.get("/khach-hang", { params: { q: email } });
+      let idKhachHang: number;
+      if (found.data && found.data.length > 0) {
+        idKhachHang = found.data[0].id;
+      } else {
+        const created = await api.post("/khach-hang", {
+          hoTen: createForm.fullName,
+          soDienThoai: createForm.phone,
+          email: createForm.customerEmail,
+          soCanCuoc: "",
+        });
+        idKhachHang = created.data.id;
+      }
+
+      const createdBooking = await api.post("/dat-phong", {
+        idKhachHang,
+        ngayNhanPhong: createForm.checkInDate,
+        ngayTraPhong: createForm.checkOutDate,
+        idPhong: [createForm.selectedRoomId],
+        tenKhach: createForm.fullName,
+        sdtKhach: createForm.phone,
+        emailKhach: createForm.customerEmail,
       });
-      idKhachHang = created.data.id;
+
+      await api.post(`/dat-phong/${createdBooking.data.id}/xac-nhan`);
+      closeCounterModal();
+      reload();
+    } finally {
+      setCreateBusy(false);
     }
-
-    const createdBooking = await api.post("/dat-phong", {
-      idKhachHang,
-      ngayNhanPhong: createForm.checkInDate,
-      ngayTraPhong: createForm.checkOutDate,
-      idPhong: [createForm.selectedRoomId],
-      tenKhach: createForm.fullName,
-      sdtKhach: createForm.phone,
-      emailKhach: createForm.customerEmail,
-    });
-
-    await api.post(`/dat-phong/${createdBooking.data.id}/xac-nhan`);
-    setCreateOpen(false);
-    reload();
   };
 
   const checkOut = async (id: number) => {
@@ -252,7 +330,7 @@ export default function DatPhongLeTan() {
       }));
     } catch (err) {
       setNotice({
-        title: "Lỗi",
+        title: "Không thể trả phòng",
         message: apiErrorMessage(err, "Lỗi"),
       });
     }
@@ -278,12 +356,35 @@ export default function DatPhongLeTan() {
     <div className="container page-shell">
       <h1 className="page-title">Quản lý đặt phòng</h1>
       <p className="page-subtitle page-subtitle--tight">
-        Xác nhận đơn, nhận — trả phòng, dịch vụ và xuất hóa đơn.
+        Xác nhận đơn, nhận — trả phòng, dịch vụ. Trả phòng chỉ khi đã thu đủ (còn nợ theo cột “Còn lại” = 0). Xuất hóa đơn kỳ lưu trú khi cần.
       </p>
       <div className="card mb-section">
-        <h3 className="card-title" style={{ marginTop: 0 }}>
-          Tìm &amp; lọc đặt phòng
-        </h3>
+        <div
+          className="form-row form-row--between"
+          style={{
+            alignItems: "flex-start",
+            gap: "1rem",
+            flexWrap: "wrap",
+            marginBottom: "1rem",
+          }}
+        >
+          <div>
+            <h3 className="card-title" style={{ marginTop: 0 }}>
+              Tìm &amp; lọc đặt phòng
+            </h3>
+            <p className="text-muted text-sm" style={{ margin: "0.35rem 0 0" }}>
+              Lọc theo khách, trạng thái hoặc khoảng ngày nhận phòng.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => setCounterModalOpen(true)}
+          >
+            <UserPlus className="btn-ico" aria-hidden />
+            Đặt phòng tại quầy
+          </button>
+        </div>
         <div className="filter-toolbar">
           <div className="form-group">
             <label>Tìm khách (tên, SĐT, email)</label>
@@ -332,199 +433,6 @@ export default function DatPhongLeTan() {
         </div>
       ) : (
         <div className="card">
-          <div className="section-divider">
-            <div className="form-row form-row--between">
-              <div>
-                <h2 className="card-title" style={{ marginBottom: "0.35rem" }}>
-                  Tạo đặt phòng tại quầy
-                </h2>
-                <p className="text-muted text-sm" style={{ margin: 0 }}>
-                  Nhập thông tin khách và chọn phòng trống để tạo đặt phòng.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setCreateOpen((v) => !v)}
-              >
-                {createOpen ? (
-                  <>
-                    <X className="btn-ico" aria-hidden />
-                    Đóng
-                  </>
-                ) : (
-                  <>
-                    <ListPlus className="btn-ico" aria-hidden />
-                    Mở form tạo đặt phòng
-                  </>
-                )}
-              </button>
-            </div>
-
-            {createOpen && (
-              <div className="counter-form-grid">
-                <div className="g4">
-                  <label className="form-group">
-                    <span>Họ tên</span>
-                    <input
-                      value={createForm.fullName}
-                      onChange={(e) =>
-                        setCreateForm((p) => ({
-                          ...p,
-                          fullName: e.target.value,
-                        }))
-                      }
-                      placeholder="Họ và tên khách"
-                    />
-                  </label>
-                </div>
-                <div className="g4">
-                  <label className="form-group">
-                    <span>Số điện thoại</span>
-                    <input
-                      value={createForm.phone}
-                      onChange={(e) =>
-                        setCreateForm((p) => ({ ...p, phone: e.target.value }))
-                      }
-                      placeholder="09xx xxx xxx"
-                    />
-                  </label>
-                </div>
-                <div className="g4">
-                  <label className="form-group">
-                    <span>Email</span>
-                    <input
-                      value={createForm.customerEmail}
-                      onChange={(e) =>
-                        setCreateForm((p) => ({
-                          ...p,
-                          customerEmail: e.target.value,
-                        }))
-                      }
-                      placeholder="email@example.com"
-                    />
-                  </label>
-                </div>
-
-                <div className="g3">
-                  <label className="form-group">
-                    <span>Ngày nhận</span>
-                    <input
-                      type="date"
-                      value={createForm.checkInDate}
-                      onChange={(e) =>
-                        setCreateForm((p) => ({
-                          ...p,
-                          checkInDate: e.target.value,
-                        }))
-                      }
-                      placeholder="Ngày nhận phòng"
-                    />
-                  </label>
-                </div>
-                <div className="g3">
-                  <label className="form-group">
-                    <span>Ngày trả</span>
-                    <input
-                      type="date"
-                      value={createForm.checkOutDate}
-                      onChange={(e) =>
-                        setCreateForm((p) => ({
-                          ...p,
-                          checkOutDate: e.target.value,
-                        }))
-                      }
-                      placeholder="Ngày trả phòng"
-                    />
-                  </label>
-                </div>
-                <div className="g3">
-                  <label className="form-group">
-                    <span>Loại phòng</span>
-                    <select
-                      value={createForm.roomTypeId}
-                      onChange={(e) =>
-                        setCreateForm((p) => ({
-                          ...p,
-                          roomTypeId: e.target.value,
-                        }))
-                      }
-                    >
-                      <option value="">(Tất cả)</option>
-                      {roomTypes.map((rt) => (
-                        <option key={rt.id} value={rt.id}>
-                          {rt.ten}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-                <div
-                  className="g3"
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-end",
-                  }}
-                >
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={async () => {
-                      try {
-                        await createBookingAtCounter();
-                      } catch (err) {
-                        setNotice({
-                          title: "Lỗi",
-                          message: apiErrorMessage(err, "Lỗi"),
-                        });
-                      }
-                    }}
-                  >
-                    <UserPlus className="btn-ico" aria-hidden />
-                    Tạo đặt phòng
-                  </button>
-                </div>
-
-                <div className="g12">
-                  <div className="text-muted text-sm" style={{ marginBottom: "0.5rem" }}>
-                    {availableRooms.length > 0
-                      ? "Chọn phòng trống:"
-                      : "Chưa có danh sách phòng. Hãy chọn ngày trước."}
-                  </div>
-                  <div className="form-row" style={{ gap: "0.75rem" }}>
-                    {availableRooms.map((rm) => (
-                      <label key={rm.id} className="room-pick-label">
-                        <input
-                          type="radio"
-                          name="room"
-                          checked={createForm.selectedRoomId === rm.id}
-                          onChange={() =>
-                            setCreateForm((p) => ({
-                              ...p,
-                              selectedRoomId: rm.id,
-                            }))
-                          }
-                        />
-                        <div>
-                          <div style={{ fontWeight: 700 }}>{rm.soPhong}</div>
-                          <div className="text-muted text-sm">
-                            {rm.tenLoaiPhong}{" "}
-                            <span>
-                              {Number(
-                                rm.giaChoKyLuuTru || rm.giaLoaiPhong,
-                              ).toLocaleString("vi-VN")}{" "}
-                              VND
-                            </span>
-                          </div>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
           <h3 className="card-title" style={{ marginBottom: "0.75rem" }}>
             Danh sách đặt phòng
           </h3>
@@ -656,11 +564,31 @@ export default function DatPhongLeTan() {
                           type="button"
                           className="btn btn-sm"
                           style={{ marginRight: "0.5rem" }}
+                          disabled={conNoTheoHeThong(b)}
+                          title={
+                            conNoTheoHeThong(b)
+                              ? `Còn ${Number(
+                                  b.thanhToan?.conPhaiThu ?? 0,
+                                ).toLocaleString("vi-VN")} VND chưa thu — thu đủ rồi mới trả phòng`
+                              : "Ghi nhận trả phòng khi đã thu đủ"
+                          }
                           onClick={() => checkOut(b.id)}
                         >
                           <LogOut className="btn-ico" aria-hidden />
                           Trả phòng
                         </button>
+                        {conNoTheoHeThong(b) && (
+                          <p
+                            className="text-muted text-sm"
+                            style={{ margin: "0.35rem 0 0", maxWidth: 280, lineHeight: 1.35 }}
+                          >
+                            Còn phải thu{" "}
+                            <strong>
+                              {Number(b.thanhToan?.conPhaiThu ?? 0).toLocaleString("vi-VN")} VND
+                            </strong>
+                            . Thu đủ (PayOS / quy trình khách sạn) trước khi bấm Trả phòng.
+                          </p>
+                        )}
                         <div className="inline-actions inline-actions--stack">
                           <select
                             className="input-compact"
@@ -711,10 +639,10 @@ export default function DatPhongLeTan() {
                       type="button"
                       className="btn btn-secondary btn-sm"
                       style={{ marginTop: "0.5rem", display: "block" }}
-                      onClick={() => issueInvoice(b.id)}
+                      onClick={() => void issueInvoice(b.id)}
                     >
                       <FileText className="btn-ico" aria-hidden />
-                      Xuất hóa đơn
+                      Hóa đơn kỳ lưu trú
                     </button>
                   </td>
                 </tr>
@@ -734,28 +662,311 @@ export default function DatPhongLeTan() {
       {invoiceModal.open && invoiceModal.data != null ? (
         <div
           className="modal-backdrop"
-          role="presentation"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="letan-invoice-title"
           onClick={() => setInvoiceModal({ open: false, data: null })}
         >
           <div
-            className="card modal-panel"
+            className="card modal-panel invoice-page invoice-modal-panel"
+            style={{ maxWidth: "min(920px, calc(100vw - 2rem))", width: "100%" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="form-row form-row--between" style={{ alignItems: "center" }}>
-              <h2 className="card-title" style={{ margin: 0 }}>
-                Hóa đơn
-              </h2>
+            <div
+              className="invoice-toolbar no-print"
+              style={{ margin: "0 0 1rem", padding: 0, background: "transparent" }}
+            >
+              <div
+                className="invoice-toolbar__inner"
+                style={{ flexWrap: "wrap", gap: "0.5rem" }}
+              >
+                <h2 id="letan-invoice-title" className="card-title" style={{ margin: 0, flex: "1 1 12rem" }}>
+                  Hóa đơn kỳ lưu trú · Đơn #{invoiceModal.data.id}
+                </h2>
+                <div className="invoice-toolbar__actions" style={{ flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    disabled={invoicePdfBusy}
+                    onClick={() => void taiPdfTuModal()}
+                  >
+                    {invoicePdfBusy ? (
+                      <Loader2 className="btn-ico btn-ico--spin" aria-hidden />
+                    ) : (
+                      <Download className="btn-ico" aria-hidden />
+                    )}
+                    Tải PDF
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => window.print()}
+                  >
+                    <Printer className="btn-ico" aria-hidden />
+                    In
+                  </button>
+                  <Link
+                    to={`/le-tan/hoa-don/${invoiceModal.data.id}`}
+                    className="btn btn-secondary btn-sm"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <ExternalLink className="btn-ico" aria-hidden />
+                    Toàn màn hình
+                  </Link>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    type="button"
+                    onClick={() => setInvoiceModal({ open: false, data: null })}
+                  >
+                    <X className="btn-ico" aria-hidden />
+                    Đóng
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div
+              className="invoice-print-wrap"
+              style={{ maxHeight: "min(70vh, 640px)", overflow: "auto" }}
+            >
+              <HoaDonDocument
+                ref={invoiceRootRef}
+                dp={invoiceModal.data}
+                tagline="Đà Nẵng · Hóa đơn kỳ lưu trú / Phiếu thanh toán"
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {counterModalOpen ? (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="counter-booking-title"
+          onClick={() => {
+            if (!createBusy) closeCounterModal();
+          }}
+        >
+          <div
+            className="card modal-panel counter-booking-modal"
+            style={{
+              maxWidth: "min(640px, calc(100vw - 2rem))",
+              width: "100%",
+              maxHeight: "min(92vh, 900px)",
+              display: "flex",
+              flexDirection: "column",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="form-row form-row--between"
+              style={{ alignItems: "flex-start", gap: "1rem", flexShrink: 0 }}
+            >
+              <div>
+                <h2 id="counter-booking-title" className="card-title" style={{ margin: 0 }}>
+                  Đặt phòng tại quầy
+                </h2>
+                <p className="text-muted text-sm" style={{ margin: "0.35rem 0 0", lineHeight: 1.45 }}>
+                  Nhập khách, kỳ lưu trú và chọn phòng trống. Đơn được xác nhận ngay sau khi tạo.
+                </p>
+              </div>
               <button
-                className="btn btn-secondary btn-sm"
                 type="button"
-                onClick={() => setInvoiceModal({ open: false, data: null })}
+                className="btn btn-secondary btn-sm"
+                disabled={createBusy}
+                onClick={closeCounterModal}
+                aria-label="Đóng"
               >
                 <X className="btn-ico" aria-hidden />
-                Đóng
               </button>
             </div>
-            <div className="mt-4">
-              <pre>{JSON.stringify(invoiceModal.data, null, 2)}</pre>
+
+            <div className="counter-form-grid mt-4" style={{ overflowY: "auto", flex: 1, minHeight: 0 }}>
+              <div className="g4">
+                <label className="form-group">
+                  <span>Họ tên</span>
+                  <input
+                    value={createForm.fullName}
+                    onChange={(e) =>
+                      setCreateForm((p) => ({
+                        ...p,
+                        fullName: e.target.value,
+                      }))
+                    }
+                    placeholder="Họ và tên khách"
+                    autoComplete="name"
+                  />
+                </label>
+              </div>
+              <div className="g4">
+                <label className="form-group">
+                  <span>Số điện thoại</span>
+                  <input
+                    value={createForm.phone}
+                    onChange={(e) =>
+                      setCreateForm((p) => ({ ...p, phone: e.target.value }))
+                    }
+                    placeholder="09xx xxx xxx"
+                    autoComplete="tel"
+                  />
+                </label>
+              </div>
+              <div className="g4">
+                <label className="form-group">
+                  <span>Email</span>
+                  <input
+                    type="email"
+                    value={createForm.customerEmail}
+                    onChange={(e) =>
+                      setCreateForm((p) => ({
+                        ...p,
+                        customerEmail: e.target.value,
+                      }))
+                    }
+                    placeholder="email@example.com"
+                    autoComplete="email"
+                  />
+                </label>
+              </div>
+
+              <div className="g3">
+                <label className="form-group">
+                  <span>Ngày nhận</span>
+                  <input
+                    type="date"
+                    value={createForm.checkInDate}
+                    onChange={(e) =>
+                      setCreateForm((p) => ({
+                        ...p,
+                        checkInDate: e.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+              <div className="g3">
+                <label className="form-group">
+                  <span>Ngày trả</span>
+                  <input
+                    type="date"
+                    value={createForm.checkOutDate}
+                    onChange={(e) =>
+                      setCreateForm((p) => ({
+                        ...p,
+                        checkOutDate: e.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+              <div className="g3">
+                <label className="form-group">
+                  <span>Loại phòng</span>
+                  <select
+                    value={createForm.roomTypeId}
+                    onChange={(e) =>
+                      setCreateForm((p) => ({
+                        ...p,
+                        roomTypeId: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">(Tất cả)</option>
+                    {roomTypes.map((rt) => (
+                      <option key={rt.id} value={rt.id}>
+                        {rt.ten}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="g12">
+                <div className="text-muted text-sm" style={{ marginBottom: "0.5rem" }}>
+                  {availableRooms.length > 0
+                    ? "Chọn một phòng trống:"
+                    : "Chọn ngày nhận và trả để xem phòng trống."}
+                </div>
+                <div
+                  className="form-row"
+                  style={{
+                    gap: "0.75rem",
+                    flexWrap: "wrap",
+                    maxHeight: "min(240px, 38vh)",
+                    overflowY: "auto",
+                    paddingBottom: "0.25rem",
+                  }}
+                >
+                  {availableRooms.map((rm) => (
+                    <label key={rm.id} className="room-pick-label">
+                      <input
+                        type="radio"
+                        name="counter-room-pick"
+                        checked={createForm.selectedRoomId === rm.id}
+                        onChange={() =>
+                          setCreateForm((p) => ({
+                            ...p,
+                            selectedRoomId: rm.id,
+                          }))
+                        }
+                      />
+                      <div>
+                        <div style={{ fontWeight: 700 }}>{rm.soPhong}</div>
+                        <div className="text-muted text-sm">
+                          {rm.tenLoaiPhong}{" "}
+                          <span>
+                            {Number(rm.giaChoKyLuuTru || rm.giaLoaiPhong).toLocaleString("vi-VN")}{" "}
+                            VND
+                          </span>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="form-row form-row--between mt-4 pt-3"
+              style={{
+                gap: "0.75rem",
+                flexWrap: "wrap",
+                borderTop: "1px solid var(--border-subtle, #e2e8f0)",
+                flexShrink: 0,
+              }}
+            >
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={createBusy}
+                onClick={closeCounterModal}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={createBusy}
+                onClick={async () => {
+                  try {
+                    await createBookingAtCounter();
+                  } catch (err) {
+                    setNotice({
+                      title: "Không tạo được đặt phòng",
+                      message: apiErrorMessage(err, "Lỗi"),
+                    });
+                  }
+                }}
+              >
+                {createBusy ? (
+                  <Loader2 className="btn-ico btn-ico--spin" aria-hidden />
+                ) : (
+                  <UserPlus className="btn-ico" aria-hidden />
+                )}
+                Tạo đặt phòng
+              </button>
             </div>
           </div>
         </div>

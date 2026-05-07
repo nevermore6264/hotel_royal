@@ -362,8 +362,6 @@ export default function DanhSachPhong() {
               const unitLabel = datesOk
                 ? `VND / kỳ${soDem != null ? ` · ${soDem} đêm` : ""}`
                 : "Giá tham khảo / đêm";
-              const coTheChonPhong =
-                isKhachHang && (datesOk || r.trangThai === "PHONG_TRONG");
 
               return (
                 <article
@@ -396,8 +394,8 @@ export default function DanhSachPhong() {
                         to={`/dat-phong?idPhong=${r.id}&ngayNhanPhong=${checkIn || ""}&ngayTraPhong=${checkOut || ""}`}
                         className="btn room-card__cta"
                         style={{
-                          pointerEvents: coTheChonPhong ? "auto" : "none",
-                          opacity: coTheChonPhong ? 1 : 0.55,
+                          pointerEvents: isKhachHang ? "auto" : "none",
+                          opacity: isKhachHang ? 1 : 0.55,
                         }}
                       >
                         <BedDouble className="btn-ico" aria-hidden />

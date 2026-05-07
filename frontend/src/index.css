@@ -4722,6 +4722,26 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
     margin: 10mm 12mm;
   }
 
+  /* Lễ tân: in chỉ nội dung modal hóa đơn, ẩn bảng đặt phòng phía sau */
+  body.invoice-modal-print-mode .page-shell > *:not(.modal-backdrop) {
+    display: none !important;
+  }
+
+  body.invoice-modal-print-mode .modal-backdrop {
+    position: static !important;
+    inset: auto !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  body.invoice-modal-print-mode .invoice-modal-panel {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
   .no-print {
     display: none !important;
   }

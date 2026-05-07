@@ -68,8 +68,25 @@ public class KhachHangService {
         KhachHangDto dto = new KhachHangDto();
         dto.setId(kh.getId());
         dto.setHoTen(kh.getHoTen());
-        dto.setSoDienThoai(kh.getSoDienThoai());
-        dto.setEmail(kh.getEmail());
+
+        String sdt = kh.getSoDienThoai();
+        if ((sdt == null || sdt.isBlank()) && kh.getNguoiDung() != null) {
+            String nd = kh.getNguoiDung().getSoDienThoai();
+            if (nd != null && !nd.isBlank()) {
+                sdt = nd;
+            }
+        }
+        dto.setSoDienThoai(sdt);
+
+        String email = kh.getEmail();
+        if ((email == null || email.isBlank()) && kh.getNguoiDung() != null) {
+            String nd = kh.getNguoiDung().getEmail();
+            if (nd != null && !nd.isBlank()) {
+                email = nd;
+            }
+        }
+        dto.setEmail(email);
+
         dto.setSoCanCuoc(kh.getSoCanCuoc());
         if (kh.getNguoiDung() != null) dto.setIdNguoiDung(kh.getNguoiDung().getId());
         return dto;

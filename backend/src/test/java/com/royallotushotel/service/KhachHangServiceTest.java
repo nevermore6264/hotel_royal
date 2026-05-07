@@ -2,6 +2,7 @@ package com.royallotushotel.service;
 
 import com.royallotushotel.dto.KhachHangDto;
 import com.royallotushotel.entity.KhachHang;
+import com.royallotushotel.entity.NguoiDung;
 import com.royallotushotel.repository.KhachHangRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +53,25 @@ class KhachHangServiceTest {
     void layTheoId_shouldThrowWhenMissing() {
         when(repository.findById(1L)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.layTheoId(1L)).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void layTheoId_laySdtVaEmailTuTaiKhoanKhiHoSoKhachTrong() {
+        NguoiDung nd = new NguoiDung();
+        nd.setId(5L);
+        nd.setSoDienThoai("0909111222");
+        nd.setEmail("user@test.com");
+        KhachHang kh = new KhachHang();
+        kh.setId(1L);
+        kh.setHoTen("Nguyen A");
+        kh.setSoDienThoai(null);
+        kh.setEmail(null);
+        kh.setNguoiDung(nd);
+        when(repository.findById(1L)).thenReturn(Optional.of(kh));
+        KhachHangDto r = service.layTheoId(1L);
+        assertThat(r.getSoDienThoai()).isEqualTo("0909111222");
+        assertThat(r.getEmail()).isEqualTo("user@test.com");
+        assertThat(r.getIdNguoiDung()).isEqualTo(5L);
     }
 
     @Test

@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -197,6 +198,11 @@ public class DatPhongService {
                 .build();
         thanhToanRepository.save(thanhToan);
 
+        ThongTinEmailDatPhong tinMail = thongTinEmailTuDon(dp, tongTien, false);
+        if (tinMail != null) {
+            guiEmailService.guiThongBaoDatPhong(tinMail);
+        }
+
         return sangDto(datPhongRepository.findById(dp.getId()).orElseThrow());
     }
 
@@ -225,6 +231,16 @@ public class DatPhongService {
         DatPhong dp = layThucThe(idDatPhong);
         if (!MaTrangThaiDatPhong.DA_NHAN_PHONG.equals(dp.getTrangThai())) {
             throw new RuntimeException("Đơn phải ở trạng thái DA_NHAN_PHONG để trả phòng");
+        }
+        capNhatTongThanhToan(dp);
+        ThanhToan tt = thanhToanRepository.findByDatPhong_Id(idDatPhong).orElse(null);
+        if (tt != null && tt.getConPhaiThu() != null
+                && tt.getConPhaiThu().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal con = tt.getConPhaiThu().setScale(0, RoundingMode.HALF_UP);
+            throw new RuntimeException(
+                    "Chưa thanh toán đủ — còn phải thu "
+                            + con.toPlainString()
+                            + " VND. Vui lòng thu đủ (theo hệ thống thanh toán đang dùng) trước khi trả phòng tại quầy.");
         }
         dp.setTrangThai(MaTrangThaiDatPhong.DA_TRA_PHONG);
         for (ChiTietDatPhong d : dp.getChiTiet()) {
@@ -289,7 +305,10 @@ public class DatPhongService {
         }
         datPhongRepository.save(dp);
         capNhatTongThanhToan(dp);
-        guiEmailService.guiXacNhanDatPhong(dp, tinhTongTien(dp));
+        ThongTinEmailDatPhong tinMail = thongTinEmailTuDon(dp, tinhTongTien(dp), true);
+        if (tinMail != null) {
+            guiEmailService.guiThongBaoDatPhong(tinMail);
+        }
     }
 
     @Transactional
@@ -548,5 +567,37 @@ public class DatPhongService {
             dto.setThanhToan(tt);
         }
         return dto;
+    }
+
+    private ThongTinEmailDatPhong thongTinEmailTuDon(DatPhong dp, BigDecimal tongTien, boolean laXacNhanTuLeTan) {
+        String den = layEmailKhach(dp);
+        if (den == null || den.isBlank()) {
+            return null;
+        }
+        List<String> dongPhong = new ArrayList<>();
+        for (ChiTietDatPhong ct : dp.getChiTiet()) {
+            Phong p = ct.getPhong();
+            dongPhong.add(String.format("Phòng %s · %s", p.getSoPhong(), p.getLoaiPhong().getTen()));
+        }
+        return new ThongTinEmailDatPhong(
+                dp.getTenKhach(),
+                den.trim(),
+                dp.getId(),
+                dp.getNgayNhanPhong(),
+                dp.getNgayTraPhong(),
+                tongTien,
+                List.copyOf(dongPhong),
+                laXacNhanTuLeTan
+        );
+    }
+
+    private String layEmailKhach(DatPhong dp) {
+        if (dp.getEmailKhach() != null && !dp.getEmailKhach().isBlank()) {
+            return dp.getEmailKhach();
+        }
+        if (dp.getKhachHang() != null && dp.getKhachHang().getEmail() != null) {
+            return dp.getKhachHang().getEmail();
+        }
+        return null;
     }
 }

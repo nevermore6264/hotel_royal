@@ -33,6 +33,9 @@ spring:
           auth: true
           starttls:
             enable: true
+          # Một số JVM / mạng gặp handshake với Gmail — thử TLS 1.2+
+          ssl:
+            protocols: TLSv1.2 TLSv1.3
 
 server:
   port: ${SERVER_PORT:8090}
@@ -57,6 +60,12 @@ payment:
 app:
   upload:
     root: ${APP_UPLOAD_DIR:uploads}
+  mail:
+    frontend-base-url: ${APP_PUBLIC_FRONTEND_URL:http://localhost:5173}
+    # PKIX / “unable to find valid certification path”: thường do proxy TLS (mạng công ty).
+    # Cách đúng: import CA proxy vào truststore Java. Chỉ khi cần tuyệt đối ở dev:
+    # MAIL_SMTP_TRUST_INSECURE=true (tin mọi chứng chỉ — không an toàn cho production).
+    smtp-trust-insecure: ${MAIL_SMTP_TRUST_INSECURE:false}
   # Đơn CHO_DUYET chưa thanh toán sẽ tự hủy sau khoảng thời gian này (phút). Đặt 0 để tắt.
   dat-phong:
     phut-giu-cho-thanh-toan: ${APP_PHUT_GIU_CHO_THANH_TOAN:30}

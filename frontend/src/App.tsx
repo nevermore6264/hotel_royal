@@ -181,6 +181,14 @@ export default function App() {
             }
           />
           <Route
+            path="hoa-don/:id"
+            element={
+              <PrivateRoute roles={["ROLE_QUAN_TRI", "ROLE_LE_TAN"]}>
+                <InHoaDon />
+              </PrivateRoute>
+            }
+          />
+          <Route
             path="khach-hang"
             element={
               <PrivateRoute roles={["ROLE_QUAN_TRI", "ROLE_LE_TAN"]}>
