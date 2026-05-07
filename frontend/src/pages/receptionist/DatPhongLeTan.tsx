@@ -12,7 +12,7 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../../api/client";
 import HoaDonDocument, {
   type HoaDonDuLieu,
@@ -75,6 +75,32 @@ function conPhaiThuSo(b: DatPhong): number {
 /** Còn số phải thu (VND) — chặn trả phòng tại quầy khi chưa thu đủ. */
 function conNoTheoHeThong(b: DatPhong): boolean {
   return conPhaiThuSo(b) > 0.5;
+}
+
+/** Khớp backend `payment.payos.ty-le-coc-phan-tram` (mặc định 30). */
+const TY_LE_COC_PAYOS = 30;
+
+function tienConLaiPayOs(b: DatPhong): number {
+  return Number(b.thanhToan?.conPhaiThu ?? 0);
+}
+
+function coTheThanhToanPayOsLeTan(b: DatPhong): boolean {
+  if (b.trangThai === "DA_HUY") return false;
+  return b.thanhToan != null && tienConLaiPayOs(b) > 0.009;
+}
+
+function tienThuPayOsLanNay(
+  b: DatPhong,
+  cheDo: "TOAN_BO" | "DAT_COC",
+): number {
+  const con = tienConLaiPayOs(b);
+  const tong = Number(b.tongTien || 0);
+  if (con <= 0) return 0;
+  if (cheDo === "DAT_COC") {
+    const coc = Math.ceil((tong * TY_LE_COC_PAYOS) / 100);
+    return Math.min(coc, con);
+  }
+  return con;
 }
 
 function emptyCounterForm() {
@@ -142,6 +168,22 @@ export default function DatPhongLeTan() {
   });
   const invoiceRootRef = useRef<HTMLElement | null>(null);
   const [invoicePdfBusy, setInvoicePdfBusy] = useState(false);
+  const [payosModal, setPayosModal] = useState<{
+    open: boolean;
+    booking: DatPhong | null;
+    busy: boolean;
+    cheDo: "TOAN_BO" | "DAT_COC";
+    /** Mở từ nút Trả phòng: chỉ thu nốt (TOAN_BO), không đặt cọc. */
+    forCheckout: boolean;
+  }>({
+    open: false,
+    booking: null,
+    busy: false,
+    cheDo: "TOAN_BO",
+    forCheckout: false,
+  });
+  const payosModalRef = useRef(payosModal);
+  payosModalRef.current = payosModal;
   const [notice, setNotice] = useState<{
     title: string;
     message: string;
@@ -158,6 +200,9 @@ export default function DatPhongLeTan() {
     setCounterErrors({});
     setAvailableRooms([]);
   };
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [roomTypes, setRoomTypes] = useState<{ id: number; ten: string }[]>([]);
   const [availableRooms, setAvailableRooms] = useState<
     {
@@ -185,6 +230,25 @@ export default function DatPhongLeTan() {
   useEffect(() => {
     reload();
   }, [page, qDebounced, trangThaiLoc, tuNgay, denNgay]);
+
+  useEffect(() => {
+    const q = new URLSearchParams(location.search);
+    if (q.get("tuPayOsTraPhong") !== "1") return;
+    q.delete("tuPayOsTraPhong");
+    q.delete("idDatPhong");
+    const search = q.toString();
+    navigate(
+      { pathname: location.pathname, search: search ? `?${search}` : "" },
+      { replace: true },
+    );
+    reload();
+    setNotice({
+      title: "Quay lại từ PayOS",
+      message:
+        "Đã làm mới danh sách. Kiểm tra cột Còn lại — nếu về 0, bấm Trả phòng để ghi nhận.",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ xử lý query một lần khi URL đổi; reload() lấy state filter hiện tại
+  }, [location.search, location.pathname, navigate]);
 
   useEffect(() => {
     setPage(0);
@@ -296,6 +360,55 @@ export default function DatPhongLeTan() {
     }
   };
 
+  const moModalQrPayOs = (b: DatPhong, opts?: { forCheckout?: boolean }) => {
+    const forCheckout = opts?.forCheckout === true;
+    setPayosModal({
+      open: true,
+      booking: b,
+      busy: false,
+      cheDo: "TOAN_BO",
+      forCheckout,
+    });
+  };
+
+  const dongModalQrPayOs = () => {
+    setPayosModal({
+      open: false,
+      booking: null,
+      busy: false,
+      cheDo: "TOAN_BO",
+      forCheckout: false,
+    });
+  };
+
+  const taoLinkVaChuyenPayOs = async () => {
+    const { booking: b, cheDo, forCheckout } = payosModalRef.current;
+    if (!b) return;
+    const cheDoGui = forCheckout ? "TOAN_BO" : cheDo;
+    setPayosModal((p) => ({ ...p, busy: true }));
+    try {
+      const idDatPhong = b.id;
+      const origin = window.location.origin;
+      const urlTroVe = forCheckout
+        ? `${origin}/le-tan/dat-phong?idDatPhong=${idDatPhong}&tuPayOsTraPhong=1`
+        : `${origin}/dat-phong/thanh-cong?idDatPhong=${idDatPhong}`;
+      const payRes = await api.post("/thanh-toan/tao-url", {
+        idDatPhong,
+        urlTroVe,
+        urlHuy: `${origin}/le-tan/dat-phong`,
+        cheDoThanhToan: cheDoGui,
+      });
+      const payUrl = payRes.data.duongThanhToan as string;
+      window.location.assign(payUrl);
+    } catch (err) {
+      setPayosModal((p) => ({ ...p, busy: false }));
+      setNotice({
+        title: "PayOS",
+        message: apiErrorMessage(err, "Không tạo được link thanh toán PayOS"),
+      });
+    }
+  };
+
   const cancelRoom = async (bookingId: number, detailId: number) => {
     try {
       const res = await api.post(
@@ -377,6 +490,14 @@ export default function DatPhongLeTan() {
     }
   };
 
+  const xuLyTraPhong = (b: DatPhong) => {
+    if (conNoTheoHeThong(b)) {
+      moModalQrPayOs(b, { forCheckout: true });
+      return;
+    }
+    void checkOut(b.id);
+  };
+
   const [serviceIdByBooking, setServiceIdByBooking] = useState<
     Record<number, number>
   >({});
@@ -397,8 +518,9 @@ export default function DatPhongLeTan() {
     <div className="container page-shell">
       <h1 className="page-title">Quản lý đặt phòng</h1>
       <p className="page-subtitle page-subtitle--tight">
-        Xác nhận đơn, nhận — trả phòng, dịch vụ. Trả phòng chỉ khi đã thu đủ
-        (còn nợ theo cột “Còn lại” = 0). Xuất hóa đơn kỳ lưu trú khi cần.
+        Xác nhận đơn, nhận — trả phòng, dịch vụ. Nếu còn nợ (chưa trả hoặc trả
+        một phần), bấm Trả phòng để mở PayOS thu nốt; khi “Còn lại” = 0 mới
+        ghi nhận trả phòng. Xuất hóa đơn kỳ lưu trú khi cần.
       </p>
       <div className="card mb-section">
         <div
@@ -420,7 +542,7 @@ export default function DatPhongLeTan() {
           </div>
           <button
             type="button"
-            className="btn"
+            className="btn letan-counter-cta"
             onClick={() => setCounterModalOpen(true)}
           >
             <UserPlus className="btn-ico" aria-hidden />
@@ -502,23 +624,9 @@ export default function DatPhongLeTan() {
                       {formatNgayVN(b.ngayTraPhong)}
                     </td>
                     <td>
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "0.4rem",
-                        }}
-                      >
+                      <div className="letan-booking-rooms">
                         {b.chiTiet?.map((d) => (
-                          <div
-                            key={d.id}
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              gap: "0.75rem",
-                              alignItems: "center",
-                            }}
-                          >
+                          <div key={d.id} className="letan-booking-room-line">
                             <span>
                               {d.soPhong}{" "}
                               <span className="text-muted text-sm">
@@ -579,58 +687,56 @@ export default function DatPhongLeTan() {
                       )}
                     </td>
                     <td>
-                      {b.trangThai === "CHO_DUYET" && (
-                        <button
-                          type="button"
-                          className="btn btn-sm"
-                          style={{ marginRight: "0.5rem" }}
-                          onClick={() => confirmBooking(b.id)}
-                        >
-                          <BadgeCheck className="btn-ico" aria-hidden />
-                          Xác nhận
-                        </button>
-                      )}
-                      {b.trangThai === "DA_XAC_NHAN" && (
-                        <button
-                          type="button"
-                          className="btn btn-sm"
-                          style={{ marginRight: "0.5rem" }}
-                          onClick={() => checkIn(b.id)}
-                        >
-                          <KeyRound className="btn-ico" aria-hidden />
-                          Nhận phòng
-                        </button>
-                      )}
-                      {b.trangThai === "DA_NHAN_PHONG" && (
-                        <>
-                          <button
-                            type="button"
-                            className="btn btn-sm"
-                            style={{ marginRight: "0.5rem" }}
-                            disabled={conNoTheoHeThong(b)}
-                            title={
-                              conNoTheoHeThong(b)
-                                ? `Còn ${Number(
-                                    b.thanhToan?.conPhaiThu ?? 0,
-                                  ).toLocaleString(
-                                    "vi-VN",
-                                  )} VND chưa thu — thu đủ rồi mới trả phòng`
-                                : "Ghi nhận trả phòng khi đã thu đủ"
-                            }
-                            onClick={() => checkOut(b.id)}
-                          >
-                            <LogOut className="btn-ico" aria-hidden />
-                            Trả phòng
-                          </button>
-                          {conNoTheoHeThong(b) && (
-                            <p
-                              className="text-muted text-sm"
-                              style={{
-                                margin: "0.35rem 0 0",
-                                maxWidth: 280,
-                                lineHeight: 1.35,
-                              }}
+                      <div className="letan-booking-actions">
+                        <div className="letan-booking-actions__primary">
+                          {b.trangThai === "CHO_DUYET" && (
+                            <button
+                              type="button"
+                              className="btn btn-sm"
+                              onClick={() => confirmBooking(b.id)}
                             >
+                              <BadgeCheck className="btn-ico" aria-hidden />
+                              Xác nhận
+                            </button>
+                          )}
+                          {b.trangThai === "DA_XAC_NHAN" && (
+                            <button
+                              type="button"
+                              className="btn btn-sm"
+                              onClick={() => checkIn(b.id)}
+                            >
+                              <KeyRound className="btn-ico" aria-hidden />
+                              Nhận phòng
+                            </button>
+                          )}
+                          {b.trangThai === "DA_NHAN_PHONG" && (
+                            <button
+                              type="button"
+                              className={
+                                "btn btn-sm" +
+                                (conNoTheoHeThong(b)
+                                  ? " letan-booking-actions__checkout--owes"
+                                  : "")
+                              }
+                              title={
+                                conNoTheoHeThong(b)
+                                  ? `Còn ${Number(
+                                      b.thanhToan?.conPhaiThu ?? 0,
+                                    ).toLocaleString(
+                                      "vi-VN",
+                                    )} VND — bấm để mở PayOS thanh toán nốt`
+                                  : "Ghi nhận trả phòng khi đã thu đủ"
+                              }
+                              onClick={() => xuLyTraPhong(b)}
+                            >
+                              <LogOut className="btn-ico" aria-hidden />
+                              Trả phòng
+                            </button>
+                          )}
+                        </div>
+                        {b.trangThai === "DA_NHAN_PHONG" &&
+                          conNoTheoHeThong(b) && (
+                            <p className="letan-booking-actions__hint">
                               Còn phải thu{" "}
                               <strong>
                                 {Number(
@@ -638,67 +744,80 @@ export default function DatPhongLeTan() {
                                 ).toLocaleString("vi-VN")}{" "}
                                 VND
                               </strong>
-                              . Thu đủ (PayOS / quy trình khách sạn) trước khi
-                              bấm Trả phòng.
+                              . Bấm Trả phòng để mở PayOS; sau khi khách thanh
+                              toán xong, tải lại danh sách và bấm lại Trả phòng.
                             </p>
                           )}
-                          <div className="inline-actions inline-actions--stack">
-                            <select
-                              className="input-compact"
-                              value={
-                                serviceIdByBooking[b.id] ??
-                                services[0]?.id ??
-                                ""
-                              }
-                              onChange={(e) =>
-                                setServiceIdByBooking((prev) => ({
-                                  ...prev,
-                                  [b.id]: Number(e.target.value),
-                                }))
-                              }
-                            >
-                              {services.map((s) => (
-                                <option key={s.id} value={s.id}>
-                                  {s.ten}
-                                </option>
-                              ))}
-                            </select>
-                            <input
-                              className="input-compact"
-                              type="number"
-                              min={1}
-                              value={qtyByBooking[b.id] ?? 1}
-                              onChange={(e) =>
-                                setQtyByBooking((prev) => ({
-                                  ...prev,
-                                  [b.id]: Number(e.target.value),
-                                }))
-                              }
-                              style={{ width: 90 }}
-                              placeholder="SL"
-                              title="Số lượng"
-                            />
+                        {b.trangThai === "DA_NHAN_PHONG" ? (
+                          <div className="letan-booking-actions__services">
+                            <div className="inline-actions inline-actions--stack">
+                              <select
+                                className="input-compact"
+                                value={
+                                  serviceIdByBooking[b.id] ??
+                                  services[0]?.id ??
+                                  ""
+                                }
+                                onChange={(e) =>
+                                  setServiceIdByBooking((prev) => ({
+                                    ...prev,
+                                    [b.id]: Number(e.target.value),
+                                  }))
+                                }
+                              >
+                                {services.map((s) => (
+                                  <option key={s.id} value={s.id}>
+                                    {s.ten}
+                                  </option>
+                                ))}
+                              </select>
+                              <input
+                                className="input-compact letan-booking-actions__qty"
+                                type="number"
+                                min={1}
+                                value={qtyByBooking[b.id] ?? 1}
+                                onChange={(e) =>
+                                  setQtyByBooking((prev) => ({
+                                    ...prev,
+                                    [b.id]: Number(e.target.value),
+                                  }))
+                                }
+                                placeholder="SL"
+                                title="Số lượng"
+                              />
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => addService(b.id)}
+                              >
+                                <PackagePlus className="btn-ico" aria-hidden />
+                                Thêm dịch vụ
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
+
+                        <div className="letan-booking-actions__secondary">
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => void issueInvoice(b.id)}
+                          >
+                            <FileText className="btn-ico" aria-hidden />
+                            Hóa đơn
+                          </button>
+                          {coTheThanhToanPayOsLeTan(b) ? (
                             <button
                               type="button"
-                              className="btn btn-secondary btn-sm"
-                              onClick={() => addService(b.id)}
+                              className="btn btn-payos btn-sm"
+                              onClick={() => moModalQrPayOs(b)}
                             >
-                              <PackagePlus className="btn-ico" aria-hidden />
-                              Thêm dịch vụ
+                              <ExternalLink className="btn-ico" aria-hidden />
+                              PayOS
                             </button>
-                          </div>
-                        </>
-                      )}
-
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        style={{ marginTop: "0.5rem", display: "block" }}
-                        onClick={() => void issueInvoice(b.id)}
-                      >
-                        <FileText className="btn-ico" aria-hidden />
-                        Hóa đơn kỳ lưu trú
-                      </button>
+                          ) : null}
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -803,6 +922,182 @@ export default function DatPhongLeTan() {
                 dp={invoiceModal.data}
                 tagline="Đà Nẵng · Hóa đơn kỳ lưu trú / Phiếu thanh toán"
               />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {payosModal.open && payosModal.booking != null ? (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="letan-payos-title"
+          onClick={() => dongModalQrPayOs()}
+        >
+          <div
+            className="card modal-panel"
+            style={{
+              maxWidth: "min(440px, calc(100vw - 2rem))",
+              width: "100%",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="form-row form-row--between"
+              style={{ alignItems: "flex-start", marginBottom: "1rem" }}
+            >
+              <div>
+                <h2
+                  id="letan-payos-title"
+                  className="card-title"
+                  style={{ margin: 0 }}
+                >
+                  {payosModal.forCheckout
+                    ? "Thanh toán nốt (trả phòng)"
+                    : "Thanh toán PayOS"}
+                </h2>
+                <p
+                  className="text-muted text-sm"
+                  style={{ margin: "0.35rem 0 0" }}
+                >
+                  Đơn #{payosModal.booking.id}
+                  {payosModal.booking.tenKhachHang ||
+                  payosModal.booking.tenKhach
+                    ? ` · ${payosModal.booking.tenKhachHang ?? payosModal.booking.tenKhach}`
+                    : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => dongModalQrPayOs()}
+                aria-label="Đóng"
+              >
+                <X className="btn-ico" aria-hidden />
+              </button>
+            </div>
+            <p className="text-sm" style={{ marginBottom: "1rem" }}>
+              Còn phải thu:{" "}
+              <strong>
+                {tienConLaiPayOs(payosModal.booking).toLocaleString("vi-VN")}{" "}
+                VND
+              </strong>
+            </p>
+            {payosModal.forCheckout ? (
+              <p
+                className="text-muted text-sm"
+                style={{ marginBottom: "1rem", lineHeight: 1.45 }}
+              >
+                Trả phòng chỉ ghi nhận khi đã thu đủ. Link PayOS lần này là{" "}
+                <strong>toàn bộ số còn lại</strong> (không chọn đặt cọc). Sau
+                khi khách thanh toán, làm mới trang và bấm lại Trả phòng.
+              </p>
+            ) : null}
+            {payosModal.forCheckout ? null : (
+              <fieldset
+                className="booking-pay-mode"
+                style={{ marginBottom: "1rem" }}
+              >
+                <legend className="booking-pay-mode__legend">Hình thức</legend>
+                <label
+                  className={
+                    payosModal.cheDo === "TOAN_BO"
+                      ? "booking-pay-mode__opt booking-pay-mode__opt--on"
+                      : "booking-pay-mode__opt"
+                  }
+                >
+                  <input
+                    type="radio"
+                    name="cheDoPayOSLetan"
+                    checked={payosModal.cheDo === "TOAN_BO"}
+                    onChange={() =>
+                      setPayosModal((p) => ({
+                        ...p,
+                        cheDo: "TOAN_BO",
+                      }))
+                    }
+                  />
+                  <span className="booking-pay-mode__opt-body">
+                    <span className="booking-pay-mode__opt-title">
+                      Thanh toán đủ
+                    </span>
+                    <span className="booking-pay-mode__amt">
+                      {tienThuPayOsLanNay(
+                        payosModal.booking,
+                        "TOAN_BO",
+                      ).toLocaleString("vi-VN")}{" "}
+                      VND
+                    </span>
+                  </span>
+                </label>
+                <label
+                  className={
+                    payosModal.cheDo === "DAT_COC"
+                      ? "booking-pay-mode__opt booking-pay-mode__opt--on"
+                      : "booking-pay-mode__opt"
+                  }
+                >
+                  <input
+                    type="radio"
+                    name="cheDoPayOSLetan"
+                    checked={payosModal.cheDo === "DAT_COC"}
+                    onChange={() =>
+                      setPayosModal((p) => ({
+                        ...p,
+                        cheDo: "DAT_COC",
+                      }))
+                    }
+                  />
+                  <span className="booking-pay-mode__opt-body">
+                    <span className="booking-pay-mode__opt-title">
+                      Đặt cọc ({TY_LE_COC_PAYOS}%)
+                    </span>
+                    <span className="booking-pay-mode__amt">
+                      {tienThuPayOsLanNay(
+                        payosModal.booking,
+                        "DAT_COC",
+                      ).toLocaleString("vi-VN")}{" "}
+                      VND lần này
+                    </span>
+                  </span>
+                </label>
+                {payosModal.cheDo === "DAT_COC" &&
+                  tienConLaiPayOs(payosModal.booking) >
+                    tienThuPayOsLanNay(payosModal.booking, "DAT_COC") +
+                      0.009 && (
+                    <p className="booking-pay-mode__hint text-muted text-sm">
+                      Còn lại{" "}
+                      <strong>
+                        {(
+                          tienConLaiPayOs(payosModal.booking) -
+                          tienThuPayOsLanNay(payosModal.booking, "DAT_COC")
+                        ).toLocaleString("vi-VN")}{" "}
+                        VND
+                      </strong>{" "}
+                      — thu bổ sung sau.
+                    </p>
+                  )}
+              </fieldset>
+            )}
+            <p className="letan-payos-modal-intro">
+              Bấm nút bên dưới để mở trang thanh toán PayOS (chuyển hướng trình
+              duyệt). Sau khi xong, bạn quay lại theo liên kết trả về của PayOS.
+            </p>
+            <div className="letan-payos-modal-actions">
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                disabled={payosModal.busy}
+                onClick={() => void taoLinkVaChuyenPayOs()}
+              >
+                {payosModal.busy ? (
+                  <Loader2 className="btn-ico btn-ico--spin" aria-hidden />
+                ) : (
+                  <ExternalLink className="btn-ico" aria-hidden />
+                )}
+                Mở PayOS thanh toán
+              </button>
             </div>
           </div>
         </div>
