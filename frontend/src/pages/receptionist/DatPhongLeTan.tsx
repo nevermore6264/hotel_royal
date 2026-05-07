@@ -234,20 +234,87 @@ export default function DatPhongLeTan() {
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     if (q.get("tuPayOsTraPhong") !== "1") return;
-    q.delete("tuPayOsTraPhong");
-    q.delete("idDatPhong");
-    const search = q.toString();
-    navigate(
-      { pathname: location.pathname, search: search ? `?${search}` : "" },
-      { replace: true },
-    );
-    reload();
-    setNotice({
-      title: "Quay lại từ PayOS",
-      message:
-        "Đã làm mới danh sách. Kiểm tra cột Còn lại — nếu về 0, bấm Trả phòng để ghi nhận.",
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ xử lý query một lần khi URL đổi; reload() lấy state filter hiện tại
+
+    const idDatPhongRaw = q.get("idDatPhong");
+    const code = q.get("code");
+    const paymentLinkId = q.get("id");
+    const orderCodeRaw = q.get("orderCode");
+    const cancel = q.get("cancel");
+    const status = q.get("status");
+
+    const stripPayOsReturnParams = (params: URLSearchParams) => {
+      params.delete("tuPayOsTraPhong");
+      params.delete("idDatPhong");
+      params.delete("code");
+      params.delete("id");
+      params.delete("orderCode");
+      params.delete("cancel");
+      params.delete("status");
+    };
+
+    let cancelled = false;
+
+    void (async () => {
+      let noticeTitle = "Quay lại từ PayOS";
+      let noticeMessage =
+        "Đã làm mới danh sách. Kiểm tra cột Còn lại — nếu về 0, bấm Trả phòng để ghi nhận.";
+
+      const orderCode = orderCodeRaw ? Number.parseInt(orderCodeRaw, 10) : NaN;
+      const payosHuy =
+        cancel === "true" ||
+        (status != null && status.toUpperCase() === "CANCELLED");
+      const canDongBo =
+        Boolean(idDatPhongRaw) &&
+        Boolean(paymentLinkId) &&
+        Boolean(orderCodeRaw) &&
+        Number.isFinite(orderCode) &&
+        orderCode > 0 &&
+        code === "00" &&
+        !payosHuy;
+
+      if (canDongBo) {
+        try {
+          const res = await api.post("/thanh-toan/dong-bo-payos", {
+            idDatPhong: Number(idDatPhongRaw),
+            orderCode,
+            paymentLinkId,
+          });
+          const tt = (res.data as { trangThai?: string })?.trangThai;
+          if (tt === "DA_GHI_NHAN") {
+            noticeMessage =
+              "Đã ghi nhận thanh toán từ PayOS. Kiểm tra cột Còn lại — nếu về 0, có thể bấm Trả phòng.";
+          } else if (tt === "CHO_THANH_TOAN") {
+            noticeMessage =
+              "PayOS chưa trả về số tiền ngay; danh sách đã làm mới — thử lại sau hoặc chờ webhook.";
+          } else if (tt === "DA_HUY_TREN_CONG") {
+            noticeTitle = "PayOS";
+            noticeMessage = "Giao dịch đã hủy trên cổng thanh toán.";
+          }
+        } catch (e) {
+          noticeTitle = "PayOS";
+          noticeMessage = apiErrorMessage(
+            e,
+            "Không đồng bộ được thanh toán. Đã làm mới danh sách — kiểm tra lại hoặc chờ webhook.",
+          );
+        }
+      }
+
+      if (cancelled) return;
+
+      stripPayOsReturnParams(q);
+      const search = q.toString();
+      navigate(
+        { pathname: location.pathname, search: search ? `?${search}` : "" },
+        { replace: true },
+      );
+      reload();
+      setNotice({ title: noticeTitle, message: noticeMessage });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- một lần theo URL; reload() dùng filter hiện tại
   }, [location.search, location.pathname, navigate]);
 
   useEffect(() => {
@@ -989,8 +1056,7 @@ export default function DatPhongLeTan() {
                 className="text-muted text-sm"
                 style={{ marginBottom: "1rem", lineHeight: 1.45 }}
               >
-                Trả phòng chỉ ghi nhận khi đã thu đủ. Link PayOS lần này là{" "}
-                <strong>toàn bộ số còn lại</strong> (không chọn đặt cọc). Sau
+                Trả phòng chỉ ghi nhận khi đã thu đủ. Sau
                 khi khách thanh toán, làm mới trang và bấm lại Trả phòng.
               </p>
             ) : null}

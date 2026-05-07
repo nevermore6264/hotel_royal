@@ -9,7 +9,9 @@ import com.royallotushotel.entity.ThanhToan;
 import com.royallotushotel.hangso.LoaiGiaoDichThanhToan;
 import com.royallotushotel.hangso.MaPhuongThucThanhToan;
 import com.royallotushotel.hangso.MaTrangThaiThanhToan;
+import com.royallotushotel.hangso.MaVaiTro;
 import com.royallotushotel.payment.PayOsKySo;
+import com.royallotushotel.security.ChuTheNguoiDung;
 import com.royallotushotel.repository.DatPhongRepository;
 import com.royallotushotel.repository.KhachHangRepository;
 import com.royallotushotel.repository.ThanhToanRepository;
@@ -21,6 +23,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
@@ -322,7 +325,7 @@ public class ThanhToanService {
             Long idDatPhong,
             int orderCode,
             String paymentLinkId,
-            Long idNguoiDung) {
+            ChuTheNguoiDung chuThe) {
         if (payOsCheDoThu) {
             return Map.of(
                     "trangThai", "CHE_DO_THU",
@@ -339,10 +342,12 @@ public class ThanhToanService {
 
         DatPhong dp = datPhongRepository.findById(idDatPhong)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đặt phòng"));
-        KhachHang kh = khachHangRepository.findByNguoiDung_Id(idNguoiDung)
-                .orElseThrow(() -> new RuntimeException("Chỉ tài khoản khách mới đồng bộ được thanh toán."));
-        if (!dp.getKhachHang().getId().equals(kh.getId())) {
-            throw new RuntimeException("Đơn đặt phòng không thuộc tài khoản hiện tại.");
+        if (!laNhanVienDongBoPayOs(chuThe)) {
+            KhachHang kh = khachHangRepository.findByNguoiDung_Id(chuThe.getId())
+                    .orElseThrow(() -> new RuntimeException("Chỉ tài khoản khách mới đồng bộ được thanh toán."));
+            if (!dp.getKhachHang().getId().equals(kh.getId())) {
+                throw new RuntimeException("Đơn đặt phòng không thuộc tài khoản hiện tại.");
+            }
         }
 
         JsonNode root = goiLayThongTinLinkPayOs(paymentLinkId.trim());
@@ -382,6 +387,12 @@ public class ThanhToanService {
         return Map.of(
                 "trangThai", "DA_GHI_NHAN",
                 "thongDiep", "Đã ghi nhận thanh toán.");
+    }
+
+    private boolean laNhanVienDongBoPayOs(ChuTheNguoiDung chuThe) {
+        return chuThe.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(r -> MaVaiTro.LE_TAN.equals(r) || MaVaiTro.QUAN_TRI.equals(r));
     }
 
     private JsonNode goiLayThongTinLinkPayOs(String paymentLinkId) {

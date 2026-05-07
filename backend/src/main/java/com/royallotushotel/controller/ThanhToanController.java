@@ -48,7 +48,7 @@ public class ThanhToanController {
         int orderCode = Integer.parseInt(body.get("orderCode").toString().trim());
         String paymentLinkId = body.get("paymentLinkId").toString().trim();
         Map<String, Object> ketQua = thanhToanService.dongBoSauRedirectPayOs(
-                idDatPhong, orderCode, paymentLinkId, chuThe.getId());
+                idDatPhong, orderCode, paymentLinkId, chuThe);
         return ResponseEntity.ok(ketQua);
     }
 

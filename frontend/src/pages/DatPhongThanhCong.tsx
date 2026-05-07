@@ -1,4 +1,4 @@
-import { ClipboardList, Loader2 } from "lucide-react";
+import { ClipboardList, Home, LayoutList, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import api from "../api/client";
@@ -10,7 +10,7 @@ type SyncState = "idle" | "syncing" | "done" | "skipped" | "error";
 
 export default function DatPhongThanhCong() {
   const [params] = useSearchParams();
-  const { user } = useAuth();
+  const { user, isKhachHang, isLeTan } = useAuth();
   const { toast } = useToast();
   const idDatPhong = params.get("idDatPhong");
   const [syncState, setSyncState] = useState<SyncState>("idle");
@@ -75,7 +75,9 @@ export default function DatPhongThanhCong() {
           toast("Giao dịch đã hủy trên PayOS.", "info");
         } else if (tt === "CHO_THANH_TOAN") {
           toast(
-            "Thanh toán chưa ghi nhận ngay; vài phút sau kiểm tra lại mục Đơn của tôi.",
+            isKhachHang
+              ? "Thanh toán chưa ghi nhận ngay; vài phút sau kiểm tra lại mục Đơn của tôi."
+              : "Thanh toán chưa ghi nhận ngay; vài phút sau kiểm tra lại trong Quản lý đặt phòng.",
             "info",
           );
         } else if (tt === "CHE_DO_THU") {
@@ -88,7 +90,9 @@ export default function DatPhongThanhCong() {
         toast(
           apiErrorMessage(
             e,
-            "Không đồng bộ được trạng thái. Mở Đơn của tôi sau vài phút hoặc liên hệ lễ tân.",
+            isKhachHang
+              ? "Không đồng bộ được trạng thái. Mở Đơn của tôi sau vài phút hoặc liên hệ lễ tân."
+              : "Không đồng bộ được trạng thái. Kiểm tra lại Quản lý đặt phòng sau vài phút.",
           ),
           "error",
         );
@@ -106,6 +110,7 @@ export default function DatPhongThanhCong() {
     status,
     payosCheDoThu,
     toast,
+    isKhachHang,
   ]);
 
   return (
@@ -142,12 +147,33 @@ export default function DatPhongThanhCong() {
           </p>
         )}
         <p className="text-muted">
-          Email xác nhận đã được gửi đến hộp thư của bạn (khi hệ thống đã ghi nhận thanh toán).
+          {isKhachHang
+            ? "Email xác nhận đã được gửi đến hộp thư của bạn (khi hệ thống đã ghi nhận thanh toán)."
+            : "Khi hệ thống đã ghi nhận thanh toán, email xác nhận có thể được gửi tới khách (theo thông tin trong đơn)."}
         </p>
-        <Link to="/don-cua-toi" className="btn btn-lg btn-block mt-4">
-          <ClipboardList className="btn-ico" aria-hidden />
-          Xem đơn của tôi
-        </Link>
+        {isKhachHang ? (
+          <Link to="/don-cua-toi" className="btn btn-lg btn-block mt-4">
+            <ClipboardList className="btn-ico" aria-hidden />
+            Xem đơn của tôi
+          </Link>
+        ) : isLeTan ? (
+          <Link
+            to={
+              idDatPhong
+                ? `/le-tan/dat-phong?idDatPhong=${encodeURIComponent(idDatPhong)}`
+                : "/le-tan/dat-phong"
+            }
+            className="btn btn-lg btn-block mt-4"
+          >
+            <LayoutList className="btn-ico" aria-hidden />
+            Về quản lý đặt phòng
+          </Link>
+        ) : (
+          <Link to="/" className="btn btn-lg btn-block mt-4">
+            <Home className="btn-ico" aria-hidden />
+            Về trang chủ
+          </Link>
+        )}
         <p className="auth-footer" style={{ marginBottom: 0 }}>
           <Link to="/">Về trang chủ</Link>
         </p>
