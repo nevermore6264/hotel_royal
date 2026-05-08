@@ -141,18 +141,18 @@ export default function AdminDichVu() {
       };
       if (editing) {
         await api.put(`/dich-vu/${editing.id}`, payload);
-        toast("Đã cập nhật dịch vụ.", "success");
+        toast("Đã cập nhật dịch vụ.", "thanhCong");
       } else {
         await api.post("/dich-vu", payload);
-        toast("Đã thêm dịch vụ.", "success");
+        toast("Đã thêm dịch vụ.", "thanhCong");
       }
       closeFormModal();
       load();
     } catch (err) {
       toast(
-        (err as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Lưu dịch vụ thất bại.",
-        "error",
+        (err as { response?: { data?: { loi?: string } } })?.response?.data
+          ?.loi || "Lưu dịch vụ thất bại.",
+        "thatBai",
       );
     } finally {
       setSaveBusy(false);
@@ -166,13 +166,13 @@ export default function AdminDichVu() {
       await api.delete(`/dich-vu/${pendingDeleteId}`);
       setPendingDeleteId(null);
       load();
-      toast("Đã xóa dịch vụ.", "success");
+      toast("Đã xóa dịch vụ.", "thanhCong");
     } catch (err) {
       setPendingDeleteId(null);
       toast(
-        (err as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Xóa dịch vụ thất bại.",
-        "error",
+        (err as { response?: { data?: { loi?: string } } })?.response?.data
+          ?.loi || "Xóa dịch vụ thất bại.",
+        "thatBai",
       );
     } finally {
       setDeleteBusy(false);

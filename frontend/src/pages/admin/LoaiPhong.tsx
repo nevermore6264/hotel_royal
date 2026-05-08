@@ -211,10 +211,10 @@ export default function AdminLoaiPhong() {
     try {
       if (editing) {
         await api.put(`/loai-phong/${editing.id}`, payload);
-        toast("Đã cập nhật loại phòng.", "success");
+        toast("Đã cập nhật loại phòng.", "thanhCong");
       } else {
         await api.post("/loai-phong", payload);
-        toast("Đã thêm loại phòng.", "success");
+        toast("Đã thêm loại phòng.", "thanhCong");
       }
       setFormOpen(false);
       setEditing(null);
@@ -222,7 +222,7 @@ export default function AdminLoaiPhong() {
       setFieldErrors({});
       load();
     } catch (err) {
-      toast(apiErrorMessage(err, "Lưu loại phòng thất bại."), "error");
+      toast(apiErrorMessage(err, "Lưu loại phòng thất bại."), "thatBai");
     } finally {
       setSaveBusy(false);
     }
@@ -232,18 +232,18 @@ export default function AdminLoaiPhong() {
     if (pendingDeleteId == null) return;
     if ((tongPhongTheoLoai[pendingDeleteId] ?? 0) > 0) {
       setPendingDeleteId(null);
-      toast("Chỉ được xóa loại phòng chưa có phòng nào.", "error");
+      toast("Chỉ được xóa loại phòng chưa có phòng nào.", "thatBai");
       return;
     }
     setDeleteBusy(true);
     try {
       await api.delete(`/loai-phong/${pendingDeleteId}`);
       setPendingDeleteId(null);
-      toast("Đã xóa loại phòng.", "success");
+      toast("Đã xóa loại phòng.", "thanhCong");
       load();
     } catch (err) {
       setPendingDeleteId(null);
-      toast(apiErrorMessage(err, "Xóa loại phòng thất bại."), "error");
+      toast(apiErrorMessage(err, "Xóa loại phòng thất bại."), "thatBai");
     } finally {
       setDeleteBusy(false);
     }

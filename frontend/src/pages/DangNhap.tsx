@@ -5,7 +5,7 @@ export default function DangNhap() {
   return (
     <AuthSplitLayout>
       <div className="auth-split-card animate-scale-in">
-        <LoginForm variant="full" />
+        <LoginForm />
       </div>
     </AuthSplitLayout>
   );

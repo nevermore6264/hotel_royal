@@ -85,7 +85,7 @@ export default function DatPhong() {
   });
   const [phongXemTruoc, setPhongXemTruoc] = useState<Phong | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [baoLoi, setBaoLoi] = useState("");
   const [cheDoThanhToan, setCheDoThanhToan] = useState<"TOAN_BO" | "DAT_COC">(
     "TOAN_BO",
   );
@@ -147,7 +147,7 @@ export default function DatPhong() {
 
     toast(
       "Bạn đã hủy thanh toán trên PayOS. Đơn vẫn chờ thanh toán — có thể thử lại hoặc hủy đơn trong mục Đơn của tôi.",
-      "info",
+      "thongTin",
     );
 
     const next = new URLSearchParams(searchParams);
@@ -280,17 +280,17 @@ export default function DatPhong() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setBaoLoi("");
     if (!user) {
       navigate("/dang-nhap");
       return;
     }
     if (!user.vaiTro?.includes("ROLE_KHACH_HANG")) {
-      setError("Bạn không có quyền đặt phòng.");
+      setBaoLoi("Bạn không có quyền đặt phòng.");
       return;
     }
     if (selectedIds.length === 0 || !checkIn || !checkOut) {
-      setError("Vui lòng chọn phòng và ngày nhận/trả phòng.");
+      setBaoLoi("Vui lòng chọn phòng và ngày nhận/trả phòng.");
       return;
     }
     setLoading(true);
@@ -298,19 +298,19 @@ export default function DatPhong() {
       const meRes = await api.get("/xac-thuc/toi");
       const idKhachHang = meRes.data.idKhachHang as number | undefined;
       if (!idKhachHang) {
-        setError(
+        setBaoLoi(
           "Tài khoản chưa có thông tin khách hàng. Vui lòng liên hệ lễ tân.",
         );
         setLoading(false);
         return;
       }
-      const booking = await api.post("/dat-phong", {
+      const phanHoiTaoDon = await api.post("/dat-phong", {
         idKhachHang,
         ngayNhanPhong: checkIn,
         ngayTraPhong: checkOut,
         idPhong: selectedIds,
       });
-      const idDatPhong = booking.data.id;
+      const idDatPhong = phanHoiTaoDon.data.id;
       const payRes = await api.post("/thanh-toan/tao-url", {
         idDatPhong,
         urlTroVe: `${window.location.origin}/dat-phong/thanh-cong?idDatPhong=${idDatPhong}`,
@@ -319,9 +319,9 @@ export default function DatPhong() {
       });
       window.location.href = payRes.data.duongThanhToan;
     } catch (err: unknown) {
-      setError(
-        (err as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Có lỗi xảy ra",
+      setBaoLoi(
+        (err as { response?: { data?: { loi?: string } } })?.response?.data?.loi ||
+          "Có lỗi xảy ra",
       );
     } finally {
       setLoading(false);
@@ -683,8 +683,8 @@ export default function DatPhong() {
                 )}
               </>
             )}
-            {error && (
-              <p className="form-error booking-summary-error">{error}</p>
+            {baoLoi && (
+              <p className="form-error booking-summary-error">{baoLoi}</p>
             )}
             <button
               type="submit"

@@ -169,20 +169,20 @@ function MessengerComposer({
     e.target.value = "";
     if (!f) return;
     if (!f.type.startsWith("image/")) {
-      toast("Chỉ gửi được file ảnh.", "error");
+      toast("Chỉ gửi được file ảnh.", "thatBai");
       return;
     }
     if (f.size > MAX_IMG_BYTES) {
-      toast("Ảnh tối đa 4 MB.", "error");
+      toast("Ảnh tối đa 4 MB.", "thatBai");
       return;
     }
     try {
       await onSendImage(f);
     } catch (err) {
       toast(
-        (err as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Không gửi được ảnh.",
-        "error",
+        (err as { response?: { data?: { loi?: string } } })?.response?.data
+          ?.loi || "Không gửi được ảnh.",
+        "thatBai",
       );
     }
   };
@@ -336,9 +336,9 @@ function ChatGuest() {
       loadTin();
     } catch (err) {
       toast(
-        (err as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Không gửi được tin",
-        "error",
+        (err as { response?: { data?: { loi?: string } } })?.response?.data
+          ?.loi || "Không gửi được tin",
+        "thatBai",
       );
     }
   };
@@ -577,9 +577,9 @@ function ChatStaff() {
       loadCuocs();
     } catch (err) {
       toast(
-        (err as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Không gửi được tin",
-        "error",
+        (err as { response?: { data?: { loi?: string } } })?.response?.data
+          ?.loi || "Không gửi được tin",
+        "thatBai",
       );
     }
   };

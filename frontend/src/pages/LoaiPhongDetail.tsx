@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { apiErrorMessage } from "../lib/apiError";
 
 type Loai = {
   id: number;
@@ -132,13 +133,15 @@ export default function LoaiPhongDetail() {
         noiDung: form.noiDung,
       });
       setForm({ diem: 5, noiDung: "" });
-      toast("Đã gửi đánh giá.", "success");
+      toast("Đã gửi đánh giá.", "thanhCong");
       load();
     } catch (err) {
       toast(
-        (err as { response?: { data?: string } })?.response?.data ||
+        apiErrorMessage(
+          err,
           "Không gửi được đánh giá (mỗi tài khoản chỉ một lần / loại).",
-        "error",
+        ),
+        "thatBai",
       );
     }
   };

@@ -208,7 +208,7 @@ export default function DonCuaToi() {
 
     toast(
       "Bạn đã hủy thanh toán trên PayOS. Đơn vẫn giữ nguyên — có thể thử thanh toán lại.",
-      "info",
+      "thongTin",
     );
 
     const next = new URLSearchParams(searchParams);
@@ -235,7 +235,7 @@ export default function DonCuaToi() {
       if (pendingCancel.kind === "whole") {
         await api.post(`/dat-phong/${pendingCancel.bookingId}/huy`);
         await refreshList();
-        toast("Đã hủy đơn đặt phòng.", "success");
+        toast("Đã hủy đơn đặt phòng.", "thanhCong");
       } else {
         const res = await api.post(
           `/dat-phong/${pendingCancel.bookingId}/chi-tiet/${pendingCancel.detailId}/huy`,
@@ -246,11 +246,11 @@ export default function DonCuaToi() {
             item.id === pendingCancel.bookingId ? res.data : item,
           ),
         );
-        toast("Đã hủy phòng trong đơn.", "success");
+        toast("Đã hủy phòng trong đơn.", "thanhCong");
       }
       setPendingCancel(null);
     } catch (e) {
-      toast(apiErrorMessage(e, "Thao tác thất bại"), "error");
+      toast(apiErrorMessage(e, "Thao tác thất bại"), "thatBai");
     } finally {
       setCancelBusy(false);
     }
@@ -271,7 +271,7 @@ export default function DonCuaToi() {
     } catch (e) {
       toast(
         apiErrorMessage(e, "Không tạo được link thanh toán PayOS"),
-        "error",
+        "thatBai",
       );
       setPayBusy(false);
     }

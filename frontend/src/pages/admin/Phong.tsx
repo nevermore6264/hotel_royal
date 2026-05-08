@@ -125,12 +125,12 @@ export default function AdminPhong() {
       );
       const urls = (data.tep || []).map((x) => x.duongDan);
       themAnhVaoForm(urls);
-      toast(`Đã tải lên ${urls.length} ảnh.`, "success");
+      toast(`Đã tải lên ${urls.length} ảnh.`, "thanhCong");
     } catch (err) {
       toast(
-        (err as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Upload thất bại.",
-        "error",
+        (err as { response?: { data?: { loi?: string } } })?.response?.data
+          ?.loi || "Upload thất bại.",
+        "thatBai",
       );
     } finally {
       setDangTaiAnh(false);
@@ -223,15 +223,15 @@ export default function AdminPhong() {
       };
       if (phongDangSua) {
         await api.put(`/phong/${phongDangSua.id}`, payload);
-        toast("Đã cập nhật phòng.", "success");
+        toast("Đã cập nhật phòng.", "thanhCong");
       } else {
         await api.post("/phong", payload);
-        toast("Đã thêm phòng.", "success");
+        toast("Đã thêm phòng.", "thanhCong");
       }
       dongModalForm();
       taiDuLieu();
     } catch (err) {
-      toast(apiErrorMessage(err, "Lỗi"), "error");
+      toast(apiErrorMessage(err, "Lỗi"), "thatBai");
     } finally {
       setDangLuu(false);
     }
@@ -242,7 +242,7 @@ export default function AdminPhong() {
     const phongCanXoa = danhSachPhong.content.find((p) => p.id === idChoXoa);
     if (phongCanXoa && phongCanXoa.trangThai !== "PHONG_TRONG") {
       setIdChoXoa(null);
-      toast("Chỉ được xóa phòng đang ở trạng thái Trống.", "error");
+      toast("Chỉ được xóa phòng đang ở trạng thái Trống.", "thatBai");
       return;
     }
     setDangXoa(true);
@@ -250,10 +250,10 @@ export default function AdminPhong() {
       await api.delete(`/phong/${idChoXoa}`);
       setIdChoXoa(null);
       taiDuLieu();
-      toast("Đã xóa phòng.", "success");
+      toast("Đã xóa phòng.", "thanhCong");
     } catch (err) {
       setIdChoXoa(null);
-      toast(apiErrorMessage(err, "Lỗi"), "error");
+      toast(apiErrorMessage(err, "Lỗi"), "thatBai");
     } finally {
       setDangXoa(false);
     }

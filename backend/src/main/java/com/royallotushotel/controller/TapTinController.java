@@ -23,41 +23,41 @@ public class TapTinController {
 
     @PostMapping("/phong-anh")
     @PreAuthorize("hasRole('QUAN_TRI')")
-    public ResponseEntity<?> taiLenPhongAnh(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> taiLenPhongAnh(@RequestParam("file") MultipartFile tep) {
         try {
-            String duongDan = tapTinPhongService.luuAnhPhong(file);
-            Map<String, String> body = new HashMap<>();
-            body.put("duongDan", duongDan);
-            return ResponseEntity.ok(body);
+            String duongDan = tapTinPhongService.luuAnhPhong(tep);
+            Map<String, String> phanHoi = new HashMap<>();
+            phanHoi.put("duongDan", duongDan);
+            return ResponseEntity.ok(phanHoi);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("loi", e.getMessage()));
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Không lưu được tệp"));
+            return ResponseEntity.internalServerError().body(Map.of("loi", "Không lưu được tệp"));
         }
     }
 
     @PostMapping("/phong-anh-nhieu")
     @PreAuthorize("hasRole('QUAN_TRI')")
     public ResponseEntity<?> taiLenNhieu(
-            @RequestParam(value = "files", required = false) MultipartFile[] files) {
-        boolean coTepThucSu = files != null
-                && Arrays.stream(files).anyMatch(f -> f != null && !f.isEmpty());
+            @RequestParam(value = "files", required = false) MultipartFile[] mangTep) {
+        boolean coTepThucSu = mangTep != null
+                && Arrays.stream(mangTep).anyMatch(tep -> tep != null && !tep.isEmpty());
         if (!coTepThucSu)
-            return ResponseEntity.badRequest().body(Map.of("error", "Không có tệp"));
+            return ResponseEntity.badRequest().body(Map.of("loi", "Không có tệp"));
         List<Map<String, String>> ketQua = new ArrayList<>();
-        for (MultipartFile f : files) {
-            if (f.isEmpty()) continue;
+        for (MultipartFile moiTep : mangTep) {
+            if (moiTep.isEmpty()) continue;
             try {
-                String duongDan = tapTinPhongService.luuAnhPhong(f);
+                String duongDan = tapTinPhongService.luuAnhPhong(moiTep);
                 ketQua.add(Map.of("duongDan", duongDan));
             } catch (IllegalArgumentException e) {
-                return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+                return ResponseEntity.badRequest().body(Map.of("loi", e.getMessage()));
             } catch (IOException e) {
-                return ResponseEntity.internalServerError().body(Map.of("error", "Không lưu được tệp"));
+                return ResponseEntity.internalServerError().body(Map.of("loi", "Không lưu được tệp"));
             }
         }
         if (ketQua.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Không có tệp"));
+            return ResponseEntity.badRequest().body(Map.of("loi", "Không có tệp"));
         }
         return ResponseEntity.ok(Map.of("tep", ketQua));
     }

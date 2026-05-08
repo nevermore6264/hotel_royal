@@ -478,7 +478,7 @@ export default function TrangChu() {
           {!user ? (
             <div className="landing-hero__aside">
               <div className="home-login-card" id="home-login">
-                <LoginForm variant="compact" onSuccess={() => undefined} />
+        <LoginForm laGon khiDangNhapThanhCong={() => undefined} />
               </div>
               <div className="landing-peek" aria-hidden>
                 <article className="landing-mini-card landing-mini-card--a">

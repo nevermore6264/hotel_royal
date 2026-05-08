@@ -21,26 +21,26 @@ public final class PayOsKySo {
             String returnUrl,
             String checksumKey
     ) {
-        String raw = "amount=" + amountVnd
+        String chuoiHamCanKy = "amount=" + amountVnd
                 + "&cancelUrl=" + cancelUrl
                 + "&description=" + description
                 + "&orderCode=" + orderCode
                 + "&returnUrl=" + returnUrl;
-        return hamSha256Hex(raw, checksumKey);
+        return hamSha256Hex(chuoiHamCanKy, checksumKey);
     }
 
-    public static boolean xacThucDuLieuWebhook(JsonNode data, String chuKyNhan, String checksumKey) {
+    public static boolean xacThucDuLieuWebhook(JsonNode duLieuNut, String chuKyNhan, String checksumKey) {
         if (chuKyNhan == null || chuKyNhan.isBlank() || checksumKey == null || checksumKey.isBlank()) {
             return false;
         }
-        String raw = chuyenDataWebhookThanhChuoi(data);
-        String tinh = hamSha256Hex(raw, checksumKey);
+        String chuoiDuLieuHam = chuyenDuLieuWebhookThanhChuoi(duLieuNut);
+        String tinh = hamSha256Hex(chuoiDuLieuHam, checksumKey);
         return tinh.equalsIgnoreCase(chuKyNhan.trim());
     }
 
-    private static String chuyenDataWebhookThanhChuoi(JsonNode data) {
+    private static String chuyenDuLieuWebhookThanhChuoi(JsonNode duLieuNut) {
         TreeMap<String, String> sapXep = new TreeMap<>();
-        Iterator<Map.Entry<String, JsonNode>> it = data.fields();
+        Iterator<Map.Entry<String, JsonNode>> it = duLieuNut.fields();
         while (it.hasNext()) {
             Map.Entry<String, JsonNode> e = it.next();
             sapXep.put(e.getKey(), giaTriThanhChuoiKy(e.getValue()));

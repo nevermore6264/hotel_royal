@@ -12,12 +12,13 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, String>> handleRuntime(RuntimeException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+    public ResponseEntity<Map<String, String>> xuLyLoiThoiGianChay(RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("loi", e.getMessage()));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Map<String, String>> handleAccessDenied() {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Access denied"));
+    public ResponseEntity<Map<String, String>> xuLyTuChoiTruyCap() {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("loi", "Truy cập bị từ chối"));
     }
 }

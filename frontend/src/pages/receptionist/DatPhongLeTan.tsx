@@ -955,7 +955,15 @@ export default function DatPhongLeTan() {
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
-                    onClick={() => window.print()}
+                    onClick={() => {
+                      const idHoaDon = invoiceModal.data?.id;
+                      if (idHoaDon == null) return;
+                      window.open(
+                        `/le-tan/hoa-don/${idHoaDon}?autoPrint=1`,
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                    }}
                   >
                     <Printer className="btn-ico" aria-hidden />
                     In

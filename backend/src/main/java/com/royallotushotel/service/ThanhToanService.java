@@ -290,21 +290,21 @@ public class ThanhToanService {
         if (payOsChecksumKey == null || payOsChecksumKey.isBlank()) {
             throw new RuntimeException("Chưa cấu hình payment.payos.checksum-key");
         }
-        JsonNode data = root.get("data");
-        if (data == null || data.isNull()) {
+        JsonNode duLieuNutPayOs = root.get("data");
+        if (duLieuNutPayOs == null || duLieuNutPayOs.isNull()) {
             return;
         }
-        String sig = root.path("signature").asText("");
-        if (!PayOsKySo.xacThucDuLieuWebhook(data, sig, payOsChecksumKey.trim())) {
+        String chuKy = root.path("signature").asText("");
+        if (!PayOsKySo.xacThucDuLieuWebhook(duLieuNutPayOs, chuKy, payOsChecksumKey.trim())) {
             throw new RuntimeException("Chữ ký webhook payOS không hợp lệ");
         }
         if (!root.path("success").asBoolean(false) || !"00".equals(root.path("code").asText())) {
             return;
         }
-        int orderCode = data.path("orderCode").asInt(0);
+        int orderCode = duLieuNutPayOs.path("orderCode").asInt(0);
         if (orderCode == 0) return;
 
-        long amountVnd = data.path("amount").asLong(0L);
+        long amountVnd = duLieuNutPayOs.path("amount").asLong(0L);
         if (amountVnd <= 0L) {
             throw new RuntimeException("Webhook payOS thiếu hoặc sai số tiền (amount)");
         }
@@ -351,8 +351,8 @@ public class ThanhToanService {
         }
 
         JsonNode root = goiLayThongTinLinkPayOs(paymentLinkId.trim());
-        JsonNode data = root.get("data");
-        int ocApi = data.path("orderCode").asInt(0);
+        JsonNode duLieuNutPayOs = root.get("data");
+        int ocApi = duLieuNutPayOs.path("orderCode").asInt(0);
         if (ocApi != orderCode) {
             throw new RuntimeException("Dữ liệu payOS không khớp mã đơn.");
         }
@@ -363,8 +363,8 @@ public class ThanhToanService {
             throw new RuntimeException("Mã payOS không khớp với đơn đang chờ thanh toán.");
         }
 
-        String st = data.path("status").asText("");
-        long amountPaid = data.path("amountPaid").asLong(0L);
+        String st = duLieuNutPayOs.path("status").asText("");
+        long amountPaid = duLieuNutPayOs.path("amountPaid").asLong(0L);
 
         if (("CANCELLED".equalsIgnoreCase(st) || "CANCELED".equalsIgnoreCase(st)) && amountPaid <= 0L) {
             return Map.of(
@@ -404,17 +404,17 @@ public class ThanhToanService {
         String url = base + "/v2/payment-requests/" + paymentLinkId;
         try {
             ResponseEntity<String> res = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
-            String raw = res.getBody();
-            JsonNode root = objectMapper.readTree(raw != null ? raw : "{}");
+            String chuoiPhanHoi = res.getBody();
+            JsonNode root = objectMapper.readTree(chuoiPhanHoi != null ? chuoiPhanHoi : "{}");
             if (!"00".equals(root.path("code").asText())) {
                 throw new RuntimeException("payOS: " + root.path("desc").asText("Không lấy được trạng thái link"));
             }
-            JsonNode data = root.get("data");
-            if (data == null || data.isNull()) {
+            JsonNode duLieuNutPayOs = root.get("data");
+            if (duLieuNutPayOs == null || duLieuNutPayOs.isNull()) {
                 throw new RuntimeException("payOS không trả về data");
             }
-            String sig = root.path("signature").asText("");
-            if (!PayOsKySo.xacThucDuLieuWebhook(data, sig, payOsChecksumKey.trim())) {
+            String chuKy = root.path("signature").asText("");
+            if (!PayOsKySo.xacThucDuLieuWebhook(duLieuNutPayOs, chuKy, payOsChecksumKey.trim())) {
                 throw new RuntimeException("Chữ ký phản hồi payOS không hợp lệ");
             }
             return root;

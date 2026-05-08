@@ -225,15 +225,15 @@ export default function AdminBangGiaPhong() {
     try {
       if (editing) {
         await api.put(`/bang-gia-phong/${editing.id}`, payload);
-        toast("Đã cập nhật bảng giá.", "success");
+        toast("Đã cập nhật bảng giá.", "thanhCong");
       } else {
         await api.post("/bang-gia-phong", payload);
-        toast("Đã thêm bảng giá.", "success");
+        toast("Đã thêm bảng giá.", "thanhCong");
       }
       closeFormModal();
       load();
     } catch (err) {
-      toast(apiErrorMessage(err, "Lưu bảng giá thất bại"), "error");
+      toast(apiErrorMessage(err, "Lưu bảng giá thất bại"), "thatBai");
     } finally {
       setSaveBusy(false);
     }
@@ -246,10 +246,10 @@ export default function AdminBangGiaPhong() {
       await api.delete(`/bang-gia-phong/${pendingDeleteId}`);
       setPendingDeleteId(null);
       load();
-      toast("Đã xóa bảng giá.", "success");
+      toast("Đã xóa bảng giá.", "thanhCong");
     } catch (err) {
       setPendingDeleteId(null);
-      toast(apiErrorMessage(err, "Xóa thất bại"), "error");
+      toast(apiErrorMessage(err, "Xóa thất bại"), "thatBai");
     } finally {
       setDeleteBusy(false);
     }

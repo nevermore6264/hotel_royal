@@ -6,22 +6,22 @@ import {
   type ReactNode,
 } from "react";
 
-type ToastType = "success" | "error" | "info";
+type KieuThongBao = "thanhCong" | "thatBai" | "thongTin";
 
-type ToastItem = { id: number; type: ToastType; message: string };
+type MucThongBao = { id: number; kieu: KieuThongBao; noiDung: string };
 
 type ToastContextValue = {
-  toast: (message: string, type?: ToastType) => void;
+  toast: (noiDung: string, kieu?: KieuThongBao) => void;
 };
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<ToastItem[]>([]);
+  const [items, setItems] = useState<MucThongBao[]>([]);
 
-  const toast = useCallback((message: string, type: ToastType = "info") => {
+  const toast = useCallback((noiDung: string, kieu: KieuThongBao = "thongTin") => {
     const id = Date.now() + Math.floor(Math.random() * 1000);
-    setItems((prev) => [...prev, { id, type, message }]);
+    setItems((prev) => [...prev, { id, kieu, noiDung }]);
     window.setTimeout(() => {
       setItems((prev) => prev.filter((t) => t.id !== id));
     }, 4200);
@@ -32,8 +32,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div className="toast-host" aria-live="polite">
         {items.map((t) => (
-          <div key={t.id} className={`toast toast--${t.type}`} role="status">
-            {t.message}
+          <div key={t.id} className={`toast toast--${t.kieu}`} role="status">
+            {t.noiDung}
           </div>
         ))}
       </div>

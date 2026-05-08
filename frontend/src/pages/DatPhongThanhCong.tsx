@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { apiErrorMessage } from "../lib/apiError";
 
-type SyncState = "idle" | "syncing" | "done" | "skipped" | "error";
+type SyncState = "idle" | "syncing" | "done" | "skipped" | "thatBai";
 
 export default function DatPhongThanhCong() {
   const [params] = useSearchParams();
@@ -70,23 +70,23 @@ export default function DatPhongThanhCong() {
         setSyncState("done");
         const tt = (res.data as { trangThai?: string })?.trangThai;
         if (tt === "DA_GHI_NHAN") {
-          toast("Đã xác nhận thanh toán và cập nhật đơn đặt phòng.", "success");
+          toast("Đã xác nhận thanh toán và cập nhật đơn đặt phòng.", "thanhCong");
         } else if (tt === "DA_HUY_TREN_CONG") {
-          toast("Giao dịch đã hủy trên PayOS.", "info");
+          toast("Giao dịch đã hủy trên PayOS.", "thongTin");
         } else if (tt === "CHO_THANH_TOAN") {
           toast(
             isKhachHang
               ? "Thanh toán chưa ghi nhận ngay; vài phút sau kiểm tra lại mục Đơn của tôi."
               : "Thanh toán chưa ghi nhận ngay; vài phút sau kiểm tra lại trong Quản lý đặt phòng.",
-            "info",
+            "thongTin",
           );
         } else if (tt === "CHE_DO_THU") {
-          toast("Đã ghi nhận (chế độ thử PayOS).", "success");
+          toast("Đã ghi nhận (chế độ thử PayOS).", "thanhCong");
         }
       })
       .catch((e) => {
         if (cancelledReq) return;
-        setSyncState("error");
+        setSyncState("thatBai");
         toast(
           apiErrorMessage(
             e,
@@ -94,7 +94,7 @@ export default function DatPhongThanhCong() {
               ? "Không đồng bộ được trạng thái. Mở Đơn của tôi sau vài phút hoặc liên hệ lễ tân."
               : "Không đồng bộ được trạng thái. Kiểm tra lại Quản lý đặt phòng sau vài phút.",
           ),
-          "error",
+          "thatBai",
         );
       });
     return () => {
@@ -141,7 +141,7 @@ export default function DatPhongThanhCong() {
             trả tiền, dữ liệu vẫn có thể được cập nhật qua webhook sau vài phút.
           </p>
         )}
-        {syncState === "error" && (
+        {syncState === "thatBai" && (
           <p className="form-error" role="alert">
             Có lỗi khi đồng bộ PayOS. Bạn vẫn có thể xem đơn bên dưới — trạng thái có thể cập nhật chậm hơn.
           </p>

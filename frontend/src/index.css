@@ -2935,19 +2935,19 @@ a.layout-nav-link.layout-nav-link--active {
   }
 }
 
-.toast--success {
+.toast--thanhCong {
   background: rgba(21, 94, 81, 0.95);
   border-color: rgba(45, 212, 191, 0.45);
   color: #ecfdf5;
 }
 
-.toast--error {
+.toast--thatBai {
   background: rgba(127, 29, 29, 0.96);
   border-color: rgba(248, 113, 113, 0.45);
   color: #fef2f2;
 }
 
-.toast--info {
+.toast--thongTin {
   background: var(--bg-card);
   color: var(--text);
 }

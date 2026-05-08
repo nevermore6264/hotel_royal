@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Download, FileText, Loader2, Printer } from "lucide-react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import api from "../api/client";
 import HoaDonDocument, { type HoaDonDuLieu } from "../components/HoaDonDocument";
 import { formatNgayGioVN } from "../lib/ngayGio";
@@ -8,10 +8,12 @@ import { formatNgayGioVN } from "../lib/ngayGio";
 export default function InHoaDon() {
   const { id } = useParams();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [dp, setDp] = useState<HoaDonDuLieu | null>(null);
   const [err, setErr] = useState("");
   const [pdfBusy, setPdfBusy] = useState(false);
   const invoiceRootRef = useRef<HTMLElement | null>(null);
+  const daTuDongInRef = useRef(false);
 
   const laLeTan = location.pathname.startsWith("/le-tan/");
   const quayLai = laLeTan
@@ -25,6 +27,14 @@ export default function InHoaDon() {
       .then((r) => setDp(r.data))
       .catch(() => setErr("Không xem được hóa đơn."));
   }, [id]);
+
+  useEffect(() => {
+    if (searchParams.get("autoPrint") !== "1") return;
+    if (!dp || daTuDongInRef.current) return;
+    daTuDongInRef.current = true;
+    const boHen = window.setTimeout(() => window.print(), 160);
+    return () => window.clearTimeout(boHen);
+  }, [dp, searchParams]);
 
   const ngayLapToolbar = useMemo(() => {
     if (!dp?.thoiGianTao) return formatNgayGioVN(new Date().toISOString());

@@ -18,9 +18,9 @@ type ProfileFieldErrors = Partial<
 >;
 
 function layLoiApi(err: unknown): string {
-  const d = (err as { response?: { data?: { error?: string; message?: string } } })
+  const d = (err as { response?: { data?: { loi?: string; thongDiep?: string } } })
     ?.response?.data;
-  return (d?.error || d?.message || "").trim();
+  return (d?.loi || d?.thongDiep || "").trim();
 }
 
 function mapLoiHoSoTuApi(msg: string): ProfileFieldErrors | null {
@@ -175,15 +175,15 @@ export default function HoSo() {
       });
       await refreshSession();
       setProfileErrors({});
-      toast("Đã cập nhật hồ sơ.", "success");
+      toast("Đã cập nhật hồ sơ.", "thanhCong");
     } catch (err) {
       const msg = layLoiApi(err);
       const mapped = mapLoiHoSoTuApi(msg);
       if (mapped) {
         setProfileErrors(mapped);
-        toast("Vui lòng sửa các trường được đánh dấu.", "error");
+        toast("Vui lòng sửa các trường được đánh dấu.", "thatBai");
       } else {
-        toast(msg || "Không lưu được hồ sơ.", "error");
+        toast(msg || "Không lưu được hồ sơ.", "thatBai");
       }
     }
   };
@@ -222,9 +222,9 @@ export default function HoSo() {
       });
       setPwd({ cu: "", moi: "", nhapLai: "" });
       setPwdErrors({});
-      toast("Đã đổi mật khẩu.", "success");
+      toast("Đã đổi mật khẩu.", "thanhCong");
     } catch (err) {
-      toast(layLoiApi(err) || "Đổi mật khẩu thất bại.", "error");
+      toast(layLoiApi(err) || "Đổi mật khẩu thất bại.", "thatBai");
     }
   };
 

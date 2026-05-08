@@ -39,66 +39,72 @@ public class ChatController {
     @GetMapping("/khach/tin-nhan")
     @PreAuthorize("hasRole('KHACH_HANG')")
     public ResponseEntity<List<TinNhanChatDto>> tinNhanCuaKhach(
-            @AuthenticationPrincipal ChuTheNguoiDung user,
+            @AuthenticationPrincipal ChuTheNguoiDung chuThe,
             @RequestParam Long idNguoiHoTro) {
-        return ResponseEntity.ok(chatService.tinNhanCuaKhach(user, idNguoiHoTro));
+        return ResponseEntity.ok(chatService.tinNhanCuaKhach(chuThe, idNguoiHoTro));
     }
 
     @PostMapping("/khach/tin-nhan")
     @PreAuthorize("hasRole('KHACH_HANG')")
     public ResponseEntity<TinNhanChatDto> guiTinKhach(
-            @AuthenticationPrincipal ChuTheNguoiDung user,
-            @Valid @RequestBody YeuCauGuiTinKhach body) {
+            @AuthenticationPrincipal ChuTheNguoiDung chuThe,
+            @Valid @RequestBody YeuCauGuiTinKhach yeuCauPhieu) {
         return ResponseEntity.ok(chatService.guiTinKhach(
-                user, body.getNoiDung(), body.getIdNguoiHoTro(), body.getKieuTin()));
+                chuThe,
+                yeuCauPhieu.getNoiDung(),
+                yeuCauPhieu.getIdNguoiHoTro(),
+                yeuCauPhieu.getKieuTin()));
     }
 
     @PostMapping("/tai-anh")
     @PreAuthorize("hasAnyRole('KHACH_HANG','LE_TAN','QUAN_TRI')")
-    public ResponseEntity<?> taiAnhChat(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> taiAnhChat(@RequestParam("file") MultipartFile tep) {
         try {
-            String duongDan = tapTinPhongService.luuAnhChat(file);
-            Map<String, String> body = new HashMap<>();
-            body.put("duongDan", duongDan);
-            return ResponseEntity.ok(body);
+            String duongDan = tapTinPhongService.luuAnhChat(tep);
+            Map<String, String> phanHoi = new HashMap<>();
+            phanHoi.put("duongDan", duongDan);
+            return ResponseEntity.ok(phanHoi);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("loi", e.getMessage()));
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Không lưu được tệp"));
+            return ResponseEntity.internalServerError().body(Map.of("loi", "Không lưu được tệp"));
         }
     }
 
     @GetMapping("/cuoc-tro-chuyen")
     @PreAuthorize("hasAnyRole('LE_TAN','QUAN_TRI')")
     public ResponseEntity<List<CuocTroChuyenTomTatDto>> danhSachCuoc(
-            @AuthenticationPrincipal ChuTheNguoiDung user) {
-        return ResponseEntity.ok(chatService.danhSachCuocChoNhanVien(user));
+            @AuthenticationPrincipal ChuTheNguoiDung chuThe) {
+        return ResponseEntity.ok(chatService.danhSachCuocChoNhanVien(chuThe));
     }
 
     @GetMapping("/cuoc-tro-chuyen/{id}/tin-nhan")
     @PreAuthorize("hasAnyRole('LE_TAN','QUAN_TRI')")
     public ResponseEntity<List<TinNhanChatDto>> tinTrongCuoc(
-            @AuthenticationPrincipal ChuTheNguoiDung user,
+            @AuthenticationPrincipal ChuTheNguoiDung chuThe,
             @PathVariable Long id) {
-        return ResponseEntity.ok(chatService.tinTrongCuoc(user, id));
+        return ResponseEntity.ok(chatService.tinTrongCuoc(chuThe, id));
     }
 
     @PostMapping("/cuoc-tro-chuyen/{id}/tin-nhan")
     @PreAuthorize("hasAnyRole('LE_TAN','QUAN_TRI')")
     public ResponseEntity<TinNhanChatDto> guiTinNhanVien(
-            @AuthenticationPrincipal ChuTheNguoiDung user,
+            @AuthenticationPrincipal ChuTheNguoiDung chuThe,
             @PathVariable Long id,
-            @Valid @RequestBody YeuCauGuiTinChat body) {
+            @Valid @RequestBody YeuCauGuiTinChat yeuCauPhieu) {
         return ResponseEntity.ok(chatService.guiTinNhanVien(
-                user, id, body.getNoiDung(), body.getKieuTin()));
+                chuThe, id, yeuCauPhieu.getNoiDung(), yeuCauPhieu.getKieuTin()));
     }
 
     @PostMapping("/nhan-vien/tin-nhan")
     @PreAuthorize("hasAnyRole('LE_TAN','QUAN_TRI')")
     public ResponseEntity<TinNhanChatDto> guiTinNhanVienTheoKhach(
-            @AuthenticationPrincipal ChuTheNguoiDung user,
-            @Valid @RequestBody YeuCauGuiTinNhanVienChoKhach body) {
+            @AuthenticationPrincipal ChuTheNguoiDung chuThe,
+            @Valid @RequestBody YeuCauGuiTinNhanVienChoKhach yeuCauPhieu) {
         return ResponseEntity.ok(chatService.guiTinNhanVienTheoKhach(
-                user, body.getIdNguoiDungKhach(), body.getNoiDung(), body.getKieuTin()));
+                chuThe,
+                yeuCauPhieu.getIdNguoiDungKhach(),
+                yeuCauPhieu.getNoiDung(),
+                yeuCauPhieu.getKieuTin()));
     }
 }

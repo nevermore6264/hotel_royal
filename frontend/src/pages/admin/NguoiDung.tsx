@@ -220,7 +220,7 @@ export default function AdminNguoiDung() {
         };
         if (matKhau) capNhat.matKhau = matKhau;
         await api.put(`/nguoi-dung/${editing.id}`, capNhat);
-        toast("Đã cập nhật người dùng.", "success");
+        toast("Đã cập nhật người dùng.", "thanhCong");
       } else {
         await api.post("/nguoi-dung", {
           tenDangNhap,
@@ -231,15 +231,15 @@ export default function AdminNguoiDung() {
           trangThai: form.trangThai,
           vaiTro: vaiTroPayload,
         });
-        toast("Đã thêm người dùng.", "success");
+        toast("Đã thêm người dùng.", "thanhCong");
       }
       closeFormModal();
       load();
     } catch (err) {
       toast(
-        (err as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Lỗi",
-        "error",
+        (err as { response?: { data?: { loi?: string } } })?.response?.data
+          ?.loi || "Lỗi",
+        "thatBai",
       );
     } finally {
       setSaveBusy(false);
@@ -265,14 +265,14 @@ export default function AdminNguoiDung() {
         trangThaiMoi === "KHOA"
           ? "Đã khóa tài khoản."
           : "Đã mở khóa tài khoản.",
-        "success",
+        "thanhCong",
       );
       load();
     } catch (err) {
       toast(
-        (err as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Không thể cập nhật trạng thái tài khoản.",
-        "error",
+        (err as { response?: { data?: { loi?: string } } })?.response?.data
+          ?.loi || "Không thể cập nhật trạng thái tài khoản.",
+        "thatBai",
       );
     } finally {
       setToggleBusyId(null);

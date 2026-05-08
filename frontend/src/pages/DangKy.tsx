@@ -13,13 +13,13 @@ export default function DangKy() {
     soDienThoai: "",
     loaiTaiKhoan: "" as "" | "VANG_LAI",
   });
-  const [error, setError] = useState("");
+  const [baoLoi, setBaoLoi] = useState("");
   const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setBaoLoi("");
     try {
       await register({
         tenDangNhap: form.tenDangNhap,
@@ -31,9 +31,9 @@ export default function DangKy() {
       });
       navigate("/");
     } catch (err: unknown) {
-      setError(
-        (err as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error || "Đăng ký thất bại",
+      setBaoLoi(
+        (err as { response?: { data?: { loi?: string } } })?.response?.data?.loi ||
+          "Đăng ký thất bại",
       );
     }
   };
@@ -123,7 +123,7 @@ export default function DangKy() {
               </select>
             </div>
           </div>
-          {error && <p className="form-error">{error}</p>}
+          {baoLoi && <p className="form-error">{baoLoi}</p>}
           <button type="submit" className="btn btn-block btn-lg">
             <UserPlus className="btn-ico" aria-hidden />
             Đăng ký

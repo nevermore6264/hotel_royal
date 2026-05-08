@@ -103,15 +103,15 @@ export default function AdminChinhSachHuyPhong() {
       };
       if (editing) {
         await api.put(`/chinh-sach-huy-phong/${editing.id}`, payload);
-        toast("Đã cập nhật chính sách.", "success");
+        toast("Đã cập nhật chính sách.", "thanhCong");
       } else {
         await api.post("/chinh-sach-huy-phong", payload);
-        toast("Đã thêm chính sách.", "success");
+        toast("Đã thêm chính sách.", "thanhCong");
       }
       closeFormModal();
       load();
     } catch (err) {
-      toast(apiErrorMessage(err, "Lỗi"), "error");
+      toast(apiErrorMessage(err, "Lỗi"), "thatBai");
     } finally {
       setSaveBusy(false);
     }
@@ -124,10 +124,10 @@ export default function AdminChinhSachHuyPhong() {
       await api.delete(`/chinh-sach-huy-phong/${pendingDeleteId}`);
       setPendingDeleteId(null);
       load();
-      toast("Đã xóa chính sách.", "success");
+      toast("Đã xóa chính sách.", "thanhCong");
     } catch (err) {
       setPendingDeleteId(null);
-      toast(apiErrorMessage(err, "Lỗi"), "error");
+      toast(apiErrorMessage(err, "Lỗi"), "thatBai");
     } finally {
       setDeleteBusy(false);
     }
