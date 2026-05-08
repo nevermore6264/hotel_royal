@@ -72,16 +72,6 @@ app:
     # Khoảng cách giữa các lần quét hủy quá hạn (giây)
     tan-so-quet-giay: ${APP_QUET_HUY_DAT_PHONG_GIAY:60}
 
-# Trợ lý FAQ (OpenAI-compatible Chat Completions). Tắt mặc định — bật khi có API key.
-ai:
-  faq:
-    enabled: ${AI_FAQ_ENABLED:false}
-    api-key: ${OPENAI_API_KEY:}
-    base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
-    model: ${OPENAI_MODEL:gpt-4o-mini}
-    temperature: ${AI_FAQ_TEMPERATURE:0.35}
-    max-tokens: ${AI_FAQ_MAX_TOKENS:700}
-
 logging:
   level:
     com.royallotushotel: DEBUG

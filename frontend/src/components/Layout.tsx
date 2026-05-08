@@ -7,7 +7,6 @@ import {
   HousekeepingSubNav,
   ReceptionSubNav,
 } from "./RoleSubNav";
-import FaqChatWidget from "./FaqChatWidget";
 
 export default function Layout() {
   const {
@@ -489,7 +488,6 @@ export default function Layout() {
       <main className="layout-main">
         <Outlet />
       </main>
-      <FaqChatWidget />
     </div>
   );
 }

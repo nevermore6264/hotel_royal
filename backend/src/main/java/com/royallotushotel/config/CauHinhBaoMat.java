@@ -44,7 +44,6 @@ public class CauHinhBaoMat {
                         .requestMatchers(HttpMethod.GET, "/xac-thuc/toi").authenticated()
                         .requestMatchers("/xac-thuc/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/chinh-sach-huy-phong/**").permitAll()
-                        .requestMatchers("/tro-giup-faq/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/phong")
                         .hasAnyRole("QUAN_TRI", "LE_TAN", "BUONG_PHONG")
                         .requestMatchers(HttpMethod.GET, "/phong/can-don-ve-sinh")
