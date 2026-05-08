@@ -26,6 +26,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -38,6 +40,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class DatPhongService {
+
+    private static final ZoneId MUI_GIO_KHACH_SAN = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final DatPhongRepository datPhongRepository;
     private final KhachHangRepository khachHangRepository;
@@ -211,6 +215,16 @@ public class DatPhongService {
         DatPhong dp = layThucThe(idDatPhong);
         if (!MaTrangThaiDatPhong.DA_XAC_NHAN.equals(dp.getTrangThai())) {
             throw new RuntimeException("Đơn phải ở trạng thái DA_XAC_NHAN để nhận phòng");
+        }
+        LocalDate ngayNhanTheoDon = dp.getNgayNhanPhong();
+        if (ngayNhanTheoDon != null) {
+            LocalDate homNay = LocalDate.now(MUI_GIO_KHACH_SAN);
+            if (homNay.isBefore(ngayNhanTheoDon)) {
+                throw new RuntimeException(
+                        "Chưa đến ngày nhận phòng theo đơn ("
+                                + ngayNhanTheoDon.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                                + "). Chỉ có thể nhận phòng từ ngày này trở đi.");
+            }
         }
         dp.setTrangThai(MaTrangThaiDatPhong.DA_NHAN_PHONG);
         for (ChiTietDatPhong d : dp.getChiTiet()) {

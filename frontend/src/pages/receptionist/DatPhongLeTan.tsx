@@ -119,6 +119,18 @@ function coTheThanhToanPayOsLeTan(b: DatPhong): boolean {
   return b.thanhToan != null && tienConLaiPayOs(b) > 0.009;
 }
 
+function ngayHomNayYyyyMmDd(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** So sánh theo lịch ngày máy khách (khớp quy tắc backend Asia/Ho_Chi_Minh cho cùng một “ngày”). */
+function daDenNgayNhanPhong(isoNgayNhan?: string): boolean {
+  if (!isoNgayNhan) return true;
+  return ngayHomNayYyyyMmDd() >= isoNgayNhan.slice(0, 10);
+}
+
 function tienThuPayOsLanNay(
   b: DatPhong,
   cheDo: "TOAN_BO" | "DAT_COC",
@@ -921,6 +933,12 @@ export default function DatPhongLeTan() {
                             <button
                               type="button"
                               className="btn btn-sm"
+                              disabled={!daDenNgayNhanPhong(b.ngayNhanPhong)}
+                              title={
+                                !daDenNgayNhanPhong(b.ngayNhanPhong)
+                                  ? `Chưa đến ngày nhận phòng (theo đơn: ${formatNgayVN(b.ngayNhanPhong)}).`
+                                  : undefined
+                              }
                               onClick={() => checkIn(b.id)}
                             >
                               <KeyRound className="btn-ico" aria-hidden />
