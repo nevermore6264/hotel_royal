@@ -90,3 +90,28 @@ export function classBadgePhong(ma?: string): string {
       return "badge badge--state-muted";
   }
 }
+
+export function tenTrangThaiVeSinh(ma?: string): string {
+  const m: Record<string, string> = {
+    SACH: "Sạch",
+    CAN_DON: "Cần dọn",
+    BAN: "Bẩn",
+    DANG_DON: "Đang dọn",
+  };
+  return ma ? m[ma] ?? ma : "—";
+}
+
+export function classBadgeVeSinh(ma?: string): string {
+  switch (ma) {
+    case "SACH":
+      return "badge badge--state-ok";
+    case "CAN_DON":
+      return "badge badge--state-warn";
+    case "BAN":
+      return "badge badge--state-bad";
+    case "DANG_DON":
+      return "badge badge--state-info";
+    default:
+      return "badge badge--state-muted";
+  }
+}

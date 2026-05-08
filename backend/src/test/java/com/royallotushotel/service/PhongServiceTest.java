@@ -290,7 +290,11 @@ class PhongServiceTest {
 
     @Test
     void timPhongCanDon() {
-        when(phongRepository.findByTrangThaiVeSinhIn(List.of(MaTrangThaiVeSinh.CAN_DON, MaTrangThaiVeSinh.BAN)))
+        when(phongRepository.findByTrangThaiVeSinhIn(
+                        List.of(
+                                MaTrangThaiVeSinh.CAN_DON,
+                                MaTrangThaiVeSinh.BAN,
+                                MaTrangThaiVeSinh.DANG_DON)))
                 .thenReturn(List.of(phongCoLoai));
         assertThat(phongService.timPhongCanDon()).hasSize(1);
     }

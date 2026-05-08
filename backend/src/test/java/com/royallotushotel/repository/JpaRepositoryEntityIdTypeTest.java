@@ -10,9 +10,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Đảm bảo mỗi repository khai báo đúng kiểu thực thể và khóa cho {@link JpaRepository}.
- */
 class JpaRepositoryEntityIdTypeTest {
 
     static Stream<Arguments> tatCaRepo() {

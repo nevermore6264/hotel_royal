@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 type Props = {
-  /** Giao diện ô đăng nhập nhỏ trên trang chủ */
   laGon?: boolean;
   khiDangNhapThanhCong?: () => void;
 };

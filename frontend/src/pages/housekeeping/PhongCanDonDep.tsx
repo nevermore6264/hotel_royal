@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
-import { ClipboardCheck, RefreshCw, Sparkles } from "lucide-react";
+import { RefreshCw, Sparkles } from "lucide-react";
 import api from "../../api/client";
+import { useToast } from "../../context/ToastContext";
+import { apiErrorMessage } from "../../lib/apiError";
+import { classBadgeVeSinh, tenTrangThaiVeSinh } from "../../lib/trangThai";
 
 type Phong = {
   id: number;
@@ -8,20 +11,12 @@ type Phong = {
   trangThai: string;
   trangThaiVeSinh: string;
   ghiChuVeSinh?: string;
-  idDatPhong?: number;
 };
 
 export default function PhongCanDonDep() {
+  const { toast } = useToast();
   const [rooms, setRooms] = useState<Phong[]>([]);
   const [loading, setLoading] = useState(true);
-  const [targetStatus] = useState<"SACH">("SACH");
-  const [services, setServices] = useState<
-    { id: number; ten: string; gia: number }[]
-  >([]);
-  const [laundryServiceId, setLaundryServiceId] = useState<number | null>(null);
-  const [laundryQtyByRoomId, setLaundryQtyByRoomId] = useState<
-    Record<number, number>
-  >({});
 
   const load = () => {
     setLoading(true);
@@ -38,49 +33,61 @@ export default function PhongCanDonDep() {
   );
 
   useEffect(() => {
-    api.get("/dich-vu").then((r) => setServices(r.data));
-  }, []);
-
-  useEffect(() => {
-    if (!services || services.length === 0) return;
-    const laundry =
-      services.find((s) => s.ten?.toLowerCase().includes("giặt")) ||
-      services[0];
-    if (laundry) setLaundryServiceId(laundry.id);
-  }, [services]);
+    setNotesByRoomId((prev) => {
+      const next = { ...prev };
+      for (const r of rooms) {
+        if (!(r.id in next) && r.ghiChuVeSinh != null && r.ghiChuVeSinh !== "") {
+          next[r.id] = r.ghiChuVeSinh;
+        }
+      }
+      return next;
+    });
+  }, [rooms]);
 
   const setNote = (roomId: number, note: string) => {
     setNotesByRoomId((prev) => ({ ...prev, [roomId]: note }));
   };
 
-  const updateCleanliness = async (roomId: number) => {
+  const patchVeSinh = async (roomId: number, trangThaiVeSinh: string) => {
+    const soPhong =
+      rooms.find((x) => x.id === roomId)?.soPhong ?? String(roomId);
     const ghiChu = notesByRoomId[roomId] || "";
-    await api.patch(`/phong/${roomId}/ve-sinh`, null, {
-      params: {
-        trangThaiVeSinh: targetStatus,
-        ghiChu: ghiChu || undefined,
-      },
-    });
-    load();
-  };
-
-  const addLaundry = async (roomId: number) => {
-    const room = rooms.find((r) => r.id === roomId);
-    if (!room?.idDatPhong) return;
-    if (!laundryServiceId) return;
-    const soLuong = laundryQtyByRoomId[roomId] ?? 1;
-    await api.post(`/dich-vu/dat-phong/${room.idDatPhong}/them`, {
-      idDichVu: laundryServiceId,
-      soLuong,
-    });
-    load();
+    try {
+      await api.patch(`/phong/${roomId}/ve-sinh`, null, {
+        params: {
+          trangThaiVeSinh,
+          ghiChu: ghiChu || undefined,
+        },
+      });
+      if (trangThaiVeSinh === "DANG_DON") {
+        toast(
+          `Phòng ${soPhong}: đã chuyển sang ${tenTrangThaiVeSinh("DANG_DON")}.`,
+          "thanhCong",
+        );
+      } else if (trangThaiVeSinh === "SACH") {
+        toast(
+          `Phòng ${soPhong}: đã dọn xong — vệ sinh: ${tenTrangThaiVeSinh("SACH")}.`,
+          "thanhCong",
+        );
+      } else {
+        toast(`Phòng ${soPhong}: đã cập nhật vệ sinh.`, "thanhCong");
+      }
+      load();
+    } catch (e) {
+      toast(
+        apiErrorMessage(e, "Không cập nhật được trạng thái vệ sinh."),
+        "thatBai",
+      );
+    }
   };
 
   return (
     <div className="container page-shell">
       <h1 className="page-title">Phòng cần dọn</h1>
       <p className="page-subtitle page-subtitle--tight">
-        Cập nhật trạng thái vệ sinh và ghi chú sau khi dọn.
+        <strong>Bắt đầu dọn</strong> đánh dấu phòng đang được xử lý;{" "}
+        <strong>Đã dọn xong</strong> đặt vệ sinh về <strong>Sạch</strong>. Ghi chú
+        là tùy chọn.
       </p>
       {loading ? (
         <div className="card loading-panel">
@@ -92,92 +99,73 @@ export default function PhongCanDonDep() {
           <h3 className="card-title" style={{ marginTop: 0 }}>
             Phòng cần xử lý
           </h3>
-          <div className="form-inline" style={{ marginBottom: "1.15rem" }}>
-            <div className="form-group">
-              <label>Trạng thái sau khi dọn</label>
-              <select value={targetStatus} disabled>
-                <option value="SACH">Sạch</option>
-              </select>
-            </div>
-          </div>
           <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Phòng</th>
-                <th>Tình trạng</th>
-                <th>Ghi chú</th>
-                <th>Giặt ủi</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rooms.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.soPhong}</td>
-                  <td>{r.trangThaiVeSinh}</td>
-                  <td style={{ width: 360 }}>
-                    <input
-                      value={notesByRoomId[r.id] || ""}
-                      onChange={(e) => setNote(r.id, e.target.value)}
-                      placeholder="Ví dụ: đã thay ga / giặt đồ / khử mùi..."
-                    />
-                  </td>
-                  <td style={{ minWidth: 210 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "0.5rem",
-                        alignItems: "center",
-                      }}
-                    >
-                      <input
-                        type="number"
-                        min={1}
-                        value={laundryQtyByRoomId[r.id] ?? 1}
-                        onChange={(e) =>
-                          setLaundryQtyByRoomId((prev) => ({
-                            ...prev,
-                            [r.id]: Number(e.target.value),
-                          }))
-                        }
-                        className="input-compact"
-                        style={{ width: 90 }}
-                        placeholder="SL"
-                        title="Số lượng dịch vụ"
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        disabled={!r.idDatPhong || !laundryServiceId}
-                        onClick={() => addLaundry(r.id)}
-                      >
-                        <ClipboardCheck className="btn-ico" aria-hidden />
-                        Ghi nhận
-                      </button>
-                    </div>
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className="btn btn-sm"
-                      onClick={() => updateCleanliness(r.id)}
-                    >
-                      <Sparkles className="btn-ico" aria-hidden />
-                      Đã dọn xong
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {rooms.length === 0 && (
+            <table>
+              <thead>
                 <tr>
-                  <td colSpan={5} style={{ color: "var(--text-muted)" }}>
-                    Không có phòng cần dọn.
-                  </td>
+                  <th>Phòng</th>
+                  <th>Tình trạng</th>
+                  <th>Ghi chú</th>
+                  <th style={{ minWidth: "12rem" }}>Thao tác</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rooms.map((r) => (
+                  <tr key={r.id}>
+                    <td>{r.soPhong}</td>
+                    <td>
+                      <span className={classBadgeVeSinh(r.trangThaiVeSinh)}>
+                        {tenTrangThaiVeSinh(r.trangThaiVeSinh)}
+                      </span>
+                    </td>
+                    <td className="buong-phong-can-don__note-cell">
+                      <textarea
+                        className="buong-phong-can-don__note"
+                        rows={2}
+                        value={notesByRoomId[r.id] ?? ""}
+                        onChange={(e) => setNote(r.id, e.target.value)}
+                        placeholder="Đã thay ga, khử mùi…"
+                        aria-label={`Ghi chú sau dọn — phòng ${r.soPhong}`}
+                        autoComplete="off"
+                      />
+                    </td>
+                    <td>
+                      <div className="buong-phong-can-don__actions">
+                        {(r.trangThaiVeSinh === "CAN_DON" ||
+                          r.trangThaiVeSinh === "BAN") && (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => patchVeSinh(r.id, "DANG_DON")}
+                          >
+                            Bắt đầu dọn
+                          </button>
+                        )}
+                        {(r.trangThaiVeSinh === "CAN_DON" ||
+                          r.trangThaiVeSinh === "BAN" ||
+                          r.trangThaiVeSinh === "DANG_DON") && (
+                          <button
+                            type="button"
+                            className="btn btn-sm"
+                            onClick={() => patchVeSinh(r.id, "SACH")}
+                          >
+                            <Sparkles className="btn-ico" aria-hidden />
+                            Đã dọn xong
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {rooms.length === 0 && (
+                  <tr>
+                    <td colSpan={4} style={{ color: "var(--text-muted)" }}>
+                      Không có phòng cần dọn.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
           <div className="mt-4">
             <button type="button" className="btn btn-secondary" onClick={load}>

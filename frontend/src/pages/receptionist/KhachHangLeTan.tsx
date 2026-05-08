@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { Pencil, Save, X } from "lucide-react";
+import { MessageCircle, Pencil, Phone, Save, X } from "lucide-react";
 import api from "../../api/client";
 import PaginationBar from "../../components/PaginationBar";
 import { useToast } from "../../context/ToastContext";
 import { apiErrorMessage } from "../../lib/apiError";
+import { soDienThoaiTelHref, soDienThoaiZaloMeHref } from "../../lib/dienThoai";
 
 type KhachHang = {
   id: number;
@@ -112,6 +113,10 @@ export default function KhachHangLeTan() {
       <p className="page-subtitle page-subtitle--tight">
         Tìm theo tên, số điện thoại hoặc email — có phân trang.
       </p>
+      <p className="text-muted text-sm" style={{ marginTop: "-0.35rem" }}>
+        Gọi máy dùng ứng dụng gọi của điện thoại; Zalo mở chat/hồ sơ theo số (di
+        động VN) — gọi thoại Zalo thực hiện trong app sau khi mở.
+      </p>
       <div className="card mb-section">
         <h3 className="card-title" style={{ marginTop: 0 }}>
           Tìm kiếm
@@ -144,7 +149,51 @@ export default function KhachHangLeTan() {
                 <tr key={c.id}>
                   <td>{c.id}</td>
                   <td>{c.hoTen}</td>
-                  <td>{c.soDienThoai || "-"}</td>
+                  <td>
+                    {(() => {
+                      const tel = soDienThoaiTelHref(c.soDienThoai);
+                      const zalo = soDienThoaiZaloMeHref(c.soDienThoai);
+                      const hien = c.soDienThoai?.trim();
+                      if (!hien) return "—";
+                      return (
+                        <div className="letan-khach-sdt-actions">
+                          {tel ? (
+                            <a
+                              href={tel}
+                              className="letan-khach-tel"
+                              aria-label={`Gọi ${hien}`}
+                            >
+                              <Phone
+                                size={14}
+                                className="letan-khach-tel__ico"
+                                aria-hidden
+                              />
+                              {hien}
+                            </a>
+                          ) : (
+                            <span>{hien}</span>
+                          )}
+                          {zalo ? (
+                            <a
+                              href={zalo}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="letan-khach-zalo"
+                              aria-label={`Mở Zalo với số ${hien}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MessageCircle
+                                size={14}
+                                className="letan-khach-zalo__ico"
+                                aria-hidden
+                              />
+                              Zalo
+                            </a>
+                          ) : null}
+                        </div>
+                      );
+                    })()}
+                  </td>
                   <td>{c.email || "-"}</td>
                   <td>{c.soCanCuoc || "-"}</td>
                   <td>
@@ -230,7 +279,43 @@ export default function KhachHangLeTan() {
                   setPhieuSua((p) => ({ ...p, soDienThoai: e.target.value }))
                 }
                 placeholder="Tùy chọn"
+                inputMode="tel"
+                autoComplete="tel"
               />
+              {(() => {
+                const telSua = soDienThoaiTelHref(phieuSua.soDienThoai);
+                const zaloSua = soDienThoaiZaloMeHref(phieuSua.soDienThoai);
+                if (!telSua && !zaloSua) return null;
+                return (
+                  <div
+                    className="letan-khach-sdt-modal-actions"
+                    style={{ marginTop: "0.5rem" }}
+                  >
+                    {telSua ? (
+                      <a
+                        href={telSua}
+                        className="btn btn-sm btn-secondary"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Phone className="btn-ico" aria-hidden />
+                        Gọi máy
+                      </a>
+                    ) : null}
+                    {zaloSua ? (
+                      <a
+                        href={zaloSua}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-sm btn-secondary"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MessageCircle className="btn-ico" aria-hidden />
+                        Mở Zalo
+                      </a>
+                    ) : null}
+                  </div>
+                );
+              })()}
             </div>
             <div className="form-group">
               <label>Email</label>

@@ -203,6 +203,34 @@ public class ThanhToanService {
             String cong,
             String maGiaoDich,
             BigDecimal soTienLanNay) {
+        ghiNhanThanhToanNoiBo(idDatPhong, cong, maGiaoDich, soTienLanNay, null);
+    }
+
+    /**
+     * Ghi nhận thanh toán tiền mặt tại quầy (lễ tân nhập số tiền).
+     */
+    @Transactional
+    public void ghiNhanTienMat(Long idDatPhong, BigDecimal soTien, String ghiChu) {
+        if (soTien == null || soTien.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Số tiền không hợp lệ");
+        }
+        String ma = "TM-" + System.nanoTime();
+        ghiNhanThanhToanNoiBo(idDatPhong, MaPhuongThucThanhToan.TIEN_MAT, ma, soTien, ghiChu);
+    }
+
+    private static String moTaGiaoDichMacDinh(String cong, boolean du) {
+        if (MaPhuongThucThanhToan.TIEN_MAT.equals(cong)) {
+            return du ? "Thanh toán tiền mặt tại quầy (đủ)" : "Thu tiền mặt tại quầy";
+        }
+        return du ? "Thanh toán đặt phòng qua payOS" : "Đặt cọc đặt phòng qua payOS";
+    }
+
+    private void ghiNhanThanhToanNoiBo(
+            Long idDatPhong,
+            String cong,
+            String maGiaoDich,
+            BigDecimal soTienLanNay,
+            String ghiChuTuyChon) {
         if (soTienLanNay == null || soTienLanNay.compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Số tiền thanh toán không hợp lệ");
         }
@@ -250,6 +278,10 @@ public class ThanhToanService {
         BigDecimal tongSau = datPhongService.tinhTongTien(idDatPhong);
         boolean du = daThuMoi.compareTo(tongSau) >= 0;
         String loaiGd = du ? LoaiGiaoDichThanhToan.THANH_TOAN : LoaiGiaoDichThanhToan.DAT_COC;
+        String ghiChuGd =
+                ghiChuTuyChon != null && !ghiChuTuyChon.isBlank()
+                        ? ghiChuTuyChon.trim()
+                        : moTaGiaoDichMacDinh(cong, du);
         GiaoDichThanhToan gd = GiaoDichThanhToan.builder()
                 .thanhToan(tt)
                 .maGiaoDich(maGiaoDich != null ? maGiaoDich : "")
@@ -259,7 +291,7 @@ public class ThanhToanService {
                 .phuongThuc(cong)
                 .congThanhToan(cong)
                 .thamChieuCong(maGiaoDich != null ? maGiaoDich : "")
-                .ghiChu(du ? "Thanh toán đặt phòng qua payOS" : "Đặt cọc đặt phòng qua payOS")
+                .ghiChu(ghiChuGd)
                 .build();
         tt.getGiaoDich().add(gd);
         tt.setPayosOrderCode(null);

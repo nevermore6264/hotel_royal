@@ -168,7 +168,12 @@ public class PhongService {
 
     @Transactional(readOnly = true)
     public List<PhongDto> timPhongCanDon() {
-        return phongRepository.findByTrangThaiVeSinhIn(List.of(MaTrangThaiVeSinh.CAN_DON, MaTrangThaiVeSinh.BAN))
+        return phongRepository
+                .findByTrangThaiVeSinhIn(
+                        List.of(
+                                MaTrangThaiVeSinh.CAN_DON,
+                                MaTrangThaiVeSinh.BAN,
+                                MaTrangThaiVeSinh.DANG_DON))
                 .stream()
                 .map(this::sangDto)
                 .collect(Collectors.toList());

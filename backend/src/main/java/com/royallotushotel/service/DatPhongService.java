@@ -445,6 +445,32 @@ public class DatPhongService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    private List<SuDungDichVuDto> gopSuDungDichVuChoDto(DatPhong dp) {
+        if (dp.getSuDungDichVu() == null || dp.getSuDungDichVu().isEmpty()) {
+            return new ArrayList<>();
+        }
+        return dp.getSuDungDichVu().stream()
+                .collect(Collectors.groupingBy(su -> su.getDichVu().getId()))
+                .values()
+                .stream()
+                .map(list -> {
+                    list.sort(Comparator.comparing(SuDungDichVu::getId, Comparator.nullsLast(Comparator.naturalOrder())));
+                    SuDungDichVu mau = list.get(0);
+                    int tongSoLuong = list.stream().mapToInt(SuDungDichVu::getSoLuong).sum();
+                    BigDecimal donGia = mau.getDichVu().getGia();
+                    SuDungDichVuDto s = new SuDungDichVuDto();
+                    s.setId(mau.getId());
+                    s.setIdDichVu(mau.getDichVu().getId());
+                    s.setTenDichVu(mau.getDichVu().getTen());
+                    s.setSoLuong(tongSoLuong);
+                    s.setDonGia(donGia);
+                    s.setThanhTien(donGia.multiply(BigDecimal.valueOf(tongSoLuong)));
+                    return s;
+                })
+                .sorted(Comparator.comparing(SuDungDichVuDto::getTenDichVu, String.CASE_INSENSITIVE_ORDER))
+                .collect(Collectors.toList());
+    }
+
     private BigDecimal tinhTienHoan(DatPhong dp) {
         return dp.getHoanTien().stream()
                 .map(HoanTien::getSoTienHoan)
@@ -518,16 +544,7 @@ public class DatPhongService {
             c.setTyLeHoanTienApDung(d.getTyLeHoanTienApDung());
             return c;
         }).collect(Collectors.toList()));
-        dto.setSuDungDichVu(dp.getSuDungDichVu().stream().map(su -> {
-            SuDungDichVuDto s = new SuDungDichVuDto();
-            s.setId(su.getId());
-            s.setIdDichVu(su.getDichVu().getId());
-            s.setTenDichVu(su.getDichVu().getTen());
-            s.setSoLuong(su.getSoLuong());
-            s.setDonGia(su.getDichVu().getGia());
-            s.setThanhTien(su.getDichVu().getGia().multiply(BigDecimal.valueOf(su.getSoLuong())));
-            return s;
-        }).collect(Collectors.toList()));
+        dto.setSuDungDichVu(gopSuDungDichVuChoDto(dp));
         if (dp.getThanhToan() != null) {
             ThanhToanDto tt = new ThanhToanDto();
             tt.setId(dp.getThanhToan().getId());

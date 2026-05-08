@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,11 +67,21 @@ public class QuanLyDichVuService {
 
     @Transactional
     public void themVaoDatPhong(Long idDatPhong, Long idDichVu, int soLuong) {
+        if (soLuong <= 0) {
+            throw new RuntimeException("Số lượng phải lớn hơn 0");
+        }
         DatPhong dp = datPhongRepository.findById(idDatPhong).orElseThrow(() -> new RuntimeException("Không tìm thấy đặt phòng"));
         DichVu dv = dichVuRepository.findById(idDichVu).orElseThrow(() -> new RuntimeException("Không tìm thấy dịch vụ"));
-        SuDungDichVu sd = SuDungDichVu.builder().datPhong(dp).dichVu(dv).soLuong(soLuong).build();
-        dp.getSuDungDichVu().add(sd);
-        datPhongRepository.save(dp);
+        Optional<SuDungDichVu> daCo = suDungDichVuRepository.findByDatPhong_IdAndDichVu_Id(idDatPhong, idDichVu);
+        if (daCo.isPresent()) {
+            SuDungDichVu sd = daCo.get();
+            sd.setSoLuong(sd.getSoLuong() + soLuong);
+            suDungDichVuRepository.save(sd);
+        } else {
+            SuDungDichVu sd = SuDungDichVu.builder().datPhong(dp).dichVu(dv).soLuong(soLuong).build();
+            dp.getSuDungDichVu().add(sd);
+            datPhongRepository.save(dp);
+        }
         datPhongService.capNhatTongThanhToan(idDatPhong);
     }
 

@@ -20,6 +20,7 @@ import DatPhongLeTan from "./pages/receptionist/DatPhongLeTan";
 import KhachHangLeTan from "./pages/receptionist/KhachHangLeTan";
 import PhongCanDonDep from "./pages/housekeeping/PhongCanDonDep";
 import TrangThaiPhongBuongPhong from "./pages/housekeeping/TrangThaiPhong";
+import TongQuanBuongPhong from "./pages/housekeeping/TongQuanBuongPhong";
 import KhongTimThay from "./pages/KhongTimThay";
 import KhongCoQuyen from "./pages/KhongCoQuyen";
 import ThongTin from "./pages/ThongTin";
@@ -197,26 +198,38 @@ export default function App() {
             }
           />
         </Route>
-        <Route
-          path="buong-phong/can-don-ve-sinh"
-          element={
-            <PrivateRoute
-              roles={["ROLE_BUONG_PHONG", "ROLE_QUAN_TRI", "ROLE_LE_TAN"]}
-            >
-              <PhongCanDonDep />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="buong-phong/trang-thai"
-          element={
-            <PrivateRoute
-              roles={["ROLE_BUONG_PHONG", "ROLE_QUAN_TRI", "ROLE_LE_TAN"]}
-            >
-              <TrangThaiPhongBuongPhong />
-            </PrivateRoute>
-          }
-        />
+        <Route path="buong-phong">
+          <Route
+            index
+            element={
+              <PrivateRoute
+                roles={["ROLE_BUONG_PHONG", "ROLE_QUAN_TRI", "ROLE_LE_TAN"]}
+              >
+                <TongQuanBuongPhong />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="can-don-ve-sinh"
+            element={
+              <PrivateRoute
+                roles={["ROLE_BUONG_PHONG", "ROLE_QUAN_TRI", "ROLE_LE_TAN"]}
+              >
+                <PhongCanDonDep />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="trang-thai"
+            element={
+              <PrivateRoute
+                roles={["ROLE_BUONG_PHONG", "ROLE_QUAN_TRI", "ROLE_LE_TAN"]}
+              >
+                <TrangThaiPhongBuongPhong />
+              </PrivateRoute>
+            }
+          />
+        </Route>
         <Route
           path="chat"
           element={

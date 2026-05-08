@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Tiền tổng = giá một đêm × số đêm (mô phỏng tính giá đặt phòng). */
 class TinhTienPhongCoBanTest {
 
     @ParameterizedTest(name = "{0} × {1} đêm = {2}")

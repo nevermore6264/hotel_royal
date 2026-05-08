@@ -5,11 +5,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> xuLyResponseStatus(ResponseStatusException e) {
+        HttpStatus status = HttpStatus.resolve(e.getStatusCode().value());
+        if (status == null) {
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        String msg = e.getReason() != null ? e.getReason() : status.getReasonPhrase();
+        return ResponseEntity.status(status).body(Map.of("loi", msg));
+    }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> xuLyLoiThoiGianChay(RuntimeException e) {

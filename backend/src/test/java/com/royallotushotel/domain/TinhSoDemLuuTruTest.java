@@ -8,9 +8,6 @@ import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Khớp cách tính số đêm trong {@link com.royallotushotel.service.DatPhongService} / {@link com.royallotushotel.service.BangGiaPhongService}.
- */
 class TinhSoDemLuuTruTest {
 
     @ParameterizedTest(name = "{0} → {1} = {2} đêm")

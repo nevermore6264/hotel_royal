@@ -6,9 +6,11 @@ import com.royallotushotel.security.ChuTheNguoiDung;
 import com.royallotushotel.service.ThanhToanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 @RestController
@@ -35,6 +37,27 @@ public class ThanhToanController {
         JsonNode nutGoc = objectMapper.readTree(chuoiPhanThan);
         thanhToanService.xuLyWebhookPayOs(nutGoc);
         return ResponseEntity.ok(Map.of("ketQua", "thanhCong"));
+    }
+
+    @PostMapping("/tien-mat")
+    @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN')")
+    public ResponseEntity<Void> ghiNhanTienMat(@RequestBody Map<String, Object> phieuYeuCau) {
+        Long idDatPhong = Long.valueOf(phieuYeuCau.get("idDatPhong").toString());
+        Object soTienRaw = phieuYeuCau.get("soTien");
+        if (soTienRaw == null) {
+            throw new RuntimeException("Thiếu soTien");
+        }
+        BigDecimal soTien;
+        if (soTienRaw instanceof Number) {
+            soTien = BigDecimal.valueOf(((Number) soTienRaw).longValue());
+        } else {
+            String s = soTienRaw.toString().trim().replaceAll("\\s+", "");
+            soTien = new BigDecimal(s);
+        }
+        Object gc = phieuYeuCau.get("ghiChu");
+        String ghiChu = gc != null && !gc.toString().isBlank() ? gc.toString().trim() : null;
+        thanhToanService.ghiNhanTienMat(idDatPhong, soTien, ghiChu);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/dong-bo-payos")

@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   BadgeCheck,
+  Banknote,
   Download,
   ExternalLink,
+  Eye,
   FileText,
   KeyRound,
   Loader2,
   LogOut,
   PackagePlus,
   Printer,
+  Save,
   UserPlus,
   X,
 } from "lucide-react";
@@ -20,7 +23,13 @@ import HoaDonDocument, {
 import AlertDialog from "../../components/AlertDialog";
 import PaginationBar from "../../components/PaginationBar";
 import { apiErrorMessage } from "../../lib/apiError";
+import { gopSuDungDichVuHienThi } from "../../lib/gopSuDungDichVu";
 import { formatNgayVN } from "../../lib/ngayGio";
+import {
+  digitsOnlyMoney,
+  formatVndIntegerForInput,
+  parseVndIntegerInput,
+} from "../../lib/vndInput";
 import {
   classBadgeDatPhong,
   classBadgeThanhToan,
@@ -39,6 +48,15 @@ type DatPhong = {
   ngayTraPhong: string;
   trangThai: string;
   tongTien: number;
+  tienDichVu?: number;
+  suDungDichVu?: {
+    id: number;
+    idDichVu?: number;
+    tenDichVu: string;
+    soLuong: number;
+    donGia?: number;
+    thanhTien?: number;
+  }[];
   chiTiet: {
     id: number;
     soPhong: string;
@@ -68,16 +86,28 @@ type DichVu = {
   gia: number;
 };
 
+function tongTienDichVuTheoDon(b: DatPhong): number {
+  if (b.tienDichVu != null && !Number.isNaN(Number(b.tienDichVu))) {
+    return Number(b.tienDichVu);
+  }
+  return (b.suDungDichVu ?? []).reduce(
+    (s, d) => s + Number(d.thanhTien ?? 0),
+    0,
+  );
+}
+
+function soMucDichVuHienThi(b: DatPhong): number {
+  return gopSuDungDichVuHienThi(b.suDungDichVu).length;
+}
+
 function conPhaiThuSo(b: DatPhong): number {
   return Number(b.thanhToan?.conPhaiThu ?? 0);
 }
 
-/** Còn số phải thu (VND) — chặn trả phòng tại quầy khi chưa thu đủ. */
 function conNoTheoHeThong(b: DatPhong): boolean {
   return conPhaiThuSo(b) > 0.5;
 }
 
-/** Khớp backend `payment.payos.ty-le-coc-phan-tram` (mặc định 30). */
 const TY_LE_COC_PAYOS = 30;
 
 function tienConLaiPayOs(b: DatPhong): number {
@@ -173,7 +203,6 @@ export default function DatPhongLeTan() {
     booking: DatPhong | null;
     busy: boolean;
     cheDo: "TOAN_BO" | "DAT_COC";
-    /** Mở từ nút Trả phòng: chỉ thu nốt (TOAN_BO), không đặt cọc. */
     forCheckout: boolean;
   }>({
     open: false,
@@ -184,6 +213,19 @@ export default function DatPhongLeTan() {
   });
   const payosModalRef = useRef(payosModal);
   payosModalRef.current = payosModal;
+  const [tienMatModal, setTienMatModal] = useState<{
+    open: boolean;
+    booking: DatPhong | null;
+    soTienStr: string;
+    ghiChu: string;
+    busy: boolean;
+  }>({
+    open: false,
+    booking: null,
+    soTienStr: "",
+    ghiChu: "",
+    busy: false,
+  });
   const [notice, setNotice] = useState<{
     title: string;
     message: string;
@@ -448,6 +490,63 @@ export default function DatPhongLeTan() {
     });
   };
 
+  const moTienMat = (b: DatPhong) => {
+    const con = tienConLaiPayOs(b);
+    setTienMatModal({
+      open: true,
+      booking: b,
+      soTienStr:
+        con > 0 ? formatVndIntegerForInput(Math.round(con)) : "",
+      ghiChu: "",
+      busy: false,
+    });
+  };
+
+  const dongTienMat = () => {
+    setTienMatModal({
+      open: false,
+      booking: null,
+      soTienStr: "",
+      ghiChu: "",
+      busy: false,
+    });
+  };
+
+  const guiGhiNhanTienMat = async () => {
+    const b = tienMatModal.booking;
+    if (!b) return;
+    const soTien = parseVndIntegerInput(tienMatModal.soTienStr);
+    if (!Number.isFinite(soTien) || soTien <= 0) {
+      setNotice({
+        title: "Tiền mặt",
+        message: "Nhập số tiền hợp lệ (VND, số nguyên).",
+      });
+      return;
+    }
+    setTienMatModal((p) => ({ ...p, busy: true }));
+    try {
+      await api.post("/thanh-toan/tien-mat", {
+        idDatPhong: b.id,
+        soTien,
+        ghiChu: tienMatModal.ghiChu.trim() || undefined,
+      });
+      dongTienMat();
+      reload();
+      setNotice({
+        title: "Thanh toán tiền mặt",
+        message:
+          "Số tiền đã được ghi nhận vào đơn. Khi mục «Còn lại» = 0, bạn có thể ghi nhận trả phòng cho khách.",
+      });
+    } catch (err) {
+      setNotice({
+        title: "Tiền mặt",
+        message: apiErrorMessage(err, "Không ghi nhận được."),
+      });
+    } finally {
+      setTienMatModal((p) => ({ ...p, busy: false }));
+    }
+  };
+
   const taoLinkVaChuyenPayOs = async () => {
     const { booking: b, cheDo, forCheckout } = payosModalRef.current;
     if (!b) return;
@@ -565,29 +664,60 @@ export default function DatPhongLeTan() {
     void checkOut(b.id);
   };
 
-  const [serviceIdByBooking, setServiceIdByBooking] = useState<
-    Record<number, number>
-  >({});
-  const [qtyByBooking, setQtyByBooking] = useState<Record<number, number>>({});
+  const [themDichVuModal, setThemDichVuModal] = useState<DatPhong | null>(null);
+  const [themDichVuForm, setThemDichVuForm] = useState({
+    idDichVu: 0,
+    soLuong: 1,
+  });
+  const [themDichVuBusy, setThemDichVuBusy] = useState(false);
 
-  const addService = async (bookingId: number) => {
-    const idDichVu = serviceIdByBooking[bookingId];
-    const soLuong = qtyByBooking[bookingId] ?? 1;
-    if (!idDichVu) return;
-    await api.post(`/dich-vu/dat-phong/${bookingId}/them`, {
-      idDichVu,
-      soLuong,
-    });
-    reload();
+  const moThemDichVu = (b: DatPhong) => {
+    const idMacDinh = services[0]?.id ?? 0;
+    setThemDichVuForm({ idDichVu: idMacDinh, soLuong: 1 });
+    setThemDichVuModal(b);
   };
+
+  const dongThemDichVu = () => {
+    setThemDichVuModal(null);
+  };
+
+  const xacNhanThemDichVu = async () => {
+    if (!themDichVuModal || !themDichVuForm.idDichVu) {
+      setNotice({
+        title: "Thiếu thông tin",
+        message: "Chọn dịch vụ cần thêm.",
+      });
+      return;
+    }
+    const soLuong = Math.max(1, Math.floor(Number(themDichVuForm.soLuong) || 1));
+    setThemDichVuBusy(true);
+    try {
+      await api.post(`/dich-vu/dat-phong/${themDichVuModal.id}/them`, {
+        idDichVu: themDichVuForm.idDichVu,
+        soLuong,
+      });
+      dongThemDichVu();
+      reload();
+    } catch (err) {
+      setNotice({
+        title: "Không thêm được dịch vụ",
+        message: apiErrorMessage(err, "Lỗi"),
+      });
+    } finally {
+      setThemDichVuBusy(false);
+    }
+  };
+
+  const [chiTietDichVuDon, setChiTietDichVuDon] = useState<DatPhong | null>(null);
 
   return (
     <div className="container page-shell">
       <h1 className="page-title">Quản lý đặt phòng</h1>
       <p className="page-subtitle page-subtitle--tight">
-        Xác nhận đơn, nhận — trả phòng, dịch vụ. Nếu còn nợ (chưa trả hoặc trả
-        một phần), bấm Trả phòng để mở PayOS thu nốt; khi “Còn lại” = 0 mới
-        ghi nhận trả phòng. Xuất hóa đơn kỳ lưu trú khi cần.
+        Xác nhận đơn, nhận — trả phòng, dịch vụ. Dịch vụ đã thêm hiện gọn dưới
+        tổng tiền; bấm “Xem chi tiết” để xem bảng đầy đủ hoặc mở Hóa đơn. Nếu
+        còn nợ, dùng <strong>Tiền mặt</strong> (nhập số tại quầy) hoặc{" "}
+        <strong>PayOS</strong>; khi “Còn lại” = 0 mới ghi nhận trả phòng.
       </p>
       <div className="card mb-section">
         <div
@@ -721,7 +851,28 @@ export default function DatPhongLeTan() {
                         {tenTrangThaiDatPhong(b.trangThai)}
                       </span>
                     </td>
-                    <td>{Number(b.tongTien).toLocaleString("vi-VN")} VND</td>
+                    <td>
+                      <div>
+                        {Number(b.tongTien).toLocaleString("vi-VN")} VND
+                      </div>
+                      {(b.suDungDichVu?.length ?? 0) > 0 ? (
+                        <div className="letan-booking-dv-compact">
+                          <p className="letan-booking-dv-compact__sum">
+                            {soMucDichVuHienThi(b)} mục ·{" "}
+                            {tongTienDichVuTheoDon(b).toLocaleString("vi-VN")}{" "}
+                            đ
+                          </p>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm letan-booking-dv-compact__btn"
+                            onClick={() => setChiTietDichVuDon(b)}
+                          >
+                            <Eye className="btn-ico" aria-hidden />
+                            Xem chi tiết
+                          </button>
+                        </div>
+                      ) : null}
+                    </td>
                     <td>
                       {b.thanhToan ? (
                         <div>
@@ -811,56 +962,27 @@ export default function DatPhongLeTan() {
                                 ).toLocaleString("vi-VN")}{" "}
                                 VND
                               </strong>
-                              . Bấm Trả phòng để mở PayOS; sau khi khách thanh
-                              toán xong, tải lại danh sách và bấm lại Trả phòng.
+                              . Bấm <strong>Tiền mặt</strong> để nhập thủ công,
+                              hoặc <strong>Trả phòng</strong> / PayOS nếu qua
+                              ngân hàng; sau đó tải lại danh sách nếu cần.
                             </p>
                           )}
                         {b.trangThai === "DA_NHAN_PHONG" ? (
                           <div className="letan-booking-actions__services">
-                            <div className="inline-actions inline-actions--stack">
-                              <select
-                                className="input-compact"
-                                value={
-                                  serviceIdByBooking[b.id] ??
-                                  services[0]?.id ??
-                                  ""
-                                }
-                                onChange={(e) =>
-                                  setServiceIdByBooking((prev) => ({
-                                    ...prev,
-                                    [b.id]: Number(e.target.value),
-                                  }))
-                                }
-                              >
-                                {services.map((s) => (
-                                  <option key={s.id} value={s.id}>
-                                    {s.ten}
-                                  </option>
-                                ))}
-                              </select>
-                              <input
-                                className="input-compact letan-booking-actions__qty"
-                                type="number"
-                                min={1}
-                                value={qtyByBooking[b.id] ?? 1}
-                                onChange={(e) =>
-                                  setQtyByBooking((prev) => ({
-                                    ...prev,
-                                    [b.id]: Number(e.target.value),
-                                  }))
-                                }
-                                placeholder="SL"
-                                title="Số lượng"
-                              />
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => addService(b.id)}
-                              >
-                                <PackagePlus className="btn-ico" aria-hidden />
-                                Thêm dịch vụ
-                              </button>
-                            </div>
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm letan-booking-actions__them-dv"
+                              disabled={services.length === 0}
+                              title={
+                                services.length === 0
+                                  ? "Chưa có dịch vụ trong hệ thống"
+                                  : "Chọn dịch vụ và số lượng"
+                              }
+                              onClick={() => moThemDichVu(b)}
+                            >
+                              <PackagePlus className="btn-ico" aria-hidden />
+                              Thêm dịch vụ
+                            </button>
                           </div>
                         ) : null}
 
@@ -874,14 +996,24 @@ export default function DatPhongLeTan() {
                             Hóa đơn
                           </button>
                           {coTheThanhToanPayOsLeTan(b) ? (
-                            <button
-                              type="button"
-                              className="btn btn-payos btn-sm"
-                              onClick={() => moModalQrPayOs(b)}
-                            >
-                              <ExternalLink className="btn-ico" aria-hidden />
-                              PayOS
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => moTienMat(b)}
+                              >
+                                <Banknote className="btn-ico" aria-hidden />
+                                Tiền mặt
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-payos btn-sm"
+                                onClick={() => moModalQrPayOs(b)}
+                              >
+                                <ExternalLink className="btn-ico" aria-hidden />
+                                PayOS
+                              </button>
+                            </>
                           ) : null}
                         </div>
                       </div>
@@ -1002,6 +1134,224 @@ export default function DatPhongLeTan() {
         </div>
       ) : null}
 
+      {chiTietDichVuDon != null ? (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="letan-dv-chitiet-title"
+          onClick={() => setChiTietDichVuDon(null)}
+        >
+          <div
+            className="card modal-panel counter-booking-modal letan-dv-chitiet-modal"
+            style={{
+              maxWidth: "min(560px, calc(100vw - 2rem))",
+              width: "100%",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="form-row form-row--between"
+              style={{ alignItems: "flex-start", marginBottom: "1rem" }}
+            >
+              <div>
+                <h2
+                  id="letan-dv-chitiet-title"
+                  className="card-title"
+                  style={{ margin: 0 }}
+                >
+                  Chi tiết dịch vụ
+                </h2>
+                <p
+                  className="text-muted text-sm"
+                  style={{ margin: "0.35rem 0 0" }}
+                >
+                  Đơn #{chiTietDichVuDon.id}
+                  {chiTietDichVuDon.tenKhachHang ||
+                  chiTietDichVuDon.tenKhach
+                    ? ` · ${chiTietDichVuDon.tenKhachHang ?? chiTietDichVuDon.tenKhach}`
+                    : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setChiTietDichVuDon(null)}
+              >
+                <X className="btn-ico" aria-hidden />
+                Đóng
+              </button>
+            </div>
+            <div className="letan-dv-chitiet-modal__scroll">
+              <table className="letan-dv-chitiet-table">
+                <thead>
+                  <tr>
+                    <th>Dịch vụ</th>
+                    <th className="letan-dv-chitiet-table__num">SL</th>
+                    <th className="letan-dv-chitiet-table__num">Thành tiền</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gopSuDungDichVuHienThi(chiTietDichVuDon.suDungDichVu).map(
+                    (d, i) => (
+                      <tr
+                        key={`${d.idDichVu ?? "t"}-${d.tenDichVu}-${i}`}
+                      >
+                        <td>{d.tenDichVu}</td>
+                        <td className="letan-dv-chitiet-table__num">
+                          {d.soLuong}
+                        </td>
+                        <td className="letan-dv-chitiet-table__num">
+                          {d.thanhTien != null
+                            ? `${Number(d.thanhTien).toLocaleString("vi-VN")} đ`
+                            : "—"}
+                        </td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="letan-dv-chitiet-modal__footer">
+              <span>Tổng dịch vụ</span>
+              <strong>
+                {tongTienDichVuTheoDon(chiTietDichVuDon).toLocaleString("vi-VN")}{" "}
+                đ
+              </strong>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {themDichVuModal != null ? (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="letan-them-dich-vu-title"
+          onClick={() => !themDichVuBusy && dongThemDichVu()}
+        >
+          <div
+            className="card modal-panel counter-booking-modal"
+            style={{ maxWidth: "min(480px, calc(100vw - 2rem))", width: "100%" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="form-row form-row--between"
+              style={{ alignItems: "flex-start", marginBottom: "1rem" }}
+            >
+              <div>
+                <h2
+                  id="letan-them-dich-vu-title"
+                  className="card-title"
+                  style={{ margin: 0 }}
+                >
+                  Thêm dịch vụ vào đơn
+                </h2>
+                <p
+                  className="text-muted text-sm"
+                  style={{ margin: "0.35rem 0 0" }}
+                >
+                  Đơn #{themDichVuModal.id}
+                  {themDichVuModal.tenKhachHang || themDichVuModal.tenKhach
+                    ? ` · ${themDichVuModal.tenKhachHang ?? themDichVuModal.tenKhach}`
+                    : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={themDichVuBusy}
+                onClick={dongThemDichVu}
+                aria-label="Đóng"
+              >
+                <X className="btn-ico" aria-hidden />
+              </button>
+            </div>
+            {services.length === 0 ? (
+              <p className="form-error" role="alert">
+                Chưa có dịch vụ nào. Quản trị cần thêm dịch vụ trước.
+              </p>
+            ) : (
+              <>
+                <div className="form-group">
+                  <label htmlFor="letan-dich-vu-chon">Dịch vụ</label>
+                  <select
+                    id="letan-dich-vu-chon"
+                    value={themDichVuForm.idDichVu || services[0]?.id}
+                    disabled={themDichVuBusy}
+                    onChange={(e) =>
+                      setThemDichVuForm((f) => ({
+                        ...f,
+                        idDichVu: Number(e.target.value),
+                      }))
+                    }
+                  >
+                    {services.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.ten} —{" "}
+                        {Number(s.gia).toLocaleString("vi-VN")} đ
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label htmlFor="letan-dich-vu-sl">Số lượng</label>
+                  <input
+                    id="letan-dich-vu-sl"
+                    type="number"
+                    min={1}
+                    disabled={themDichVuBusy}
+                    value={themDichVuForm.soLuong}
+                    onChange={(e) =>
+                      setThemDichVuForm((f) => ({
+                        ...f,
+                        soLuong: Number(e.target.value),
+                      }))
+                    }
+                  />
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "0.5rem",
+                    justifyContent: "flex-end",
+                    marginTop: "1.25rem",
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={themDichVuBusy}
+                    onClick={() => void xacNhanThemDichVu()}
+                  >
+                    {themDichVuBusy ? (
+                      <Loader2
+                        className="btn-ico btn-ico--spin"
+                        aria-hidden
+                      />
+                    ) : (
+                      <Save className="btn-ico" aria-hidden />
+                    )}
+                    {themDichVuBusy ? "Đang lưu…" : "Lưu"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    disabled={themDichVuBusy}
+                    onClick={dongThemDichVu}
+                  >
+                    <X className="btn-ico" aria-hidden />
+                    Hủy
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+
       {payosModal.open && payosModal.booking != null ? (
         <div
           className="modal-backdrop"
@@ -1064,8 +1414,9 @@ export default function DatPhongLeTan() {
                 className="text-muted text-sm"
                 style={{ marginBottom: "1rem", lineHeight: 1.45 }}
               >
-                Trả phòng chỉ ghi nhận khi đã thu đủ. Sau
-                khi khách thanh toán, làm mới trang và bấm lại Trả phòng.
+                Trả phòng chỉ ghi nhận khi đã thu đủ. Nếu khách trả tiền mặt,
+                đóng cửa sổ này và bấm <strong>Tiền mặt</strong> trên dòng đơn;
+                nếu qua ngân hàng, dùng PayOS rồi làm mới trang.
               </p>
             ) : null}
             {payosModal.forCheckout ? null : (
@@ -1171,6 +1522,138 @@ export default function DatPhongLeTan() {
                   <ExternalLink className="btn-ico" aria-hidden />
                 )}
                 Mở PayOS thanh toán
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {tienMatModal.open && tienMatModal.booking != null ? (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="letan-tien-mat-title"
+          onClick={() => !tienMatModal.busy && dongTienMat()}
+        >
+          <div
+            className="card modal-panel counter-booking-modal"
+            style={{
+              maxWidth: "min(420px, calc(100vw - 2rem))",
+              width: "100%",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="form-row form-row--between"
+              style={{ alignItems: "flex-start", marginBottom: "1rem" }}
+            >
+              <div>
+                <h2
+                  id="letan-tien-mat-title"
+                  className="card-title"
+                  style={{ margin: 0 }}
+                >
+                  Ghi nhận tiền mặt
+                </h2>
+                <p
+                  className="text-muted text-sm"
+                  style={{ margin: "0.35rem 0 0" }}
+                >
+                  Đơn #{tienMatModal.booking.id}
+                  {tienMatModal.booking.tenKhachHang ||
+                  tienMatModal.booking.tenKhach
+                    ? ` · ${tienMatModal.booking.tenKhachHang ?? tienMatModal.booking.tenKhach}`
+                    : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={tienMatModal.busy}
+                onClick={() => dongTienMat()}
+              >
+                <X className="btn-ico" aria-hidden />
+                Đóng
+              </button>
+            </div>
+            <p className="text-sm" style={{ marginBottom: "0.75rem" }}>
+              Còn phải thu (tham khảo):{" "}
+              <strong>
+                {tienConLaiPayOs(tienMatModal.booking).toLocaleString("vi-VN")}{" "}
+                VND
+              </strong>
+            </p>
+            <div className="form-group">
+              <label htmlFor="letan-tien-mat-so">Số tiền thu (VND)</label>
+              <input
+                id="letan-tien-mat-so"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                value={tienMatModal.soTienStr}
+                onChange={(e) => {
+                  const d = digitsOnlyMoney(e.target.value);
+                  setTienMatModal((p) => ({
+                    ...p,
+                    soTienStr: d
+                      ? formatVndIntegerForInput(Number(d))
+                      : "",
+                  }));
+                }}
+                placeholder="Ví dụ: 1.500.000"
+                disabled={tienMatModal.busy}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label htmlFor="letan-tien-mat-ghichu">Ghi chú (tùy chọn)</label>
+              <input
+                id="letan-tien-mat-ghichu"
+                value={tienMatModal.ghiChu}
+                onChange={(e) =>
+                  setTienMatModal((p) => ({
+                    ...p,
+                    ghiChu: e.target.value,
+                  }))
+                }
+                placeholder="Ví dụ: thu tại quầy buổi sáng"
+                disabled={tienMatModal.busy}
+              />
+            </div>
+            <p className="text-muted text-sm" style={{ marginTop: "0.75rem" }}>
+              Nếu nhập lớn hơn số còn lại, hệ thống chỉ ghi nhận phần còn phải thu.
+            </p>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                marginTop: "1.15rem",
+              }}
+            >
+              <button
+                type="button"
+                className="btn"
+                disabled={tienMatModal.busy}
+                onClick={() => void guiGhiNhanTienMat()}
+              >
+                {tienMatModal.busy ? (
+                  <Loader2 className="btn-ico btn-ico--spin" aria-hidden />
+                ) : (
+                  <Save className="btn-ico" aria-hidden />
+                )}
+                Lưu
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={tienMatModal.busy}
+                onClick={() => dongTienMat()}
+              >
+                <X className="btn-ico" aria-hidden />
+                Hủy
               </button>
             </div>
           </div>

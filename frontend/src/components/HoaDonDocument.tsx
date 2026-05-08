@@ -1,5 +1,6 @@
 import { useMemo, forwardRef } from "react";
 import { Building2 } from "lucide-react";
+import { gopSuDungDichVuHienThi } from "../lib/gopSuDungDichVu";
 import { formatNgayGioVN, formatNgayVN } from "../lib/ngayGio";
 import {
   classBadgeDatPhong,
@@ -19,7 +20,6 @@ export type GiaoDichHoaDon = {
   congThanhToan?: string;
 };
 
-/** Dữ liệu hiển thị trên phiếu hóa đơn / thanh toán (khớp DatPhongDto). */
 export type HoaDonDuLieu = {
   id: number;
   tenKhach?: string;
@@ -44,6 +44,7 @@ export type HoaDonDuLieu = {
   }[];
   suDungDichVu?: {
     id: number;
+    idDichVu?: number;
     tenDichVu: string;
     soLuong: number;
     donGia: number;
@@ -90,7 +91,6 @@ function ghiChuHienThi(g: GiaoDichHoaDon): string {
 
 type Props = {
   dp: HoaDonDuLieu;
-  /** Nhãn phụ dưới tiêu đề (ví dụ: kỳ lưu trú). */
   tagline?: string;
 };
 
@@ -105,7 +105,11 @@ const HoaDonDocument = forwardRef<HTMLElement, Props>(function HoaDonDocument(
     );
   }, [dp.thoiGianTao]);
 
-  const coDichVu = (dp.suDungDichVu?.length ?? 0) > 0;
+  const suDungDichVuGop = useMemo(
+    () => gopSuDungDichVuHienThi(dp.suDungDichVu),
+    [dp.suDungDichVu],
+  );
+  const coDichVu = suDungDichVuGop.length > 0;
 
   return (
     <article
@@ -214,8 +218,8 @@ const HoaDonDocument = forwardRef<HTMLElement, Props>(function HoaDonDocument(
                 </tr>
               </thead>
               <tbody>
-                {dp.suDungDichVu!.map((d) => (
-                  <tr key={d.id}>
+                {suDungDichVuGop.map((d, i) => (
+                  <tr key={`${d.idDichVu ?? "t"}-${d.tenDichVu}-${i}`}>
                     <td>{d.tenDichVu}</td>
                     <td className="invoice-table__num">{d.soLuong}</td>
                     <td className="invoice-table__num">{tien(d.donGia)}</td>

@@ -11,9 +11,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Mỗi hằng {@code public static final String} trong các lớp hangso là một case riêng (Surefire đếm từng lần chạy).
- */
 class HangSoStringConstantsParameterizedTest {
 
     private static final Class<?>[] LOP_HANG_SO = {

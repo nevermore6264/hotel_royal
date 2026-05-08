@@ -54,3 +54,28 @@ export function ReceptionSubNav() {
     </nav>
   );
 }
+
+const BUONG_PHONG_ITEMS = [
+  { to: "/buong-phong", label: "Tổng quan", end: true },
+  { to: "/buong-phong/trang-thai", label: "Trạng thái phòng", end: false },
+  { to: "/buong-phong/can-don-ve-sinh", label: "Phòng cần dọn", end: false },
+] as const;
+
+export function HousekeepingSubNav() {
+  return (
+    <nav className="role-subnav" aria-label="Menu buồng phòng">
+      {BUONG_PHONG_ITEMS.map(({ to, label, end }) => (
+        <NavLink
+          key={to}
+          to={to}
+          end={end}
+          className={({ isActive }) =>
+            `role-subnav__link${isActive ? " role-subnav__link--active" : ""}`
+          }
+        >
+          {label}
+        </NavLink>
+      ))}
+    </nav>
+  );
+}

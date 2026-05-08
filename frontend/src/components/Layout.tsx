@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { LogIn, LogOut, UserPlus } from "lucide-react";
 import { Outlet, Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { AdminSubNav, ReceptionSubNav } from "./RoleSubNav";
+import {
+  AdminSubNav,
+  HousekeepingSubNav,
+  ReceptionSubNav,
+} from "./RoleSubNav";
+import FaqChatWidget from "./FaqChatWidget";
 
 export default function Layout() {
   const {
@@ -16,9 +21,9 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [navSubmenu, setNavSubmenu] = useState<null | "admin" | "reception">(
-    null,
-  );
+  const [navSubmenu, setNavSubmenu] = useState<
+    null | "admin" | "reception" | "buongphong"
+  >(null);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -58,6 +63,9 @@ export default function Layout() {
     isQuanTri && path.startsWith("/quan-tri");
   const showLeTanRibbon =
     (isLeTan || isQuanTri) && path.startsWith("/le-tan");
+  const showBuongPhongRibbon =
+    path.startsWith("/buong-phong") &&
+    (isBuongPhong || isQuanTri || isLeTan);
 
   const isPhongNav =
     path === "/phong" ||
@@ -69,6 +77,7 @@ export default function Layout() {
   const isReceptionMainNav =
     (isLeTan || isQuanTri) &&
     (path.startsWith("/le-tan") || path === "/chat");
+  const isBuongPhongMainNav = path.startsWith("/buong-phong");
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `layout-nav-link${isActive ? " layout-nav-link--active" : ""}`;
@@ -352,25 +361,71 @@ export default function Layout() {
                     )}
                   </div>
                 )}
-                {isBuongPhong && (
-                  <>
-                    <NavLink
-                      to="/buong-phong/trang-thai"
-                      end
-                      className={navLinkClass}
-                      onClick={closeMenu}
+                {(isBuongPhong || isQuanTri || isLeTan) && (
+                  <div
+                    className={`layout-nav-dropdown${navSubmenu === "buongphong" ? " layout-nav-dropdown--open" : ""}`}
+                    data-nav-dropdown-root
+                  >
+                    <button
+                      type="button"
+                      className={`layout-nav-dropdown__summary${
+                        isBuongPhongMainNav
+                          ? " layout-nav-dropdown__summary--active"
+                          : ""
+                      }`}
+                      aria-expanded={navSubmenu === "buongphong"}
+                      aria-haspopup="true"
+                      aria-controls="nav-submenu-buong-phong"
+                      id="nav-trigger-buong-phong"
+                      onClick={() =>
+                        setNavSubmenu((v) =>
+                          v === "buongphong" ? null : "buongphong",
+                        )
+                      }
                     >
-                      Trạng thái phòng
-                    </NavLink>
-                    <NavLink
-                      to="/buong-phong/can-don-ve-sinh"
-                      end
-                      className={navLinkClass}
-                      onClick={closeMenu}
-                    >
-                      Phòng cần dọn
-                    </NavLink>
-                  </>
+                      Buồng phòng
+                    </button>
+                    {navSubmenu === "buongphong" && (
+                      <div
+                        className="layout-nav-dropdown__panel"
+                        id="nav-submenu-buong-phong"
+                        role="menu"
+                        aria-labelledby="nav-trigger-buong-phong"
+                      >
+                        <NavLink
+                          to="/buong-phong"
+                          end
+                          onClick={closeMenu}
+                          role="menuitem"
+                          className={({ isActive }) =>
+                            isActive ? "layout-nav-dropdown__link--active" : ""
+                          }
+                        >
+                          Tổng quan
+                        </NavLink>
+                        <NavLink
+                          to="/buong-phong/trang-thai"
+                          onClick={closeMenu}
+                          role="menuitem"
+                          className={({ isActive }) =>
+                            isActive ? "layout-nav-dropdown__link--active" : ""
+                          }
+                        >
+                          Trạng thái phòng
+                        </NavLink>
+                        <NavLink
+                          to="/buong-phong/can-don-ve-sinh"
+                          onClick={closeMenu}
+                          role="menuitem"
+                          className={({ isActive }) =>
+                            isActive ? "layout-nav-dropdown__link--active" : ""
+                          }
+                        >
+                          Phòng cần dọn
+                        </NavLink>
+                      </div>
+                    )}
+                  </div>
                 )}
                 <span className="layout-user" title={user.tenDangNhap}>
                   {user.tenDangNhap}
@@ -424,9 +479,17 @@ export default function Layout() {
           </div>
         </div>
       )}
+      {showBuongPhongRibbon && (
+        <div className="role-subnav-ribbon role-subnav-ribbon--buong">
+          <div className="container role-subnav-ribbon-inner">
+            <HousekeepingSubNav />
+          </div>
+        </div>
+      )}
       <main className="layout-main">
         <Outlet />
       </main>
+      <FaqChatWidget />
     </div>
   );
 }
