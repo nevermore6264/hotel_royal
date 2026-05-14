@@ -5628,6 +5628,75 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
   color: var(--primary);
 }
 
+.booking-excel-lo {
+  padding: 1.15rem 1.25rem;
+}
+
+.booking-excel-lo__step-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 50%;
+  background: rgba(45, 212, 191, 0.2);
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  color: var(--primary);
+}
+
+.booking-excel-lo__lead {
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.booking-excel-lo__lead code {
+  font-size: 0.82em;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--surface) 90%, #0f172a 10%);
+}
+
+.booking-excel-lo__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.booking-excel-lo__err {
+  margin: 0.75rem 0 0;
+}
+
+.booking-excel-lo__ketqua {
+  margin-top: 1rem;
+}
+
+.booking-excel-lo__ketqua .table-wrap {
+  overflow-x: auto;
+}
+
+.booking-excel-lo__wrap {
+  max-width: 12.5rem;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.booking-excel-lo__ketqua-loi {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.booking-excel-lo__spin {
+  animation: booking-excel-spin 0.85s linear infinite;
+}
+
+@keyframes booking-excel-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .booking-date-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

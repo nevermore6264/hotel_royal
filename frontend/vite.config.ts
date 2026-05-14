@@ -6,7 +6,16 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/api": { target: "http://localhost:8090", changeOrigin: true },
+      "/api": {
+        target: "http://localhost:8090",
+        changeOrigin: true,
+        configure(proxy) {
+          proxy.on("proxyReq", (proxyReq, req) => {
+            const auth = req.headers.authorization;
+            if (auth) proxyReq.setHeader("Authorization", auth);
+          });
+        },
+      },
     },
   },
 });

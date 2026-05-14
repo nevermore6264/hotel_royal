@@ -11,8 +11,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,5 +35,13 @@ class NguoiDungServiceTest {
     void timTatCa_rong() {
         when(nguoiDungRepository.findAll()).thenReturn(List.of());
         assertThat(nguoiDungService.timTatCa()).isEmpty();
+    }
+
+    @Test
+    void layTheoId_tuChoiKhiKhongTonTai() {
+        when(nguoiDungRepository.findById(404L)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> nguoiDungService.layTheoId(404L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Không tìm thấy");
     }
 }

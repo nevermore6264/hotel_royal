@@ -22,6 +22,7 @@ import HoaDonDocument, {
 } from "../../components/HoaDonDocument";
 import AlertDialog from "../../components/AlertDialog";
 import PaginationBar from "../../components/PaginationBar";
+import DatPhongExcelLo from "../../components/DatPhongExcelLo";
 import { apiErrorMessage } from "../../lib/apiError";
 import { gopSuDungDichVuHienThi } from "../../lib/gopSuDungDichVu";
 import { formatNgayVN } from "../../lib/ngayGio";
@@ -125,7 +126,6 @@ function ngayHomNayYyyyMmDd(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-/** So sánh theo lịch ngày máy khách (khớp quy tắc backend Asia/Ho_Chi_Minh cho cùng một “ngày”). */
 function daDenNgayNhanPhong(isoNgayNhan?: string): boolean {
   if (!isoNgayNhan) return true;
   return ngayHomNayYyyyMmDd() >= isoNgayNhan.slice(0, 10);
@@ -268,9 +268,10 @@ export default function DatPhongLeTan() {
     }[]
   >([]);
 
-  const reload = () => {
+  const reload = (overridePage?: number) => {
     setLoading(true);
-    const params: Record<string, string | number> = { page, size: 10 };
+    const p = overridePage !== undefined ? overridePage : page;
+    const params: Record<string, string | number> = { page: p, size: 10 };
     if (qDebounced.trim()) params.q = qDebounced.trim();
     if (trangThaiLoc) params.trangThai = trangThaiLoc;
     if (tuNgay) params.tuNgay = tuNgay;
@@ -731,6 +732,13 @@ export default function DatPhongLeTan() {
         còn nợ, dùng <strong>Tiền mặt</strong> (nhập số tại quầy) hoặc{" "}
         <strong>PayOS</strong>; khi “Còn lại” = 0 mới ghi nhận trả phòng.
       </p>
+      <DatPhongExcelLo
+        variant="leTan"
+        onSauKhiNhapLeTan={() => {
+          setPage(0);
+          reload(0);
+        }}
+      />
       <div className="card mb-section">
         <div
           className="form-row form-row--between"

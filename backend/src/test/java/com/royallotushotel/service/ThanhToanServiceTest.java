@@ -57,4 +57,16 @@ class ThanhToanServiceTest {
         verify(thanhToanRepository, never()).save(any(ThanhToan.class));
         verify(datPhongService, never()).capNhatTongThanhToan(any());
     }
+
+    @Test
+    void xacNhanThanhToan_boQuaKhiKhongConPhaiThu() {
+        Long id = 2L;
+        when(thanhToanRepository.findByDatPhong_Id(id)).thenReturn(Optional.empty());
+        when(datPhongService.tinhTongTien(id)).thenReturn(BigDecimal.ZERO);
+
+        thanhToanService.xacNhanThanhToan(id, "TIEN_MAT", "ref");
+
+        verify(datPhongService).capNhatTongThanhToan(id);
+        verify(thanhToanRepository, never()).save(any(ThanhToan.class));
+    }
 }

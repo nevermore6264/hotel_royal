@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import api from "../api/client";
+import DatPhongExcelLo from "../components/DatPhongExcelLo";
 
 type Phong = {
   id: number;
@@ -364,6 +365,10 @@ export default function DatPhong() {
             </p>
           </div>
         </div>
+      )}
+
+      {user?.vaiTro?.includes("ROLE_KHACH_HANG") && (
+        <DatPhongExcelLo variant="khach" cheDoThanhToanPayOs={cheDoThanhToan} />
       )}
 
       <form onSubmit={handleSubmit} className="booking-layout">

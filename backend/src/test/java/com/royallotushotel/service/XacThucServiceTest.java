@@ -1,5 +1,6 @@
 package com.royallotushotel.service;
 
+import com.royallotushotel.dto.YeuCauDangKy;
 import com.royallotushotel.repository.KhachHangRepository;
 import com.royallotushotel.repository.NguoiDungRepository;
 import com.royallotushotel.repository.VaiTroRepository;
@@ -13,6 +14,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class XacThucServiceTest {
@@ -35,5 +38,18 @@ class XacThucServiceTest {
     @Test
     void layThongTinToi_idNull() {
         assertThat(xacThucService.layThongTinToi(null)).isEmpty();
+    }
+
+    @Test
+    void dangKy_tuChoiKhiTrungTenDangNhap() {
+        when(nguoiDungRepository.existsByTenDangNhap("dup")).thenReturn(true);
+        YeuCauDangKy y = new YeuCauDangKy();
+        y.setTenDangNhap("dup");
+        y.setMatKhau("secret1");
+        y.setEmail("e@test.vn");
+        y.setHoTen("H");
+        assertThatThrownBy(() -> xacThucService.dangKy(y))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Tên đăng nhập");
     }
 }

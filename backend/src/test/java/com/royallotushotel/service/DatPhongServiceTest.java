@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -48,5 +49,11 @@ class DatPhongServiceTest {
         when(datPhongRepository.timLoc(isNull(), isNull(), isNull(), isNull(), eq(p)))
                 .thenReturn(new PageImpl<>(List.of()));
         assertThat(datPhongService.timTatCa(p, null, null, null, null).getContent()).isEmpty();
+    }
+
+    @Test
+    void layIdKhachHangTheoIdNguoiDung_nullKhiKhongCoHoSo() {
+        when(khachHangRepository.findByNguoiDung_Id(9L)).thenReturn(Optional.empty());
+        assertThat(datPhongService.layIdKhachHangTheoIdNguoiDung(9L)).isNull();
     }
 }

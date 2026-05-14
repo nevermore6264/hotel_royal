@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,5 +33,12 @@ class QuanLyDichVuServiceTest {
     void timTatCa_rong() {
         when(dichVuRepository.findAll()).thenReturn(List.of());
         assertThat(quanLyDichVuService.timTatCa()).isEmpty();
+    }
+
+    @Test
+    void themVaoDatPhong_tuChoiSoLuongKhongHopLe() {
+        assertThatThrownBy(() -> quanLyDichVuService.themVaoDatPhong(1L, 2L, 0))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Số lượng");
     }
 }
