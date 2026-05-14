@@ -8,8 +8,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface LoaiPhongRepository extends JpaRepository<LoaiPhong, Long> {
+
+    List<LoaiPhong> findByTenIgnoreCase(String ten);
 
     @Query("SELECT l FROM LoaiPhong l WHERE :q IS NULL OR :q = '' OR " +
             "LOWER(l.ten) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(l.moTa,'')) LIKE LOWER(CONCAT('%', :q, '%')) " +

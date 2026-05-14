@@ -14,4 +14,8 @@ public class DongKetQuaNhapExcelDatPhongDto {
     private boolean thanhCong;
     private String loi;
     private Long idDatPhong;
+    private String hoTenDong;
+    private String lienHeDong;
+    private String yeuCauPhongNgayDong;
+    private String soPhongDaGan;
 }

@@ -15,6 +15,10 @@ import java.util.Optional;
 public interface KhachHangRepository extends JpaRepository<KhachHang, Long> {
     Optional<KhachHang> findByEmail(String email);
 
+    Optional<KhachHang> findFirstByEmailIgnoreCase(String email);
+
+    List<KhachHang> findBySoDienThoai(String soDienThoai);
+
     Optional<KhachHang> findByNguoiDung_Id(Long idNguoiDung);
 
     @Query("SELECT c FROM KhachHang c WHERE LOWER(c.hoTen) LIKE LOWER(CONCAT('%', :q, '%')) " +

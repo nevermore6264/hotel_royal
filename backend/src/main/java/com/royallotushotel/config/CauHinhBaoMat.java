@@ -4,7 +4,9 @@ import com.royallotushotel.security.BoiLocJwt;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -22,6 +24,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -40,7 +45,24 @@ public class CauHinhBaoMat {
                 .cors(cors -> cors.configurationSource(nguonCors()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.getWriter().write(
+                                    "{\"loi\":\"Phiên đăng nhập đã hết hạn hoặc chưa đăng nhập.\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.getWriter().write(
+                                    "{\"loi\":\"Bạn không có quyền thực hiện thao tác này. "
+                                            + "Hãy đăng nhập lại bằng tài khoản phù hợp (ví dụ lễ tân hoặc quản trị).\"}");
+                        }))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/xac-thuc/toi").authenticated()
                         .requestMatchers("/xac-thuc/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/chinh-sach-huy-phong/**").permitAll()
@@ -80,9 +102,17 @@ public class CauHinhBaoMat {
     @Bean
     public CorsConfigurationSource nguonCors() {
         CorsConfiguration cauHinh = new CorsConfiguration();
-        cauHinh.setAllowedOriginPatterns(List.of("http://localhost:*", "http://127.0.0.1:*"));
+        cauHinh.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "http://[::1]:*",
+                "https://localhost:*",
+                "https://127.0.0.1:*",
+                "https://[::1]:*",
+                "http://192.168.*:*"));
         cauHinh.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         cauHinh.setAllowedHeaders(List.of("*"));
+        cauHinh.setExposedHeaders(List.of(HttpHeaders.CONTENT_DISPOSITION));
         cauHinh.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource nguon = new UrlBasedCorsConfigurationSource();
         nguon.registerCorsConfiguration("/**", cauHinh);

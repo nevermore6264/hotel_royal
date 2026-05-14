@@ -107,7 +107,7 @@ public class DatPhongController {
         }
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN','KHACH_HANG')")
     public ResponseEntity<DatPhongDto> layTheoId(
             @PathVariable Long id, @AuthenticationPrincipal ChuTheNguoiDung chuThe) {
@@ -120,27 +120,27 @@ public class DatPhongController {
         return ResponseEntity.ok(datPhongService.tao(yeuCau));
     }
 
-    @PostMapping("/{id}/nhan-phong")
+    @PostMapping("/{id:\\d+}/nhan-phong")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN')")
     public void nhanPhong(@PathVariable Long id) {
         datPhongService.nhanPhong(id);
     }
 
-    @PostMapping("/{id}/tra-phong")
+    @PostMapping("/{id:\\d+}/tra-phong")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN')")
     public void traPhong(@PathVariable Long id) {
         datPhongService.traPhong(id);
     }
 
-    @PostMapping("/{id}/huy")
+    @PostMapping("/{id:\\d+}/huy")
     @PreAuthorize("hasRole('KHACH_HANG')")
     public ResponseEntity<DatPhongDto> huy(@PathVariable Long id, @AuthenticationPrincipal ChuTheNguoiDung chuThe) {
         return ResponseEntity.ok(datPhongService.huy(id, chuThe.getId()));
     }
 
-    @PostMapping("/{id}/chi-tiet/{idChiTiet}/huy")
+    @PostMapping("/{id:\\d+}/chi-tiet/{idChiTiet:\\d+}/huy")
     @PreAuthorize("hasAnyRole('KHACH_HANG','QUAN_TRI','LE_TAN')")
     public ResponseEntity<DatPhongDto> huyChiTiet(
             @PathVariable Long id,
@@ -155,14 +155,14 @@ public class DatPhongController {
         return ResponseEntity.ok(datPhongService.huyChiTiet(id, idChiTiet, idNguoiDung, boQuaKiemTraChuDon, lyDo));
     }
 
-    @PostMapping("/{id}/xac-nhan")
+    @PostMapping("/{id:\\d+}/xac-nhan")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN')")
     public void xacNhan(@PathVariable Long id) {
         datPhongService.xacNhanDatPhong(id);
     }
 
-    @GetMapping("/{id}/hoa-don")
+    @GetMapping("/{id:\\d+}/hoa-don")
     @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN','KHACH_HANG')")
     public ResponseEntity<DatPhongDto> hoaDon(
             @PathVariable Long id, @AuthenticationPrincipal ChuTheNguoiDung chuThe) {

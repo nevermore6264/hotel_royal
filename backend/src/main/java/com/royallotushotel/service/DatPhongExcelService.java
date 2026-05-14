@@ -1,9 +1,14 @@
 package com.royallotushotel.service;
 
 import com.royallotushotel.dto.DongKetQuaNhapExcelDatPhongDto;
+import com.royallotushotel.dto.DatPhongDto;
 import com.royallotushotel.dto.KetQuaNhapExcelDatPhongDto;
 import com.royallotushotel.dto.YeuCauTaoDatPhong;
+import com.royallotushotel.entity.KhachHang;
+import com.royallotushotel.entity.LoaiPhong;
 import com.royallotushotel.entity.Phong;
+import com.royallotushotel.repository.KhachHangRepository;
+import com.royallotushotel.repository.LoaiPhongRepository;
 import com.royallotushotel.repository.PhongRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Cell;
@@ -24,8 +29,13 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,23 +44,27 @@ public class DatPhongExcelService {
     private static final int MAX_DONG = 100;
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter DMY = DateTimeFormatter.ofPattern("d/M/uuuu");
+    private static final DateTimeFormatter DD_MM_YYYY = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final DatPhongService datPhongService;
     private final PhongRepository phongRepository;
+    private final KhachHangRepository khachHangRepository;
+    private final LoaiPhongRepository loaiPhongRepository;
     private final DataFormatter dataFormatter = new DataFormatter();
 
     public byte[] taoMauLeTan() throws IOException {
         try (Workbook wb = new XSSFWorkbook(); ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-            Sheet sh = wb.createSheet("DatPhong");
+            Sheet sh = wb.createSheet("Đặt phòng");
             Row h = sh.createRow(0);
             String[] cols = {
-                    "SoPhong",
-                    "NgayNhanPhong",
-                    "NgayTraPhong",
-                    "IdKhachHang",
-                    "HoTen",
-                    "SoDienThoai",
+                    "Số phòng (để trống = chọn ngẫu nhiên)",
+                    "Ngày nhận phòng",
+                    "Ngày trả phòng",
+                    "Mã khách (tùy chọn)",
+                    "Họ và tên",
+                    "Số điện thoại",
                     "Email",
+                    "Loại phòng — mã hoặc tên (khi không ghi số phòng)",
             };
             for (int i = 0; i < cols.length; i++) {
                 h.createCell(i).setCellValue(cols[i]);
@@ -65,15 +79,16 @@ public class DatPhongExcelService {
 
     public byte[] taoMauKhach() throws IOException {
         try (Workbook wb = new XSSFWorkbook(); ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-            Sheet sh = wb.createSheet("DatPhong");
+            Sheet sh = wb.createSheet("Đặt phòng");
             Row h = sh.createRow(0);
             String[] cols = {
-                    "SoPhong",
-                    "NgayNhanPhong",
-                    "NgayTraPhong",
-                    "HoTen",
-                    "SoDienThoai",
+                    "Số phòng (để trống = chọn ngẫu nhiên)",
+                    "Ngày nhận phòng",
+                    "Ngày trả phòng",
+                    "Họ và tên",
+                    "Số điện thoại",
                     "Email",
+                    "Loại phòng — mã hoặc tên (khi không ghi số phòng)",
             };
             for (int i = 0; i < cols.length; i++) {
                 h.createCell(i).setCellValue(cols[i]);
@@ -113,6 +128,192 @@ public class DatPhongExcelService {
         }
     }
 
+    private Long giaiQuyetIdKhachLeTan(Long idTuExcel, String hoTen, String sdt, String email) {
+        if (idTuExcel != null) {
+            if (khachHangRepository.findById(idTuExcel).isEmpty()) {
+                throw new RuntimeException("Không tìm thấy khách với mã đã nhập.");
+            }
+            return idTuExcel;
+        }
+        Optional<KhachHang> theoSdt = timMotKhachTheoSoDienThoai(sdt);
+        Optional<KhachHang> theoEmail = email != null && !email.isBlank()
+                ? khachHangRepository.findFirstByEmailIgnoreCase(email.trim())
+                : Optional.empty();
+        if (theoSdt.isPresent() && theoEmail.isPresent()
+                && !theoSdt.get().getId().equals(theoEmail.get().getId())) {
+            throw new RuntimeException(
+                    "Số điện thoại và email trỏ tới hai khách khác nhau — hãy điền cột \"Mã khách (tùy chọn)\".");
+        }
+        if (theoSdt.isPresent()) {
+            return theoSdt.get().getId();
+        }
+        if (theoEmail.isPresent()) {
+            return theoEmail.get().getId();
+        }
+        if (hoTen == null || hoTen.isBlank()) {
+            throw new RuntimeException(
+                    "Chưa có mã khách: cần họ tên (và số điện thoại hoặc email) để hệ thống tìm hoặc tạo hồ sơ khách.");
+        }
+        if ((sdt == null || sdt.isBlank()) && (email == null || email.isBlank())) {
+            throw new RuntimeException(
+                    "Chưa có mã khách: nhập thêm số điện thoại hoặc email để tạo hồ sơ khách mới.");
+        }
+        KhachHang moi = KhachHang.builder()
+                .hoTen(hoTen.trim())
+                .soDienThoai(sdt != null ? sdt.trim() : null)
+                .email(email != null ? email.trim() : null)
+                .build();
+        return khachHangRepository.save(moi).getId();
+    }
+
+    private Optional<KhachHang> timMotKhachTheoSoDienThoai(String sdt) {
+        if (sdt == null || sdt.isBlank()) {
+            return Optional.empty();
+        }
+        Set<Long> idTimDuoc = new LinkedHashSet<>();
+        for (String c : taoUngVienSoDienThoai(sdt.trim())) {
+            for (KhachHang k : khachHangRepository.findBySoDienThoai(c)) {
+                idTimDuoc.add(k.getId());
+            }
+        }
+        if (idTimDuoc.size() > 1) {
+            throw new RuntimeException(
+                    "Nhiều khách trùng số điện thoại — hãy điền cột \"Mã khách (tùy chọn)\" để chọn đúng người.");
+        }
+        if (idTimDuoc.size() == 1) {
+            return khachHangRepository.findById(idTimDuoc.iterator().next());
+        }
+        return Optional.empty();
+    }
+
+    private Set<String> taoUngVienSoDienThoai(String raw) {
+        Set<String> s = new LinkedHashSet<>();
+        s.add(raw);
+        String digits = raw.replaceAll("\\D", "");
+        if (!digits.isEmpty()) {
+            s.add(digits);
+            if (digits.startsWith("84") && digits.length() >= 10) {
+                s.add("0" + digits.substring(2));
+            }
+            if (digits.length() == 10 && digits.startsWith("0")) {
+                s.add(digits.substring(1));
+            }
+            if (digits.length() == 9 && digits.startsWith("9")) {
+                s.add("0" + digits);
+            }
+        }
+        return s;
+    }
+
+    private Long giaiQuyetIdPhong(String soPhongGoc, String loaiPhongGoc, LocalDate nhan, LocalDate tra) {
+        String sp = rongLaNull(soPhongGoc);
+        if (sp != null && !sp.isBlank()) {
+            Optional<Phong> optP = phongRepository.findBySoPhong(sp.trim());
+            if (optP.isEmpty()) {
+                throw new RuntimeException("Không tìm thấy phòng: " + sp.trim());
+            }
+            return optP.get().getId();
+        }
+        String lpRaw = rongLaNull(loaiPhongGoc);
+        if (lpRaw == null) {
+            throw new RuntimeException(
+                    "Cần số phòng cụ thể, hoặc để trống số phòng và điền cột loại phòng (mã số hoặc đúng tên loại) để hệ thống chọn ngẫu nhiên một phòng trống.");
+        }
+        Long idLoai = layLongTuChuoiSo(lpRaw);
+        if (idLoai != null) {
+            if (loaiPhongRepository.findById(idLoai).isEmpty()) {
+                throw new RuntimeException("Không tìm thấy loại phòng với mã: " + idLoai);
+            }
+        } else {
+            List<LoaiPhong> ds = loaiPhongRepository.findByTenIgnoreCase(lpRaw.trim());
+            if (ds.isEmpty()) {
+                throw new RuntimeException("Không tìm thấy loại phòng: " + lpRaw.trim());
+            }
+            if (ds.size() > 1) {
+                throw new RuntimeException(
+                        "Có nhiều loại phòng trùng tên — hãy điền mã loại phòng (số) thay vì tên.");
+            }
+            idLoai = ds.get(0).getId();
+        }
+        List<Phong> trong = phongRepository.timPhongTrong(nhan, tra);
+        Long finalIdLoai = idLoai;
+        List<Phong> hopLe = trong.stream()
+                .filter(p -> p.getLoaiPhong() != null && finalIdLoai.equals(p.getLoaiPhong().getId()))
+                .collect(Collectors.toList());
+        if (hopLe.isEmpty()) {
+            throw new RuntimeException("Không còn phòng trống loại đã chọn trong khoảng ngày này.");
+        }
+        Collections.shuffle(hopLe, ThreadLocalRandom.current());
+        return hopLe.get(0).getId();
+    }
+
+    private Long layLongTuChuoiSo(String s) {
+        if (s == null || s.isBlank()) {
+            return null;
+        }
+        String t = s.trim().replace(",", ".");
+        try {
+            return Long.parseLong(t.replaceAll("\\.0$", ""));
+        } catch (NumberFormatException e) {
+            try {
+                return (long) Double.parseDouble(t);
+            } catch (NumberFormatException e2) {
+                return null;
+            }
+        }
+    }
+
+    private String ghepLienHeTuFile(String rawSdt, String rawEmail) {
+        String s = rongLaNull(rawSdt);
+        String e = rongLaNull(rawEmail);
+        if (s == null && e == null) {
+            return "—";
+        }
+        if (s != null && e != null) {
+            return s + " · " + e;
+        }
+        return s != null ? s : e;
+    }
+
+    private String ghepYeuCauPhongNgayTuFile(String rawSoPhong, String rawLoai, LocalDate nhan, LocalDate tra) {
+        String sp = rawSoPhong != null ? rawSoPhong.trim() : "";
+        String lr = rawLoai != null ? rawLoai.trim() : "";
+        String ph;
+        if (!sp.isBlank()) {
+            ph = "Số phòng: " + sp;
+        } else if (!lr.isBlank()) {
+            ph = "Theo loại: " + lr;
+        } else {
+            ph = "(chưa ghi số phòng / loại)";
+        }
+        if (nhan != null && tra != null) {
+            return ph + " · " + nhan.format(DD_MM_YYYY) + " → " + tra.format(DD_MM_YYYY);
+        }
+        return ph + " · (ngày nhận/trả chưa hợp lệ)";
+    }
+
+    private String laySoPhongDaGanTuDto(DatPhongDto dto) {
+        if (dto.getChiTiet() == null || dto.getChiTiet().isEmpty()) {
+            return null;
+        }
+        return dto.getChiTiet().get(0).getSoPhong();
+    }
+
+    private void dienTomTatTuHang(
+            DongKetQuaNhapExcelDatPhongDto.DongKetQuaNhapExcelDatPhongDtoBuilder b, Row row, boolean laLeTan) {
+        int colLoaiPhong = laLeTan ? 7 : 6;
+        String rawHoTen = layChuoi(row, laLeTan ? 4 : 3);
+        String rawSdt = layChuoi(row, laLeTan ? 5 : 4);
+        String rawEmail = layChuoi(row, laLeTan ? 6 : 5);
+        String rawSoPhong = layChuoi(row, 0);
+        String rawLoai = layChuoi(row, colLoaiPhong);
+        LocalDate nhan = layNgay(row, 1);
+        LocalDate tra = layNgay(row, 2);
+        b.hoTenDong(rawHoTen.isBlank() ? "—" : rawHoTen.trim())
+                .lienHeDong(ghepLienHeTuFile(rawSdt, rawEmail))
+                .yeuCauPhongNgayDong(ghepYeuCauPhongNgayTuFile(rawSoPhong, rawLoai, nhan, tra));
+    }
+
     private KetQuaNhapExcelDatPhongDto xuLySheet(Sheet sheet, boolean laLeTan, Long idKhachHangCd) {
         List<DongKetQuaNhapExcelDatPhongDto> chiTiet = new ArrayList<>();
         int thanhCong = 0;
@@ -128,27 +329,37 @@ public class DatPhongExcelService {
             tongHang++;
             if (tongHang > MAX_DONG) {
                 thatBai++;
-                chiTiet.add(DongKetQuaNhapExcelDatPhongDto.builder()
+                var quaHan = DongKetQuaNhapExcelDatPhongDto.builder()
                         .soDongExcel(r + 1)
                         .thanhCong(false)
-                        .loi("Vượt quá " + MAX_DONG + " dòng dữ liệu — dừng xử lý.")
-                        .build());
+                        .loi("Vượt quá " + MAX_DONG + " dòng dữ liệu — dừng xử lý.");
+                dienTomTatTuHang(quaHan, row, laLeTan);
+                chiTiet.add(quaHan.build());
                 break;
             }
 
             int excelRow = r + 1;
+            String hoTenDong = "—";
+            String lienHeDong = "—";
+            String yeuCauPhongNgayDong = "—";
             try {
-                String soPhong = layChuoi(row, 0);
+                int colLoaiPhong = laLeTan ? 7 : 6;
+                String rawSoPhong = layChuoi(row, 0);
+                String rawHoTen = layChuoi(row, laLeTan ? 4 : 3);
+                String rawSdt = layChuoi(row, laLeTan ? 5 : 4);
+                String rawEmail = layChuoi(row, laLeTan ? 6 : 5);
+                String rawLoai = layChuoi(row, colLoaiPhong);
                 LocalDate nhan = layNgay(row, 1);
                 LocalDate tra = layNgay(row, 2);
-                if (soPhong.isBlank()) {
-                    throw new RuntimeException("Thiếu số phòng.");
-                }
+                hoTenDong = rawHoTen.isBlank() ? "—" : rawHoTen.trim();
+                lienHeDong = ghepLienHeTuFile(rawSdt, rawEmail);
+                yeuCauPhongNgayDong = ghepYeuCauPhongNgayTuFile(rawSoPhong, rawLoai, nhan, tra);
+
                 if (nhan == null || tra == null) {
                     throw new RuntimeException("Thiếu hoặc sai định dạng ngày nhận/trả.");
                 }
-                if (!tra.isAfter(nhan)) {
-                    throw new RuntimeException("Ngày trả phải sau ngày nhận.");
+                if (tra.isBefore(nhan)) {
+                    throw new RuntimeException("Ngày trả không được trước ngày nhận.");
                 }
 
                 Long idKh;
@@ -156,13 +367,11 @@ public class DatPhongExcelService {
                 String sdt;
                 String email;
                 if (laLeTan) {
-                    idKh = layLong(row, 3);
-                    if (idKh == null) {
-                        throw new RuntimeException("Thiếu IdKhachHang.");
-                    }
+                    Long idTuExcel = layLong(row, 3);
                     hoTen = rongLaNull(layChuoi(row, 4));
                     sdt = rongLaNull(layChuoi(row, 5));
                     email = rongLaNull(layChuoi(row, 6));
+                    idKh = giaiQuyetIdKhachLeTan(idTuExcel, hoTen, sdt, email);
                 } else {
                     idKh = idKhachHangCd;
                     hoTen = rongLaNull(layChuoi(row, 3));
@@ -170,11 +379,8 @@ public class DatPhongExcelService {
                     email = rongLaNull(layChuoi(row, 5));
                 }
 
-                Optional<Phong> optP = phongRepository.findBySoPhong(soPhong.trim());
-                if (optP.isEmpty()) {
-                    throw new RuntimeException("Không tìm thấy phòng: " + soPhong.trim());
-                }
-                Long idPhong = optP.get().getId();
+                String loaiPhongRaw = layChuoi(row, colLoaiPhong);
+                Long idPhong = giaiQuyetIdPhong(rawSoPhong, loaiPhongRaw, nhan, tra);
 
                 YeuCauTaoDatPhong yc = new YeuCauTaoDatPhong();
                 yc.setIdKhachHang(idKh);
@@ -192,6 +398,10 @@ public class DatPhongExcelService {
                         .thanhCong(true)
                         .loi(null)
                         .idDatPhong(dto.getId())
+                        .hoTenDong(hoTenDong)
+                        .lienHeDong(lienHeDong)
+                        .yeuCauPhongNgayDong(yeuCauPhongNgayDong)
+                        .soPhongDaGan(laySoPhongDaGanTuDto(dto))
                         .build());
             } catch (RuntimeException ex) {
                 thatBai++;
@@ -199,6 +409,9 @@ public class DatPhongExcelService {
                         .soDongExcel(excelRow)
                         .thanhCong(false)
                         .loi(ex.getMessage() != null ? ex.getMessage() : "Lỗi")
+                        .hoTenDong(hoTenDong)
+                        .lienHeDong(lienHeDong)
+                        .yeuCauPhongNgayDong(yeuCauPhongNgayDong)
                         .build());
             }
         }
@@ -212,7 +425,7 @@ public class DatPhongExcelService {
     }
 
     private boolean dongTrong(Row row, boolean laLeTan) {
-        int max = laLeTan ? 7 : 6;
+        int max = laLeTan ? 8 : 7;
         for (int i = 0; i < max; i++) {
             if (!layChuoi(row, i).isBlank()) {
                 return false;
