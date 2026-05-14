@@ -12,7 +12,6 @@ try {
     document.documentElement.dataset.theme = "light";
   }
 } catch {
-  /* private / blocked storage */
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

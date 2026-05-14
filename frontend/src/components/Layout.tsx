@@ -1,12 +1,14 @@
 import { useEffect, useLayoutEffect, useState } from "react";
 import { LogIn, LogOut, Moon, Sun, UserPlus } from "lucide-react";
-import { Outlet, Link, NavLink, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import {
-  AdminSubNav,
-  HousekeepingSubNav,
-  ReceptionSubNav,
-} from "./RoleSubNav";
+  Outlet,
+  Link,
+  NavLink,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { AdminSubNav, HousekeepingSubNav, ReceptionSubNav } from "./RoleSubNav";
 
 const THEME_STORAGE_KEY = "themeRoyal";
 
@@ -20,20 +22,12 @@ function apDungMauLenDom(m: MauGiaoDien) {
   }
   try {
     localStorage.setItem(THEME_STORAGE_KEY, m === "sang" ? "light" : "dark");
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
 export default function Layout() {
-  const {
-    user,
-    logout,
-    isQuanTri,
-    isLeTan,
-    isKhachHang,
-    isBuongPhong,
-  } = useAuth();
+  const { user, logout, isQuanTri, isLeTan, isKhachHang, isBuongPhong } =
+    useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -43,9 +37,7 @@ export default function Layout() {
   const [mauGiaoDien, setMauGiaoDien] = useState<MauGiaoDien>(() => {
     try {
       if (localStorage.getItem(THEME_STORAGE_KEY) === "light") return "sang";
-    } catch {
-      /* ignore */
-    }
+    } catch {}
     return "toi";
   });
 
@@ -87,13 +79,10 @@ export default function Layout() {
 
   const path = location.pathname;
 
-  const showAdminRibbon =
-    isQuanTri && path.startsWith("/quan-tri");
-  const showLeTanRibbon =
-    (isLeTan || isQuanTri) && path.startsWith("/le-tan");
+  const showAdminRibbon = isQuanTri && path.startsWith("/quan-tri");
+  const showLeTanRibbon = (isLeTan || isQuanTri) && path.startsWith("/le-tan");
   const showBuongPhongRibbon =
-    path.startsWith("/buong-phong") &&
-    (isBuongPhong || isQuanTri || isLeTan);
+    path.startsWith("/buong-phong") && (isBuongPhong || isQuanTri || isLeTan);
 
   const isPhongNav =
     path === "/phong" ||
@@ -103,8 +92,7 @@ export default function Layout() {
     path.startsWith("/don-cua-toi") || path.startsWith("/hoa-don/");
   const isAdminMainNav = isQuanTri && path.startsWith("/quan-tri");
   const isReceptionMainNav =
-    (isLeTan || isQuanTri) &&
-    (path.startsWith("/le-tan") || path === "/chat");
+    (isLeTan || isQuanTri) && (path.startsWith("/le-tan") || path === "/chat");
   const isBuongPhongMainNav = path.startsWith("/buong-phong");
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -125,9 +113,7 @@ export default function Layout() {
                 ? "Chuyển giao diện tối"
                 : "Chuyển giao diện sáng"
             }
-            title={
-              mauGiaoDien === "sang" ? "Giao diện tối" : "Giao diện sáng"
-            }
+            title={mauGiaoDien === "sang" ? "Giao diện tối" : "Giao diện sáng"}
             onClick={() =>
               setMauGiaoDien((v) => (v === "sang" ? "toi" : "sang"))
             }
@@ -151,12 +137,7 @@ export default function Layout() {
             className={`layout-nav${menuOpen ? " layout-nav--open" : ""}`}
             id="main-nav"
           >
-            <NavLink
-              to="/"
-              end
-              className={navLinkClass}
-              onClick={closeMenu}
-            >
+            <NavLink to="/" end className={navLinkClass} onClick={closeMenu}>
               Trang chủ
             </NavLink>
             <NavLink
