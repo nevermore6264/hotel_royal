@@ -17,11 +17,6 @@ import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Properties;
-
-/**
- * Khi mạng công ty / proxy thay chứng chỉ SMTP, JVM báo PKIX — cách đúng là nhập CA vào {@code cacerts}.
- * Tùy chọn này chỉ để dev: tin mọi chứng chỉ TLS (rủi ro MITM).
- */
 @Configuration
 @ConditionalOnProperty(prefix = "app.mail", name = "smtp-trust-insecure", havingValue = "true")
 @RequiredArgsConstructor

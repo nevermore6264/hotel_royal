@@ -206,9 +206,6 @@ public class ThanhToanService {
         ghiNhanThanhToanNoiBo(idDatPhong, cong, maGiaoDich, soTienLanNay, null);
     }
 
-    /**
-     * Ghi nhận thanh toán tiền mặt tại quầy (lễ tân nhập số tiền).
-     */
     @Transactional
     public void ghiNhanTienMat(Long idDatPhong, BigDecimal soTien, String ghiChu) {
         if (soTien == null || soTien.compareTo(BigDecimal.ZERO) <= 0) {

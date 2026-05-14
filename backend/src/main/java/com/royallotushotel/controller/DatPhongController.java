@@ -1,20 +1,26 @@
 package com.royallotushotel.controller;
 
 import com.royallotushotel.dto.DatPhongDto;
+import com.royallotushotel.dto.KetQuaNhapExcelDatPhongDto;
 import com.royallotushotel.dto.YeuCauTaoDatPhong;
 import com.royallotushotel.security.ChuTheNguoiDung;
+import com.royallotushotel.service.DatPhongExcelService;
 import com.royallotushotel.service.DatPhongService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +31,7 @@ import java.util.Map;
 public class DatPhongController {
 
     private final DatPhongService datPhongService;
+    private final DatPhongExcelService datPhongExcelService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN')")
@@ -43,6 +50,61 @@ public class DatPhongController {
         Long idKhach = datPhongService.layIdKhachHangTheoIdNguoiDung(chuThe.getId());
         if (idKhach == null) return ResponseEntity.ok(List.of());
         return ResponseEntity.ok(datPhongService.timTheoKhachHang(idKhach));
+    }
+
+    @GetMapping("/mau-excel-le-tan")
+    @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN')")
+    public ResponseEntity<byte[]> mauExcelLeTan() {
+        try {
+            byte[] data = datPhongExcelService.taoMauLeTan();
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"mau-dat-phong-le-tan.xlsx\"")
+                    .contentType(MediaType.parseMediaType(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(data);
+        } catch (IOException e) {
+            throw new RuntimeException("Không tạo được file mẫu.");
+        }
+    }
+
+    @GetMapping("/mau-excel-khach")
+    @PreAuthorize("hasRole('KHACH_HANG')")
+    public ResponseEntity<byte[]> mauExcelKhach() {
+        try {
+            byte[] data = datPhongExcelService.taoMauKhach();
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"mau-dat-phong-khach.xlsx\"")
+                    .contentType(MediaType.parseMediaType(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(data);
+        } catch (IOException e) {
+            throw new RuntimeException("Không tạo được file mẫu.");
+        }
+    }
+
+    @PostMapping(value = "/nhap-excel-le-tan", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN')")
+    public ResponseEntity<KetQuaNhapExcelDatPhongDto> nhapExcelLeTan(@RequestParam("tep") MultipartFile tep) {
+        try {
+            return ResponseEntity.ok(datPhongExcelService.nhapLeTan(tep));
+        } catch (IOException e) {
+            throw new RuntimeException("Không đọc được file Excel.");
+        }
+    }
+
+    @PostMapping(value = "/nhap-excel-khach", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('KHACH_HANG')")
+    public ResponseEntity<KetQuaNhapExcelDatPhongDto> nhapExcelKhach(
+            @RequestParam("tep") MultipartFile tep, @AuthenticationPrincipal ChuTheNguoiDung chuThe) {
+        Long idKhach = datPhongService.layIdKhachHangTheoIdNguoiDung(chuThe.getId());
+        if (idKhach == null) {
+            throw new RuntimeException("Tài khoản chưa có hồ sơ khách hàng.");
+        }
+        try {
+            return ResponseEntity.ok(datPhongExcelService.nhapKhach(tep, idKhach));
+        } catch (IOException e) {
+            throw new RuntimeException("Không đọc được file Excel.");
+        }
     }
 
     @GetMapping("/{id}")

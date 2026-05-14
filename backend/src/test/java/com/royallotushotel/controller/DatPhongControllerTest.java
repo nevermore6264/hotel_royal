@@ -1,5 +1,6 @@
 package com.royallotushotel.controller;
 
+import com.royallotushotel.service.DatPhongExcelService;
 import com.royallotushotel.service.DatPhongService;
 import com.royallotushotel.testsupport.WebMvcAuditMockSupport;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,9 @@ class DatPhongControllerTest extends WebMvcAuditMockSupport {
     private MockMvc mockMvc;
     @MockBean
     private DatPhongService datPhongService;
+
+    @MockBean
+    private DatPhongExcelService datPhongExcelService;
 
     @Test
     void danhSachPhanTrang() throws Exception {
