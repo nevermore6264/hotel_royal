@@ -6,6 +6,15 @@ import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import "./index.css";
 
+const THEME_STORAGE_KEY = "themeRoyal";
+try {
+  if (localStorage.getItem(THEME_STORAGE_KEY) === "light") {
+    document.documentElement.dataset.theme = "light";
+  }
+} catch {
+  /* private / blocked storage */
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>

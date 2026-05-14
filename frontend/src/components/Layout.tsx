@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { LogIn, LogOut, UserPlus } from "lucide-react";
+import { useEffect, useLayoutEffect, useState } from "react";
+import { LogIn, LogOut, Moon, Sun, UserPlus } from "lucide-react";
 import { Outlet, Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -7,6 +7,23 @@ import {
   HousekeepingSubNav,
   ReceptionSubNav,
 } from "./RoleSubNav";
+
+const THEME_STORAGE_KEY = "themeRoyal";
+
+type MauGiaoDien = "sang" | "toi";
+
+function apDungMauLenDom(m: MauGiaoDien) {
+  if (m === "sang") {
+    document.documentElement.dataset.theme = "light";
+  } else {
+    delete document.documentElement.dataset.theme;
+  }
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, m === "sang" ? "light" : "dark");
+  } catch {
+    /* ignore */
+  }
+}
 
 export default function Layout() {
   const {
@@ -23,6 +40,18 @@ export default function Layout() {
   const [navSubmenu, setNavSubmenu] = useState<
     null | "admin" | "reception" | "buongphong"
   >(null);
+  const [mauGiaoDien, setMauGiaoDien] = useState<MauGiaoDien>(() => {
+    try {
+      if (localStorage.getItem(THEME_STORAGE_KEY) === "light") return "sang";
+    } catch {
+      /* ignore */
+    }
+    return "toi";
+  });
+
+  useLayoutEffect(() => {
+    apDungMauLenDom(mauGiaoDien);
+  }, [mauGiaoDien]);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -88,6 +117,27 @@ export default function Layout() {
           <Link to="/" className="layout-logo" onClick={closeMenu}>
             Royal <span>Lotus</span>
           </Link>
+          <button
+            type="button"
+            className="layout-theme-toggle"
+            aria-label={
+              mauGiaoDien === "sang"
+                ? "Chuyển giao diện tối"
+                : "Chuyển giao diện sáng"
+            }
+            title={
+              mauGiaoDien === "sang" ? "Giao diện tối" : "Giao diện sáng"
+            }
+            onClick={() =>
+              setMauGiaoDien((v) => (v === "sang" ? "toi" : "sang"))
+            }
+          >
+            {mauGiaoDien === "sang" ? (
+              <Moon size={20} strokeWidth={2} aria-hidden />
+            ) : (
+              <Sun size={20} strokeWidth={2} aria-hidden />
+            )}
+          </button>
           <button
             type="button"
             className="layout-menu-toggle"

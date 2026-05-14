@@ -63,6 +63,7 @@ html {
 
 :root {
   color-scheme: dark;
+  --surface: #1a2430;
   --bg: #0b0f14;
   --bg-gradient:
     radial-gradient(
@@ -113,6 +114,68 @@ html {
     rgba(45, 212, 191, 0.36) 100%
   );
   --scrollbar-thumb-border: rgba(11, 15, 20, 0.9);
+  --ribbon-bg: rgba(15, 23, 42, 0.65);
+  --ribbon-bg-tan: rgba(21, 35, 48, 0.72);
+  --ribbon-bg-buong: rgba(15, 35, 42, 0.72);
+}
+
+html[data-theme="light"] .buong-phong-filter-row select,
+html[data-theme="light"] .buong-phong-filter-row input {
+  color-scheme: light;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --surface: #e2e8f0;
+  --bg: #f1f5f9;
+  --bg-gradient:
+    radial-gradient(
+      ellipse 120% 80% at 50% -25%,
+      rgba(13, 148, 136, 0.14),
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse 70% 45% at 100% 0%,
+      rgba(251, 191, 36, 0.1),
+      transparent 50%
+    );
+  --bg-elevated: #ffffff;
+  --bg-card: #ffffff;
+  --bg-muted: rgba(148, 163, 184, 0.28);
+  --card-border: rgba(15, 23, 42, 0.1);
+  --border: rgba(15, 23, 42, 0.14);
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --primary: #0d9488;
+  --primary-hover: #14b8a6;
+  --primary-muted: rgba(13, 148, 136, 0.14);
+  --accent: #d97706;
+  --accent-hover: #f59e0b;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --success: #16a34a;
+  --input-bg: rgba(255, 255, 255, 0.95);
+  --input-border: rgba(15, 23, 42, 0.16);
+  --shadow:
+    0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
+  --shadow-lg:
+    0 18px 40px -12px rgba(15, 23, 42, 0.12), 0 8px 16px -8px rgba(15, 23, 42, 0.08);
+  --focus-ring: 0 0 0 3px rgba(13, 148, 136, 0.28);
+  --scrollbar-track: rgba(226, 232, 240, 0.95);
+  --scrollbar-thumb: linear-gradient(
+    180deg,
+    rgba(13, 148, 136, 0.45) 0%,
+    rgba(13, 148, 136, 0.28) 100%
+  );
+  --scrollbar-thumb-hover: linear-gradient(
+    180deg,
+    rgba(13, 148, 136, 0.58) 0%,
+    rgba(13, 148, 136, 0.4) 100%
+  );
+  --scrollbar-thumb-border: rgba(255, 255, 255, 0.85);
+  --ribbon-bg: rgba(255, 255, 255, 0.82);
+  --ribbon-bg-tan: rgba(240, 253, 250, 0.92);
+  --ribbon-bg-buong: rgba(224, 242, 254, 0.9);
 }
 
 @keyframes fadeIn {
@@ -1262,13 +1325,13 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(11, 15, 20, 0.82);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   color: var(--text);
   padding: 0.65rem 1rem;
   border-bottom: 1px solid var(--card-border);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-lg);
   animation: slideDown 0.45s ease-out;
 }
 
@@ -1315,6 +1378,27 @@ h1 {
   background: rgba(45, 212, 191, 0.08);
 }
 
+.layout-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  flex-shrink: 0;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.layout-theme-toggle:hover {
+  border-color: rgba(45, 212, 191, 0.35);
+  background: rgba(45, 212, 191, 0.08);
+  color: var(--primary);
+}
+
 .layout-nav {
   display: flex;
   gap: 0.35rem 1rem;
@@ -1324,7 +1408,7 @@ h1 {
 }
 
 .layout-nav-link {
-  color: rgba(241, 245, 249, 0.88) !important;
+  color: color-mix(in srgb, var(--text) 90%, transparent) !important;
   font-weight: 500;
   font-size: 0.9rem;
   padding: 0.4rem 0.65rem;
@@ -1414,6 +1498,10 @@ a.layout-nav-link.layout-nav-link--active {
     visibility: visible;
     pointer-events: auto;
     transform: scaleY(1) translateY(0);
+  }
+
+  html[data-theme="light"] .layout-nav {
+    background: color-mix(in srgb, var(--bg-elevated) 97%, transparent);
   }
 
   .layout-nav .layout-user {
@@ -3278,16 +3366,16 @@ a.layout-nav-link.layout-nav-link--active {
 
 .role-subnav-ribbon {
   border-bottom: 1px solid var(--border);
-  background: rgba(15, 23, 42, 0.65);
+  background: var(--ribbon-bg);
   backdrop-filter: blur(10px);
 }
 
 .role-subnav-ribbon--tan {
-  background: rgba(21, 35, 48, 0.72);
+  background: var(--ribbon-bg-tan);
 }
 
 .role-subnav-ribbon--buong {
-  background: rgba(15, 35, 42, 0.72);
+  background: var(--ribbon-bg-buong);
 }
 
 .role-subnav-ribbon-inner {
