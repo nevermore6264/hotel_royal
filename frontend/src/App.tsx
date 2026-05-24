@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./context/AuthContext";
-import Layout from "./components/Layout";
+import { dungXacThuc } from "./context/NguCanhXacThuc";
+import KhungGiaoDien from "./components/KhungGiaoDien";
 import DangNhap from "./pages/DangNhap";
 import DangKy from "./pages/DangKy";
 import TrangChu from "./pages/TrangChu";
@@ -14,9 +14,11 @@ import AdminLoaiPhong from "./pages/admin/LoaiPhong";
 import AdminBangGiaPhong from "./pages/admin/BangGiaPhong";
 import AdminNguoiDung from "./pages/admin/NguoiDung";
 import AdminChinhSachHuyPhong from "./pages/admin/ChinhSachHuyPhong";
+import AdminDuyetYeuCauHuy from "./pages/admin/DuyetYeuCauHuy";
 import AdminDichVu from "./pages/admin/DichVu";
 import TroChuyen from "./pages/TroChuyen";
 import DatPhongLeTan from "./pages/receptionist/DatPhongLeTan";
+import HoanTienLeTan from "./pages/receptionist/HoanTienLeTan";
 import KhachHangLeTan from "./pages/receptionist/KhachHangLeTan";
 import PhongCanDonDep from "./pages/housekeeping/PhongCanDonDep";
 import TrangThaiPhongBuongPhong from "./pages/housekeeping/TrangThaiPhong";
@@ -46,7 +48,7 @@ function PrivateRoute({
   children: React.ReactNode;
   roles: string[];
 }) {
-  const { user } = useAuth();
+  const { user } = dungXacThuc();
   if (!user) return <Navigate to="/dang-nhap" replace />;
   const hasRole = roles.some((r) => user.vaiTro?.includes(r));
   if (!hasRole) return <Navigate to="/khong-co-quyen" replace />;
@@ -58,7 +60,7 @@ export default function App() {
     <Routes>
       <Route path="/dang-nhap" element={<DangNhap />} />
       <Route path="/dang-ky" element={<DangKy />} />
-      <Route path="/" element={<Layout />}>
+      <Route path="/" element={<KhungGiaoDien />}>
         <Route index element={<TrangChu />} />
         <Route path="thong-tin" element={<ThongTin />} />
         <Route path="khong-co-quyen" element={<KhongCoQuyen />} />
@@ -148,6 +150,14 @@ export default function App() {
             }
           />
           <Route
+            path="duyet-huy-phong"
+            element={
+              <PrivateRoute roles={["ROLE_QUAN_TRI"]}>
+                <AdminDuyetYeuCauHuy />
+              </PrivateRoute>
+            }
+          />
+          <Route
             path="dich-vu"
             element={
               <PrivateRoute roles={["ROLE_QUAN_TRI"]}>
@@ -194,6 +204,14 @@ export default function App() {
             element={
               <PrivateRoute roles={["ROLE_QUAN_TRI", "ROLE_LE_TAN"]}>
                 <KhachHangLeTan />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="hoan-tien"
+            element={
+              <PrivateRoute roles={["ROLE_QUAN_TRI", "ROLE_LE_TAN"]}>
+                <HoanTienLeTan />
               </PrivateRoute>
             }
           />

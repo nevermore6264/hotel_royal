@@ -4,7 +4,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-export default function AuthSplitLayout({ children }: Props) {
+export default function BoCucChiaXacThuc({ children }: Props) {
   return (
     <div className="auth-split">
       <Link to="/" className="auth-split__skip">

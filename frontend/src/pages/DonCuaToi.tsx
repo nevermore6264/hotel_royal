@@ -10,8 +10,7 @@ import {
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import api from "../api/client";
-import ConfirmDialog from "../components/ConfirmDialog";
-import { useToast } from "../context/ToastContext";
+import { dungThongBao } from "../context/NguCanhThongBao";
 import { apiErrorMessage } from "../lib/apiError";
 import { formatNgayVN } from "../lib/ngayGio";
 import {
@@ -25,6 +24,22 @@ import {
 type PendingCancel =
   | { kind: "whole"; bookingId: number }
   | { kind: "room"; bookingId: number; detailId: number };
+
+type DanhGiaHuy = {
+  coTheYeuCau: boolean;
+  lyDoKhongThe?: string;
+  soGioConLai?: number;
+  tyLeHoan?: number;
+  soTienHoanDuKien?: number;
+  moTaChinhSach?: string;
+  tungPhong?: {
+    idChiTiet: number;
+    soPhong: string;
+    soTienHoan?: number;
+    tyLeHoan?: number;
+    moTaChinhSach?: string;
+  }[];
+};
 
 type DatPhong = {
   id: number;
@@ -153,7 +168,7 @@ function tienThuPayOsLanNay(b: DatPhong, cheDo: "TOAN_BO" | "DAT_COC"): number {
 }
 
 export default function DonCuaToi() {
-  const { toast } = useToast();
+  const { toast } = dungThongBao();
   const [searchParams, setSearchParams] = useSearchParams();
   const payosHuyToastKey = useRef<string | null>(null);
   const [list, setList] = useState<DatPhong[]>([]);
@@ -162,6 +177,9 @@ export default function DonCuaToi() {
     null,
   );
   const [cancelBusy, setCancelBusy] = useState(false);
+  const [cancelEval, setCancelEval] = useState<DanhGiaHuy | null>(null);
+  const [cancelEvalLoading, setCancelEvalLoading] = useState(false);
+  const [lyDoKhach, setLyDoKhach] = useState("");
   const [payTarget, setPayTarget] = useState<DatPhong | null>(null);
   const [payCheDo, setPayCheDo] = useState<"TOAN_BO" | "DAT_COC">("TOAN_BO");
   const [payBusy, setPayBusy] = useState(false);
@@ -228,29 +246,48 @@ export default function DonCuaToi() {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [refreshList]);
 
+  useEffect(() => {
+    if (!pendingCancel) {
+      setCancelEval(null);
+      setLyDoKhach("");
+      return;
+    }
+    setCancelEvalLoading(true);
+    setCancelEval(null);
+    const params: Record<string, number> = {
+      idDatPhong: pendingCancel.bookingId,
+    };
+    if (pendingCancel.kind === "room") {
+      params.idChiTiet = pendingCancel.detailId;
+    }
+    api
+      .get("/yeu-cau-huy/danh-gia", { params })
+      .then((r) => setCancelEval(r.data))
+      .catch((e) => {
+        toast(apiErrorMessage(e, "Không đánh giá được chính sách hủy"), "thatBai");
+        setPendingCancel(null);
+      })
+      .finally(() => setCancelEvalLoading(false));
+  }, [pendingCancel, toast]);
+
   const runPendingCancel = async () => {
-    if (!pendingCancel) return;
+    if (!pendingCancel || !cancelEval?.coTheYeuCau) return;
     setCancelBusy(true);
     try {
-      if (pendingCancel.kind === "whole") {
-        await api.post(`/dat-phong/${pendingCancel.bookingId}/huy`);
-        await refreshList();
-        toast("Đã hủy đơn đặt phòng.", "thanhCong");
-      } else {
-        const res = await api.post(
-          `/dat-phong/${pendingCancel.bookingId}/chi-tiet/${pendingCancel.detailId}/huy`,
-          { lyDo: "Khach huy mot phong trong don" },
-        );
-        setList((prev) =>
-          prev.map((item) =>
-            item.id === pendingCancel.bookingId ? res.data : item,
-          ),
-        );
-        toast("Đã hủy phòng trong đơn.", "thanhCong");
-      }
+      await api.post("/yeu-cau-huy", {
+        idDatPhong: pendingCancel.bookingId,
+        idChiTiet:
+          pendingCancel.kind === "room" ? pendingCancel.detailId : undefined,
+        lyDoKhach: lyDoKhach.trim() || undefined,
+      });
+      await refreshList();
+      toast(
+        "Đã gửi yêu cầu hủy. Quản trị sẽ duyệt; sau khi duyệt, lễ tân hoàn tiền theo chính sách.",
+        "thanhCong",
+      );
       setPendingCancel(null);
     } catch (e) {
-      toast(apiErrorMessage(e, "Thao tác thất bại"), "thatBai");
+      toast(apiErrorMessage(e, "Gửi yêu cầu thất bại"), "thatBai");
     } finally {
       setCancelBusy(false);
     }
@@ -373,7 +410,7 @@ export default function DonCuaToi() {
                                   }
                                 >
                                   <LogOut className="btn-ico" aria-hidden />
-                                  Hủy phòng
+                                  Yêu cầu hủy
                                 </button>
                               )}
                           </div>
@@ -477,7 +514,7 @@ export default function DonCuaToi() {
                             }
                           >
                             <Ban className="btn-ico" aria-hidden />
-                            Hủy
+                            Gửi yêu cầu hủy
                           </button>
                         )}
                       </div>
@@ -632,27 +669,121 @@ export default function DonCuaToi() {
         </div>
       ) : null}
 
-      <ConfirmDialog
-        open={pendingCancel != null}
-        title={
-          pendingCancel?.kind === "whole"
-            ? "Hủy đơn đặt phòng"
-            : "Hủy phòng trong đơn"
-        }
-        message={
-          pendingCancel?.kind === "whole"
-            ? "Bạn có chắc muốn hủy toàn bộ đơn này?"
-            : "Bạn có chắc muốn hủy phòng này trong đơn? Các phòng khác (nếu có) vẫn giữ nguyên."
-        }
-        confirmLabel="Xác nhận hủy"
-        cancelLabel="Đóng"
-        danger
-        busy={cancelBusy}
-        onCancel={() => {
-          if (!cancelBusy) setPendingCancel(null);
-        }}
-        onConfirm={runPendingCancel}
-      />
+      {pendingCancel != null ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => {
+            if (!cancelBusy) setPendingCancel(null);
+          }}
+        >
+          <div
+            className="card modal-panel"
+            style={{
+              maxWidth: "min(520px, calc(100vw - 2rem))",
+              width: "100%",
+            }}
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="card-title" style={{ marginTop: 0 }}>
+              {pendingCancel.kind === "whole"
+                ? "Yêu cầu hủy cả đơn"
+                : "Yêu cầu hủy phòng"}
+            </h2>
+            {cancelEvalLoading ? (
+              <p className="text-muted text-sm">
+                <Loader2
+                  className="btn-ico btn-ico--spin"
+                  aria-hidden
+                  style={{ display: "inline", marginRight: "0.35rem" }}
+                />
+                Đang kiểm tra chính sách hủy…
+              </p>
+            ) : cancelEval && !cancelEval.coTheYeuCau ? (
+              <p className="text-sm" style={{ color: "var(--danger, #c44)" }}>
+                {cancelEval.lyDoKhongThe ?? "Không thể gửi yêu cầu hủy."}
+              </p>
+            ) : cancelEval ? (
+              <>
+                <p className="text-muted text-sm">
+                  {pendingCancel.kind === "whole"
+                    ? "Hệ thống đánh giá từng phòng theo chính sách hiện hành. Sau khi gửi, quản trị duyệt rồi lễ tân hoàn tiền."
+                    : "Các phòng khác trong đơn (nếu có) không bị ảnh hưởng."}
+                </p>
+                {cancelEval.soGioConLai != null && (
+                  <p className="text-sm">
+                    Còn <strong>{cancelEval.soGioConLai}</strong> giờ trước
+                    ngày nhận phòng.
+                  </p>
+                )}
+                <p className="text-sm">{cancelEval.moTaChinhSach}</p>
+                <p className="text-sm">
+                  Hoàn dự kiến:{" "}
+                  <strong>
+                    {Number(cancelEval.soTienHoanDuKien ?? 0).toLocaleString(
+                      "vi-VN",
+                    )}{" "}
+                    VND
+                  </strong>
+                  {cancelEval.tyLeHoan != null &&
+                    ` (${cancelEval.tyLeHoan}% giá phòng áp dụng)`}
+                </p>
+                {cancelEval.tungPhong && cancelEval.tungPhong.length > 1 && (
+                  <ul className="text-sm text-muted" style={{ margin: "0.5rem 0" }}>
+                    {cancelEval.tungPhong.map((p) => (
+                      <li key={p.idChiTiet}>
+                        {p.soPhong}:{" "}
+                        {Number(p.soTienHoan ?? 0).toLocaleString("vi-VN")} VND
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <label className="form-label text-sm" style={{ display: "block" }}>
+                  Lý do (tuỳ chọn)
+                  <textarea
+                    className="input mt-1"
+                    rows={2}
+                    value={lyDoKhach}
+                    onChange={(e) => setLyDoKhach(e.target.value)}
+                    disabled={cancelBusy}
+                    placeholder="VD: đổi lịch công tác…"
+                  />
+                </label>
+              </>
+            ) : null}
+            <div
+              className="form-row mt-4"
+              style={{ justifyContent: "flex-end", gap: "0.5rem" }}
+            >
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={cancelBusy}
+                onClick={() => setPendingCancel(null)}
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                disabled={
+                  cancelBusy ||
+                  cancelEvalLoading ||
+                  !cancelEval?.coTheYeuCau
+                }
+                onClick={() => void runPendingCancel()}
+              >
+                {cancelBusy ? (
+                  <Loader2 className="btn-ico btn-ico--spin" aria-hidden />
+                ) : null}
+                Gửi yêu cầu
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

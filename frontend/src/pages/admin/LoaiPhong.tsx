@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { ArrowRight, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../../api/client";
-import PaginationBar from "../../components/PaginationBar";
-import ConfirmDialog from "../../components/ConfirmDialog";
-import { useToast } from "../../context/ToastContext";
+import ThanhPhanTrang from "../../components/ThanhPhanTrang";
+import HopThoaiXacNhan from "../../components/HopThoaiXacNhan";
+import { dungThongBao } from "../../context/NguCanhThongBao";
 import { apiErrorMessage } from "../../lib/apiError";
 import {
   digitsOnlyMoney,
@@ -75,7 +75,7 @@ const LOAI_PHONG_FORM_INITIAL = {
 };
 
 export default function AdminLoaiPhong() {
-  const { toast } = useToast();
+  const { toast } = dungThongBao();
   const [page, setPage] = useState(0);
   const [q, setQ] = useState("");
   const [list, setList] = useState<{
@@ -346,7 +346,7 @@ export default function AdminLoaiPhong() {
             </tbody>
           </table>
         </div>
-        <PaginationBar
+        <ThanhPhanTrang
           page={page}
           totalPages={list.totalPages}
           onPageChange={setPage}
@@ -553,7 +553,7 @@ export default function AdminLoaiPhong() {
         </div>
       ) : null}
 
-      <ConfirmDialog
+      <HopThoaiXacNhan
         open={pendingDeleteId != null}
         title="Xóa loại phòng"
         message="Bạn có chắc muốn xóa loại phòng này? Thao tác không thể hoàn tác."

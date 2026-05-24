@@ -5785,6 +5785,65 @@ button.layout-nav-dropdown__summary.layout-nav-dropdown__summary--active {
   }
 }
 
+.booking-excel-lo__banner {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 1rem;
+  line-height: 1.45;
+}
+
+.booking-excel-lo__banner--ok {
+  background: rgba(45, 212, 191, 0.1);
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  color: var(--text);
+}
+
+.booking-excel-lo__banner--ok .btn-ico {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.booking-excel-lo__banner--warn {
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  color: var(--text);
+}
+
+.booking-excel-lo__banner--warn .btn-ico {
+  color: #fbbf24;
+  flex-shrink: 0;
+}
+
+.booking-excel-lo__goi-y {
+  color: var(--text-muted);
+}
+
+.booking-excel-lo__goi-y-label {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.booking-excel-lo__pay-nhom {
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-border);
+  background: var(--bg-muted);
+}
+
+.booking-excel-lo__details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.booking-excel-lo__details summary:hover {
+  color: var(--text);
+}
+
 .booking-date-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

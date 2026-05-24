@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import api from "../../api/client";
-import ConfirmDialog from "../../components/ConfirmDialog";
-import PaginationBar from "../../components/PaginationBar";
-import { useToast } from "../../context/ToastContext";
+import HopThoaiXacNhan from "../../components/HopThoaiXacNhan";
+import ThanhPhanTrang from "../../components/ThanhPhanTrang";
+import { dungThongBao } from "../../context/NguCanhThongBao";
 import {
   digitsOnlyMoney,
   formatVndIntegerForInput,
@@ -30,7 +30,7 @@ function normalizeTenDichVu(v: string): string {
 }
 
 export default function AdminDichVu() {
-  const { toast } = useToast();
+  const { toast } = dungThongBao();
   const [page, setPage] = useState(0);
   const [q, setQ] = useState("");
   const [list, setList] = useState<{
@@ -253,7 +253,7 @@ export default function AdminDichVu() {
             </tbody>
           </table>
         </div>
-        <PaginationBar
+        <ThanhPhanTrang
           page={page}
           totalPages={list.totalPages}
           onPageChange={setPage}
@@ -424,7 +424,7 @@ export default function AdminDichVu() {
         </div>
       ) : null}
 
-      <ConfirmDialog
+      <HopThoaiXacNhan
         open={pendingDeleteId != null}
         title="Xóa dịch vụ"
         message="Bạn có chắc muốn xóa dịch vụ này? Thao tác không thể hoàn tác."

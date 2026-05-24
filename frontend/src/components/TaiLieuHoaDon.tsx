@@ -94,7 +94,7 @@ type Props = {
   tagline?: string;
 };
 
-const HoaDonDocument = forwardRef<HTMLElement, Props>(function HoaDonDocument(
+const TaiLieuHoaDon = forwardRef<HTMLElement, Props>(function TaiLieuHoaDon(
   { dp, tagline = "Đà Nẵng · Hóa đơn / Phiếu thanh toán" },
   ref,
 ) {
@@ -334,4 +334,4 @@ const HoaDonDocument = forwardRef<HTMLElement, Props>(function HoaDonDocument(
   );
 });
 
-export default HoaDonDocument;
+export default TaiLieuHoaDon;

@@ -273,8 +273,15 @@ public class DatPhongService {
 
     @Transactional
     public DatPhongDto huy(Long idDatPhong, Long idNguoiDung) {
+        return huy(idDatPhong, idNguoiDung, false);
+    }
+
+    @Transactional
+    public DatPhongDto huy(Long idDatPhong, Long idNguoiDung, boolean boQuaKiemTraChuDon) {
         DatPhong dp = layThucThe(idDatPhong);
-        kiemTraQuyenChuDon(dp, idNguoiDung);
+        if (!boQuaKiemTraChuDon) {
+            kiemTraQuyenChuDon(dp, idNguoiDung);
+        }
         for (ChiTietDatPhong d : dp.getChiTiet()) {
             if (coTheHuy(d)) {
                 huyChiTietNoiBo(dp, d, "Huy toan bo don");
@@ -378,33 +385,103 @@ public class DatPhongService {
     }
 
     private void huyChiTietNoiBo(DatPhong dp, ChiTietDatPhong chiTiet, String lyDo) {
+        huyChiTietNoiBo(dp, chiTiet, lyDo, true);
+    }
+
+    private void huyChiTietNoiBo(DatPhong dp, ChiTietDatPhong chiTiet, String lyDo, boolean hoanNgay) {
         if (!coTheHuy(chiTiet)) {
             throw new RuntimeException("Phòng này không thể hủy");
         }
-        BigDecimal soTienHoan = dichVuHoanTien.apDungHoanChiTiet(dp, chiTiet, lyDo);
+        ChinhSachHuyPhong cs = timChinhSachApDung(dp.getNgayNhanPhong());
+        BigDecimal tyLe = cs != null ? cs.getTyLeHoanTien() : BigDecimal.ZERO;
+        chiTiet.setTyLeHoanTienApDung(tyLe);
+        BigDecimal soTienHoan = dichVuHoanTien.tinhSoTienHoan(chiTiet);
+        huyChiTietChiCapNhatTrangThai(dp, chiTiet, lyDo, soTienHoan, tyLe);
+        if (hoanNgay) {
+            ghiNhanHoanChiTiet(dp, chiTiet, soTienHoan, lyDo);
+        }
+    }
+
+    @Transactional
+    public void huyChiTietChoDuyet(DatPhong dp, ChiTietDatPhong chiTiet, String lyDo, BigDecimal soTienHoan, BigDecimal tyLe) {
+        if (!coTheHuy(chiTiet)) {
+            throw new RuntimeException("Phòng này không thể hủy");
+        }
+        huyChiTietChiCapNhatTrangThai(dp, chiTiet, lyDo, soTienHoan, tyLe);
+    }
+
+    private void huyChiTietChiCapNhatTrangThai(
+            DatPhong dp, ChiTietDatPhong chiTiet, String lyDo, BigDecimal soTienHoan, BigDecimal tyLe) {
         chiTiet.setTrangThai(MaTrangThaiChiTietDatPhong.DA_HUY);
-        chiTiet.setSoTienHoan(soTienHoan);
+        chiTiet.setSoTienHoan(soTienHoan != null ? soTienHoan : BigDecimal.ZERO);
+        chiTiet.setTyLeHoanTienApDung(tyLe != null ? tyLe : BigDecimal.ZERO);
         chiTiet.setThoiDiemHuy(LocalDateTime.now());
         chiTiet.setLyDoHuy(lyDo);
-        if (soTienHoan.compareTo(BigDecimal.ZERO) > 0 && dp.getThanhToan() != null) {
-            dp.getThanhToan().getGiaoDich().add(GiaoDichThanhToan.builder()
-                    .thanhToan(dp.getThanhToan())
-                    .maGiaoDich("HT-" + dp.getId() + "-" + chiTiet.getId() + "-" + System.currentTimeMillis())
-                    .loaiGiaoDich(LoaiGiaoDichThanhToan.HOAN_TIEN)
-                    .soTien(soTienHoan)
-                    .trangThai(MaTrangThaiThanhToan.HOAN_TIEN_MOT_PHAN)
-                    .phuongThuc(dp.getThanhToan().getPhuongThuc())
-                    .congThanhToan(dp.getThanhToan().getPhuongThuc())
-                    .thamChieuCong("REFUND-" + chiTiet.getId())
-                    .ghiChu(lyDo)
-                    .build());
-        }
         phongRepository.findById(chiTiet.getPhong().getId()).ifPresent(p -> {
             if (MaTrangThaiPhong.DA_GIU.equals(p.getTrangThai()) || MaTrangThaiPhong.PHONG_TRONG.equals(p.getTrangThai())) {
                 p.setTrangThai(MaTrangThaiPhong.PHONG_TRONG);
                 phongRepository.save(p);
             }
         });
+    }
+
+    @Transactional
+    public void ghiNhanHoanChiTiet(DatPhong dp, ChiTietDatPhong chiTiet, BigDecimal soTienHoan, String lyDo) {
+        if (soTienHoan == null || soTienHoan.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        ThanhToan tt = napThanhToan(dp);
+        if (tt == null) {
+            return;
+        }
+        tt.getGiaoDich().add(GiaoDichThanhToan.builder()
+                .thanhToan(tt)
+                .maGiaoDich("HT-" + dp.getId() + "-" + chiTiet.getId() + "-" + System.currentTimeMillis())
+                .loaiGiaoDich(LoaiGiaoDichThanhToan.HOAN_TIEN)
+                .soTien(soTienHoan)
+                .trangThai(MaTrangThaiThanhToan.HOAN_TIEN_MOT_PHAN)
+                .phuongThuc(tt.getPhuongThuc())
+                .congThanhToan(tt.getPhuongThuc())
+                .thamChieuCong("REFUND-" + chiTiet.getId())
+                .ghiChu(lyDo)
+                .build());
+        dichVuHoanTien.luuHoanTienDon(dp, soTienHoan, lyDo);
+        capNhatTongThanhToan(dp);
+    }
+
+    @Transactional
+    public void ghiNhanHoanDon(DatPhong dp, BigDecimal soTienHoan, String lyDo) {
+        if (soTienHoan == null || soTienHoan.compareTo(BigDecimal.ZERO) <= 0) {
+            capNhatTongThanhToan(dp);
+            return;
+        }
+        ThanhToan tt = napThanhToan(dp);
+        if (tt == null) {
+            capNhatTongThanhToan(dp);
+            return;
+        }
+        tt.getGiaoDich().add(GiaoDichThanhToan.builder()
+                .thanhToan(tt)
+                .maGiaoDich("HT-DP-" + dp.getId() + "-" + System.currentTimeMillis())
+                .loaiGiaoDich(LoaiGiaoDichThanhToan.HOAN_TIEN)
+                .soTien(soTienHoan)
+                .trangThai(MaTrangThaiThanhToan.HOAN_TIEN_MOT_PHAN)
+                .phuongThuc(tt.getPhuongThuc())
+                .congThanhToan(tt.getPhuongThuc())
+                .thamChieuCong("REFUND-DP-" + dp.getId())
+                .ghiChu(lyDo)
+                .build());
+        dichVuHoanTien.luuHoanTienDon(dp, soTienHoan, lyDo);
+        capNhatTongThanhToan(dp);
+    }
+
+    private ThanhToan napThanhToan(DatPhong dp) {
+        return thanhToanRepository.findByDatPhong_Id(dp.getId())
+                .map(tt -> {
+                    dp.setThanhToan(tt);
+                    return tt;
+                })
+                .orElse(null);
     }
 
     private void capNhatTrangThaiDonSauKhiHuy(DatPhong dp) {
@@ -431,6 +508,14 @@ public class DatPhongService {
         if (chuSoHuu == null || !chuSoHuu.equals(idNguoiDung)) {
             throw new RuntimeException("Không có quyền hủy đơn này");
         }
+    }
+
+    public void kiemTraQuyenChuDonCongKhai(DatPhong dp, Long idNguoiDung) {
+        kiemTraQuyenChuDon(dp, idNguoiDung);
+    }
+
+    public void capNhatTrangThaiDonSauHuyCongKhai(DatPhong dp) {
+        capNhatTrangThaiDonSauKhiHuy(dp);
     }
 
     private int tinhSoDem(YeuCauTaoDatPhong yeuCau) {

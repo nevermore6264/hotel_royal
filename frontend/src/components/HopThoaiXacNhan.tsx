@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Check, Trash2, X } from "lucide-react";
 
-type ConfirmDialogProps = {
+type PropsHopThoaiXacNhan = {
   open: boolean;
   title?: string;
   message: string;
@@ -13,7 +13,7 @@ type ConfirmDialogProps = {
   onCancel: () => void;
 };
 
-export default function ConfirmDialog({
+export default function HopThoaiXacNhan({
   open,
   title = "Xác nhận",
   message,
@@ -23,7 +23,7 @@ export default function ConfirmDialog({
   busy = false,
   onConfirm,
   onCancel,
-}: ConfirmDialogProps) {
+}: PropsHopThoaiXacNhan) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {

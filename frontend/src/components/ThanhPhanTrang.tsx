@@ -1,19 +1,19 @@
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-type PaginationBarProps = {
+type PropsThanhPhanTrang = {
   page: number;
   totalPages: number;
   onPageChange: (nextPage: number) => void;
   className?: string;
 };
 
-export default function PaginationBar({
+export default function ThanhPhanTrang({
   page,
   totalPages,
   onPageChange,
   className = "",
-}: PaginationBarProps) {
+}: PropsThanhPhanTrang) {
   const tp = Math.max(1, totalPages);
   const [paging, setPaging] = useState(false);
   const resetTimerRef = useRef<number | null>(null);

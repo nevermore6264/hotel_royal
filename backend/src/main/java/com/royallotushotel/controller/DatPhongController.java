@@ -135,21 +135,19 @@ public class DatPhongController {
     }
 
     @PostMapping("/{id:\\d+}/huy")
-    @PreAuthorize("hasRole('KHACH_HANG')")
+    @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN')")
     public ResponseEntity<DatPhongDto> huy(@PathVariable Long id, @AuthenticationPrincipal ChuTheNguoiDung chuThe) {
-        return ResponseEntity.ok(datPhongService.huy(id, chuThe.getId()));
+        return ResponseEntity.ok(datPhongService.huy(id, chuThe.getId(), true));
     }
 
     @PostMapping("/{id:\\d+}/chi-tiet/{idChiTiet:\\d+}/huy")
-    @PreAuthorize("hasAnyRole('KHACH_HANG','QUAN_TRI','LE_TAN')")
+    @PreAuthorize("hasAnyRole('QUAN_TRI','LE_TAN')")
     public ResponseEntity<DatPhongDto> huyChiTiet(
             @PathVariable Long id,
             @PathVariable Long idChiTiet,
             @RequestBody(required = false) Map<String, String> body,
             @AuthenticationPrincipal ChuTheNguoiDung chuThe) {
-        boolean boQuaKiemTraChuDon = chuThe != null && chuThe.getAuthorities() != null
-                && chuThe.getAuthorities().stream().anyMatch(quyen ->
-                        "ROLE_QUAN_TRI".equals(quyen.getAuthority()) || "ROLE_LE_TAN".equals(quyen.getAuthority()));
+        boolean boQuaKiemTraChuDon = true;
         String lyDo = body != null ? body.get("lyDo") : null;
         Long idNguoiDung = chuThe != null ? chuThe.getId() : null;
         return ResponseEntity.ok(datPhongService.huyChiTiet(id, idChiTiet, idNguoiDung, boQuaKiemTraChuDon, lyDo));

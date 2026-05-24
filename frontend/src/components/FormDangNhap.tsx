@@ -1,21 +1,21 @@
 import { useState } from "react";
 import { LogIn } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { dungXacThuc } from "../context/NguCanhXacThuc";
 
 type Props = {
   laGon?: boolean;
   khiDangNhapThanhCong?: () => void;
 };
 
-export default function LoginForm({
+export default function FormDangNhap({
   laGon = false,
   khiDangNhapThanhCong,
 }: Props) {
   const [tenDangNhap, setTenDangNhap] = useState("");
   const [matKhau, setMatKhau] = useState("");
   const [baoLoi, setBaoLoi] = useState("");
-  const { login } = useAuth();
+  const { login } = dungXacThuc();
   const navigate = useNavigate();
   const laDangGon = laGon;
 

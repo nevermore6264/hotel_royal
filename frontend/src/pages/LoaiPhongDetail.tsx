@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { BedDouble, LayoutGrid, Send } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import api from "../api/client";
-import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
+import { dungXacThuc } from "../context/NguCanhXacThuc";
+import { dungThongBao } from "../context/NguCanhThongBao";
 import { apiErrorMessage } from "../lib/apiError";
 
 type Loai = {
@@ -99,8 +99,8 @@ function StarsRow({ value }: { value: number }) {
 
 export default function LoaiPhongDetail() {
   const { id } = useParams();
-  const { isKhachHang } = useAuth();
-  const { toast } = useToast();
+  const { isKhachHang } = dungXacThuc();
+  const { toast } = dungThongBao();
   const [loai, setLoai] = useState<Loai | null>(null);
   const [danhGia, setDanhGia] = useState<DanhGia[]>([]);
   const [form, setForm] = useState({ diem: 5, noiDung: "" });

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { CircleCheck } from "lucide-react";
 
-type AlertDialogProps = {
+type PropsHopThoaiThongBao = {
   open: boolean;
   title?: string;
   message: string;
@@ -9,13 +9,13 @@ type AlertDialogProps = {
   onClose: () => void;
 };
 
-export default function AlertDialog({
+export default function HopThoaiThongBao({
   open,
   title = "Thông báo",
   message,
   okLabel = "Đóng",
   onClose,
-}: AlertDialogProps) {
+}: PropsHopThoaiThongBao) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {

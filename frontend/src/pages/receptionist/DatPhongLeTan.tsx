@@ -17,12 +17,12 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../../api/client";
-import HoaDonDocument, {
+import TaiLieuHoaDon, {
   type HoaDonDuLieu,
-} from "../../components/HoaDonDocument";
-import AlertDialog from "../../components/AlertDialog";
-import PaginationBar from "../../components/PaginationBar";
-import DatPhongExcelLo from "../../components/DatPhongExcelLo";
+} from "../../components/TaiLieuHoaDon";
+import HopThoaiThongBao from "../../components/HopThoaiThongBao";
+import ThanhPhanTrang from "../../components/ThanhPhanTrang";
+import BangDatPhongExcel from "../../components/BangDatPhongExcel";
 import { apiErrorMessage } from "../../lib/apiError";
 import { gopSuDungDichVuHienThi } from "../../lib/gopSuDungDichVu";
 import { formatNgayVN } from "../../lib/ngayGio";
@@ -732,7 +732,7 @@ export default function DatPhongLeTan() {
         còn nợ, dùng <strong>Tiền mặt</strong> (nhập số tại quầy) hoặc{" "}
         <strong>PayOS</strong>; khi “Còn lại” = 0 mới ghi nhận trả phòng.
       </p>
-      <DatPhongExcelLo
+      <BangDatPhongExcel
         variant="leTan"
         onSauKhiNhapLeTan={() => {
           setPage(0);
@@ -1049,7 +1049,7 @@ export default function DatPhongLeTan() {
               </tbody>
             </table>
           </div>
-          <PaginationBar
+          <ThanhPhanTrang
             page={page}
             totalPages={list.totalPages}
             onPageChange={setPage}
@@ -1150,7 +1150,7 @@ export default function DatPhongLeTan() {
               className="invoice-print-wrap"
               style={{ maxHeight: "min(70vh, 640px)", overflow: "auto" }}
             >
-              <HoaDonDocument
+              <TaiLieuHoaDon
                 ref={invoiceRootRef}
                 dp={invoiceModal.data}
                 tagline="Đà Nẵng · Hóa đơn kỳ lưu trú / Phiếu thanh toán"
@@ -1990,7 +1990,7 @@ export default function DatPhongLeTan() {
         </div>
       ) : null}
 
-      <AlertDialog
+      <HopThoaiThongBao
         open={notice != null}
         title={notice?.title}
         message={notice?.message ?? ""}

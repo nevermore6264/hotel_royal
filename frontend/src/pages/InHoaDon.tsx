@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Download, FileText, Loader2, Printer } from "lucide-react";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import api from "../api/client";
-import HoaDonDocument, { type HoaDonDuLieu } from "../components/HoaDonDocument";
+import TaiLieuHoaDon, { type HoaDonDuLieu } from "../components/TaiLieuHoaDon";
 import { formatNgayGioVN } from "../lib/ngayGio";
 
 export default function InHoaDon() {
@@ -139,7 +139,7 @@ export default function InHoaDon() {
         </div>
       </div>
 
-      <HoaDonDocument ref={invoiceRootRef} dp={dp} />
+      <TaiLieuHoaDon ref={invoiceRootRef} dp={dp} />
     </div>
   );
 }

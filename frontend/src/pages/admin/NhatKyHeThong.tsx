@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../api/client";
-import PaginationBar from "../../components/PaginationBar";
+import ThanhPhanTrang from "../../components/ThanhPhanTrang";
 import { formatNgayGioVN } from "../../lib/ngayGio";
 
 type Row = {
@@ -101,7 +101,7 @@ export default function AdminNhatKyHeThong() {
               </tbody>
             </table>
           </div>
-          <PaginationBar
+          <ThanhPhanTrang
             page={page}
             totalPages={rows.totalPages}
             onPageChange={setPage}

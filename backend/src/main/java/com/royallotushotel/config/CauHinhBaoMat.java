@@ -72,6 +72,8 @@ public class CauHinhBaoMat {
                         .hasAnyRole("QUAN_TRI", "LE_TAN", "BUONG_PHONG")
                         .requestMatchers(HttpMethod.GET, "/phong/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/loai-phong", "/loai-phong/**").permitAll()
+                        .requestMatchers("/yeu-cau-huy/**")
+                        .hasAnyRole("QUAN_TRI", "LE_TAN", "KHACH_HANG")
                         .requestMatchers("/dat-phong/**").hasAnyRole("QUAN_TRI", "LE_TAN", "KHACH_HANG")
                         .requestMatchers("/khach-hang/**").hasAnyRole("QUAN_TRI", "LE_TAN")
                         .requestMatchers("/dich-vu/**")

@@ -10,13 +10,13 @@ type KieuThongBao = "thanhCong" | "thatBai" | "thongTin";
 
 type MucThongBao = { id: number; kieu: KieuThongBao; noiDung: string };
 
-type ToastContextValue = {
+type KieuNguCanhThongBao = {
   toast: (noiDung: string, kieu?: KieuThongBao) => void;
 };
 
-const ToastContext = createContext<ToastContextValue | null>(null);
+const NguCanhThongBao = createContext<KieuNguCanhThongBao | null>(null);
 
-export function ToastProvider({ children }: { children: ReactNode }) {
+export function NhaCungCapThongBao({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<MucThongBao[]>([]);
 
   const toast = useCallback((noiDung: string, kieu: KieuThongBao = "thongTin") => {
@@ -28,7 +28,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ToastContext.Provider value={{ toast }}>
+    <NguCanhThongBao.Provider value={{ toast }}>
       {children}
       <div className="toast-host" aria-live="polite">
         {items.map((t) => (
@@ -37,12 +37,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           </div>
         ))}
       </div>
-    </ToastContext.Provider>
+    </NguCanhThongBao.Provider>
   );
 }
 
-export function useToast() {
-  const c = useContext(ToastContext);
-  if (!c) throw new Error("useToast cần bọc trong ToastProvider");
+export function dungThongBao() {
+  const c = useContext(NguCanhThongBao);
+  if (!c) throw new Error("dungThongBao cần bọc trong NhaCungCapThongBao");
   return c;
 }

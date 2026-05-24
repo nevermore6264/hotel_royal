@@ -10,8 +10,8 @@ import {
 } from "react";
 import { Navigate } from "react-router-dom";
 import api from "../api/client";
-import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
+import { dungXacThuc } from "../context/NguCanhXacThuc";
+import { dungThongBao } from "../context/NguCanhThongBao";
 
 type TinNhan = {
   id: number;
@@ -126,7 +126,7 @@ function MessengerComposer({
   placeholder: string;
   ariaLabel: string;
 }) {
-  const { toast } = useToast();
+  const { toast } = dungThongBao();
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [emojiOpen, setEmojiOpen] = useState(false);
@@ -268,7 +268,7 @@ function MessengerComposer({
 }
 
 export default function TroChuyen() {
-  const { user, isKhachHang, isQuanTri, isLeTan } = useAuth();
+  const { user, isKhachHang, isQuanTri, isLeTan } = dungXacThuc();
   const isStaff = !!(isQuanTri || isLeTan);
   const isGuest = !!(isKhachHang && !isStaff);
 
@@ -280,8 +280,8 @@ export default function TroChuyen() {
 }
 
 function ChatGuest() {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const { user } = dungXacThuc();
+  const { toast } = dungThongBao();
   const [nhanVien, setNhanVien] = useState<NguoiHoTro[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [tin, setTin] = useState<TinNhan[]>([]);
@@ -513,8 +513,8 @@ function ChatGuest() {
 }
 
 function ChatStaff() {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const { user } = dungXacThuc();
+  const { toast } = dungThongBao();
   const [cuocs, setCuocs] = useState<CuocTomTat[]>([]);
   const [selectedKhachId, setSelectedKhachId] = useState<number | null>(null);
   const [tin, setTin] = useState<TinNhan[]>([]);

@@ -8,7 +8,7 @@ import {
 import { BedDouble, Eye, FilterX, RotateCcw } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import api from "../api/client";
-import { useAuth } from "../context/AuthContext";
+import { dungXacThuc } from "../context/NguCanhXacThuc";
 import { classBadgePhong, tenTrangThaiPhong } from "../lib/trangThai";
 
 type SortKey = "gia-asc" | "gia-desc" | "phong-asc";
@@ -135,7 +135,7 @@ export default function DanhSachPhong() {
   const [roomTypeId, setRoomTypeId] = useState<number | "">("");
   const [sortKey, setSortKey] = useState<SortKey>("gia-asc");
   const [loadingRooms, setLoadingRooms] = useState(true);
-  const { isKhachHang } = useAuth();
+  const { isKhachHang } = dungXacThuc();
 
   const soDem = soDemLuuTru(checkIn, checkOut);
   const datesOk = !!(checkIn && checkOut && soDem != null);

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { MessageCircle, Pencil, Phone, Save, X } from "lucide-react";
 import api from "../../api/client";
-import PaginationBar from "../../components/PaginationBar";
-import { useToast } from "../../context/ToastContext";
+import ThanhPhanTrang from "../../components/ThanhPhanTrang";
+import { dungThongBao } from "../../context/NguCanhThongBao";
 import { apiErrorMessage } from "../../lib/apiError";
 import { soDienThoaiTelHref, soDienThoaiZaloMeHref } from "../../lib/dienThoai";
 
@@ -30,7 +30,7 @@ const PHIEU_RONG: PhieuSuaKhach = {
 };
 
 export default function KhachHangLeTan() {
-  const { toast } = useToast();
+  const { toast } = dungThongBao();
   const [page, setPage] = useState(0);
   const [list, setList] = useState<{
     content: KhachHang[];
@@ -212,7 +212,7 @@ export default function KhachHangLeTan() {
             </tbody>
           </table>
         </div>
-        <PaginationBar
+        <ThanhPhanTrang
           page={page}
           totalPages={list.totalPages}
           onPageChange={setPage}

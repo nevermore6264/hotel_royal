@@ -16,6 +16,10 @@ public class KetQuaNhapExcelDatPhongDto {
     private int tongHang;
     private int soThanhCong;
     private int soThatBai;
+    private boolean datTheoNhom;
+    private Long idDatPhongNhom;
+    private String thongDiepTong;
+    private String goiYChung;
     @Builder.Default
     private List<DongKetQuaNhapExcelDatPhongDto> chiTiet = new ArrayList<>();
 }

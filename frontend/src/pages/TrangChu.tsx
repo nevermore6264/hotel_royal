@@ -8,8 +8,8 @@ import {
   X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import LoginForm from "../components/LoginForm";
+import { dungXacThuc } from "../context/NguCanhXacThuc";
+import FormDangNhap from "../components/FormDangNhap";
 
 function IconSparkle() {
   return (
@@ -409,7 +409,7 @@ function LandingSlideshow() {
 }
 
 export default function TrangChu() {
-  const { isKhachHang, user } = useAuth();
+  const { isKhachHang, user } = dungXacThuc();
   const [galleryZoom, setGalleryZoom] = useState<GalleryItem | null>(null);
   const closeGalleryZoom = useCallback(() => setGalleryZoom(null), []);
 
@@ -478,7 +478,7 @@ export default function TrangChu() {
           {!user ? (
             <div className="landing-hero__aside">
               <div className="home-login-card" id="home-login">
-        <LoginForm laGon khiDangNhapThanhCong={() => undefined} />
+        <FormDangNhap laGon khiDangNhapThanhCong={() => undefined} />
               </div>
               <div className="landing-peek" aria-hidden>
                 <article className="landing-mini-card landing-mini-card--a">

@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { CreditCard, Loader2 } from "lucide-react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
+import { dungXacThuc } from "../context/NguCanhXacThuc";
+import { dungThongBao } from "../context/NguCanhThongBao";
 import api from "../api/client";
-import DatPhongExcelLo from "../components/DatPhongExcelLo";
+import BangDatPhongExcel from "../components/BangDatPhongExcel";
 
 type Phong = {
   id: number;
@@ -64,8 +64,8 @@ const TY_LE_COC_PAYOS = 30;
 export default function DatPhong() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const { user } = dungXacThuc();
+  const { toast } = dungThongBao();
   const payosHuyToastKey = useRef<string | null>(null);
   const idPhongTuUrl = useMemo(
     () => parseIdPhongTuQuery(searchParams),
@@ -368,7 +368,7 @@ export default function DatPhong() {
       )}
 
       {user?.vaiTro?.includes("ROLE_KHACH_HANG") && (
-        <DatPhongExcelLo variant="khach" cheDoThanhToanPayOs={cheDoThanhToan} />
+        <BangDatPhongExcel variant="khach" cheDoThanhToanPayOs={cheDoThanhToan} />
       )}
 
       <form onSubmit={handleSubmit} className="booking-layout">

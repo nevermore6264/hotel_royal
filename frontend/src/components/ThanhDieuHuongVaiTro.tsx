@@ -9,16 +9,18 @@ const ADMIN_ITEMS = [
   { to: "/quan-tri/dich-vu", label: "Dịch vụ" },
   { to: "/quan-tri/nguoi-dung", label: "Người dùng" },
   { to: "/quan-tri/chinh-sach-huy-phong", label: "Chính sách hủy" },
+  { to: "/quan-tri/duyet-huy-phong", label: "Duyệt hủy phòng" },
   { to: "/quan-tri/nhat-ky", label: "Nhật ký" },
 ] as const;
 
 const LE_TAN_ITEMS = [
   { to: "/le-tan/dat-phong", label: "Đặt phòng & đơn" },
+  { to: "/le-tan/hoan-tien", label: "Hoàn tiền hủy" },
   { to: "/le-tan/khach-hang", label: "Khách hàng" },
   { to: "/chat", label: "Tin nhắn" },
 ] as const;
 
-export function AdminSubNav() {
+export function ThanhDieuHuongQuanTri() {
   return (
     <nav className="role-subnav" aria-label="Menu quản trị">
       {ADMIN_ITEMS.map(({ to, label }) => (
@@ -37,7 +39,7 @@ export function AdminSubNav() {
   );
 }
 
-export function ReceptionSubNav() {
+export function ThanhDieuHuongLeTan() {
   return (
     <nav className="role-subnav" aria-label="Menu lễ tân">
       {LE_TAN_ITEMS.map(({ to, label }) => (
@@ -61,7 +63,7 @@ const BUONG_PHONG_ITEMS = [
   { to: "/buong-phong/can-don-ve-sinh", label: "Phòng cần dọn", end: false },
 ] as const;
 
-export function HousekeepingSubNav() {
+export function ThanhDieuHuongBuongPhong() {
   return (
     <nav className="role-subnav" aria-label="Menu buồng phòng">
       {BUONG_PHONG_ITEMS.map(({ to, label, end }) => (

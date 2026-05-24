@@ -18,4 +18,5 @@ public class DongKetQuaNhapExcelDatPhongDto {
     private String lienHeDong;
     private String yeuCauPhongNgayDong;
     private String soPhongDaGan;
+    private String goiYLoaiPhong;
 }

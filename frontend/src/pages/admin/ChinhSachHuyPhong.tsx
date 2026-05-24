@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import api from "../../api/client";
-import ConfirmDialog from "../../components/ConfirmDialog";
-import PaginationBar from "../../components/PaginationBar";
-import { useToast } from "../../context/ToastContext";
+import HopThoaiXacNhan from "../../components/HopThoaiXacNhan";
+import ThanhPhanTrang from "../../components/ThanhPhanTrang";
+import { dungThongBao } from "../../context/NguCanhThongBao";
 import { apiErrorMessage } from "../../lib/apiError";
 
 type ChinhSach = {
@@ -22,7 +22,7 @@ const POLICY_FORM_INITIAL = {
 };
 
 export default function AdminChinhSachHuyPhong() {
-  const { toast } = useToast();
+  const { toast } = dungThongBao();
   const [page, setPage] = useState(0);
   const [q, setQ] = useState("");
   const [conHieuLucLoc, setConHieuLucLoc] = useState<"" | "true" | "false">(
@@ -223,7 +223,7 @@ export default function AdminChinhSachHuyPhong() {
           </tbody>
         </table>
         </div>
-        <PaginationBar
+        <ThanhPhanTrang
           page={page}
           totalPages={list.totalPages}
           onPageChange={setPage}
@@ -341,7 +341,7 @@ export default function AdminChinhSachHuyPhong() {
         </div>
       ) : null}
 
-      <ConfirmDialog
+      <HopThoaiXacNhan
         open={pendingDeleteId != null}
         title="Xóa chính sách"
         message="Bạn có chắc muốn xóa chính sách hủy phòng này? Thao tác không thể hoàn tác."

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { UserPlus } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import AuthSplitLayout from "../components/AuthSplitLayout";
+import { dungXacThuc } from "../context/NguCanhXacThuc";
+import BoCucChiaXacThuc from "../components/BoCucChiaXacThuc";
 
 export default function DangKy() {
   const [form, setForm] = useState({
@@ -14,7 +14,7 @@ export default function DangKy() {
     loaiTaiKhoan: "" as "" | "VANG_LAI",
   });
   const [baoLoi, setBaoLoi] = useState("");
-  const { register } = useAuth();
+  const { register } = dungXacThuc();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,7 +39,7 @@ export default function DangKy() {
   };
 
   return (
-    <AuthSplitLayout>
+    <BoCucChiaXacThuc>
       <div className="auth-split-card auth-split-card--wide animate-scale-in">
         <p className="auth-brand">Royal Lotus</p>
         <h1 className="auth-split__title">Đăng ký</h1>
@@ -133,6 +133,6 @@ export default function DangKy() {
           Đã có tài khoản? <Link to="/dang-nhap">Đăng nhập</Link>
         </p>
       </div>
-    </AuthSplitLayout>
+    </BoCucChiaXacThuc>
   );
 }

@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import api from "../api/client";
-import { useAuth } from "../context/AuthContext";
+import { dungXacThuc } from "../context/NguCanhXacThuc";
 
 type Phong = {
   id: number;
@@ -156,7 +156,7 @@ function StarsRow({ value }: { value: number }) {
 
 export default function ChiTietPhong() {
   const { id } = useParams();
-  const { isKhachHang } = useAuth();
+  const { isKhachHang } = dungXacThuc();
   const [phong, setPhong] = useState<Phong | null>(null);
   const [loai, setLoai] = useState<Loai | null>(null);
   const [danhGia, setDanhGia] = useState<DanhGia[]>([]);

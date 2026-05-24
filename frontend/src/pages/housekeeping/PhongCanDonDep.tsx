@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, Sparkles } from "lucide-react";
 import api from "../../api/client";
-import { useToast } from "../../context/ToastContext";
+import { dungThongBao } from "../../context/NguCanhThongBao";
 import { apiErrorMessage } from "../../lib/apiError";
 import { classBadgeVeSinh, tenTrangThaiVeSinh } from "../../lib/trangThai";
 
@@ -14,7 +14,7 @@ type Phong = {
 };
 
 export default function PhongCanDonDep() {
-  const { toast } = useToast();
+  const { toast } = dungThongBao();
   const [rooms, setRooms] = useState<Phong[]>([]);
   const [loading, setLoading] = useState(true);
 

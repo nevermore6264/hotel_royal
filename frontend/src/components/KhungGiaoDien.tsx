@@ -7,8 +7,12 @@ import {
   useNavigate,
   useLocation,
 } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { AdminSubNav, HousekeepingSubNav, ReceptionSubNav } from "./RoleSubNav";
+import { dungXacThuc } from "../context/NguCanhXacThuc";
+import {
+  ThanhDieuHuongBuongPhong,
+  ThanhDieuHuongLeTan,
+  ThanhDieuHuongQuanTri,
+} from "./ThanhDieuHuongVaiTro";
 
 const THEME_STORAGE_KEY = "themeRoyal";
 
@@ -25,9 +29,9 @@ function apDungMauLenDom(m: MauGiaoDien) {
   } catch {}
 }
 
-export default function Layout() {
+export default function KhungGiaoDien() {
   const { user, logout, isQuanTri, isLeTan, isKhachHang, isBuongPhong } =
-    useAuth();
+    dungXacThuc();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -498,21 +502,21 @@ export default function Layout() {
       {showAdminRibbon && (
         <div className="role-subnav-ribbon">
           <div className="container role-subnav-ribbon-inner">
-            <AdminSubNav />
+            <ThanhDieuHuongQuanTri />
           </div>
         </div>
       )}
       {showLeTanRibbon && (
         <div className="role-subnav-ribbon role-subnav-ribbon--tan">
           <div className="container role-subnav-ribbon-inner">
-            <ReceptionSubNav />
+            <ThanhDieuHuongLeTan />
           </div>
         </div>
       )}
       {showBuongPhongRibbon && (
         <div className="role-subnav-ribbon role-subnav-ribbon--buong">
           <div className="container role-subnav-ribbon-inner">
-            <HousekeepingSubNav />
+            <ThanhDieuHuongBuongPhong />
           </div>
         </div>
       )}

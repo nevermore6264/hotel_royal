@@ -22,6 +22,31 @@ export function tenTrangThaiThanhToan(ma?: string): string {
   return ma ? m[ma] ?? ma : "—";
 }
 
+export function tenTrangThaiYeuCauHuy(ma?: string): string {
+  const m: Record<string, string> = {
+    CHO_DUYET: "Chờ quản trị duyệt",
+    DA_DUYET: "Đã duyệt — chờ hoàn tiền",
+    TU_CHOI: "Từ chối",
+    DA_HOAN_TIEN: "Đã hoàn tiền",
+  };
+  return ma ? m[ma] ?? ma : "—";
+}
+
+export function classBadgeYeuCauHuy(ma?: string): string {
+  switch (ma) {
+    case "CHO_DUYET":
+      return "badge badge--state-warn";
+    case "DA_DUYET":
+      return "badge badge--state-info";
+    case "DA_HOAN_TIEN":
+      return "badge badge--state-ok";
+    case "TU_CHOI":
+      return "badge badge--state-bad";
+    default:
+      return "badge";
+  }
+}
+
 export function tenTrangThaiChiTietPhong(ma?: string): string {
   const m: Record<string, string> = {
     DANG_GIU: "Đang giữ",

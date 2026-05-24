@@ -20,6 +20,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
@@ -30,8 +31,11 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -101,6 +105,7 @@ public class DatPhongExcelService {
         }
     }
 
+    @Transactional
     public KetQuaNhapExcelDatPhongDto nhapLeTan(MultipartFile tep) throws IOException {
         kiemTraTep(tep);
         try (InputStream in = tep.getInputStream(); Workbook wb = new XSSFWorkbook(in)) {
@@ -108,6 +113,7 @@ public class DatPhongExcelService {
         }
     }
 
+    @Transactional
     public KetQuaNhapExcelDatPhongDto nhapKhach(MultipartFile tep, Long idKhachHang) throws IOException {
         kiemTraTep(tep);
         if (idKhachHang == null) {
@@ -205,14 +211,34 @@ public class DatPhongExcelService {
         return s;
     }
 
-    private Long giaiQuyetIdPhong(String soPhongGoc, String loaiPhongGoc, LocalDate nhan, LocalDate tra) {
+    private static final String LOI_KHONG_DU_PHONG_LOAI =
+            "Không đủ phòng trống theo loại đã chọn trong khoảng ngày này.";
+
+    private Long giaiQuyetIdPhong(
+            String soPhongGoc,
+            String loaiPhongGoc,
+            LocalDate nhan,
+            LocalDate tra,
+            Set<Long> idPhongDaGanTrongLuot) {
         String sp = rongLaNull(soPhongGoc);
         if (sp != null && !sp.isBlank()) {
             Optional<Phong> optP = phongRepository.findBySoPhong(sp.trim());
             if (optP.isEmpty()) {
                 throw new RuntimeException("Không tìm thấy phòng: " + sp.trim());
             }
-            return optP.get().getId();
+            Long id = optP.get().getId();
+            if (idPhongDaGanTrongLuot.contains(id)) {
+                throw new RuntimeException(
+                        "Phòng " + sp.trim() + " đã được chọn cho dòng khác trong cùng file — hãy đổi phòng hoặc loại.");
+            }
+            List<Phong> trong = phongRepository.timPhongTrong(nhan, tra);
+            boolean conTrong = trong.stream().anyMatch(p -> id.equals(p.getId()));
+            if (!conTrong) {
+                throw new RuntimeException(
+                        "Phòng " + sp.trim() + " không còn trống trong khoảng ngày đã chọn.");
+            }
+            idPhongDaGanTrongLuot.add(id);
+            return id;
         }
         String lpRaw = rongLaNull(loaiPhongGoc);
         if (lpRaw == null) {
@@ -239,13 +265,63 @@ public class DatPhongExcelService {
         Long finalIdLoai = idLoai;
         List<Phong> hopLe = trong.stream()
                 .filter(p -> p.getLoaiPhong() != null && finalIdLoai.equals(p.getLoaiPhong().getId()))
+                .filter(p -> !idPhongDaGanTrongLuot.contains(p.getId()))
                 .collect(Collectors.toList());
         if (hopLe.isEmpty()) {
-            throw new RuntimeException("Không còn phòng trống loại đã chọn trong khoảng ngày này.");
+            throw new RuntimeException(LOI_KHONG_DU_PHONG_LOAI);
         }
         Collections.shuffle(hopLe, ThreadLocalRandom.current());
-        return hopLe.get(0).getId();
+        Long id = hopLe.get(0).getId();
+        idPhongDaGanTrongLuot.add(id);
+        return id;
     }
+
+    private String goiYLoaiPhongConTrong(LocalDate nhan, LocalDate tra) {
+        List<Phong> trong = phongRepository.timPhongTrong(nhan, tra);
+        if (trong.isEmpty()) {
+            return "Trong khoảng "
+                    + nhan.format(DD_MM_YYYY)
+                    + " → "
+                    + tra.format(DD_MM_YYYY)
+                    + " hiện chưa còn phòng trống.";
+        }
+        Map<String, Long> demLoai = new HashMap<>();
+        for (Phong p : trong) {
+            if (p.getLoaiPhong() == null) {
+                continue;
+            }
+            String ten = p.getLoaiPhong().getTen();
+            demLoai.merge(ten, 1L, Long::sum);
+        }
+        if (demLoai.isEmpty()) {
+            return "Còn phòng trống nhưng chưa phân loại — liên hệ lễ tân.";
+        }
+        return demLoai.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
+                .map(e -> e.getKey() + " (" + e.getValue() + " phòng)")
+                .collect(Collectors.joining(", "));
+    }
+
+    private boolean laLoiThieuPhong(String msg) {
+        return msg != null
+                && (msg.contains(LOI_KHONG_DU_PHONG_LOAI)
+                        || msg.contains("Không còn phòng trống")
+                        || msg.contains("không còn trống"));
+    }
+
+    private record HangChuanBi(
+            int soDongExcel,
+            Row row,
+            LocalDate nhan,
+            LocalDate tra,
+            Long idKhachHang,
+            String hoTen,
+            String sdt,
+            String email,
+            Long idPhong,
+            String hoTenDong,
+            String lienHeDong,
+            String yeuCauPhongNgayDong) {}
 
     private Long layLongTuChuoiSo(String s) {
         if (s == null || s.isBlank()) {
@@ -316,8 +392,8 @@ public class DatPhongExcelService {
 
     private KetQuaNhapExcelDatPhongDto xuLySheet(Sheet sheet, boolean laLeTan, Long idKhachHangCd) {
         List<DongKetQuaNhapExcelDatPhongDto> chiTiet = new ArrayList<>();
-        int thanhCong = 0;
-        int thatBai = 0;
+        List<HangChuanBi> hangHopLe = new ArrayList<>();
+        Set<Long> idPhongDaGanTrongLuot = new HashSet<>();
         int tongHang = 0;
 
         int last = sheet.getLastRowNum();
@@ -327,18 +403,17 @@ public class DatPhongExcelService {
                 continue;
             }
             tongHang++;
+            int excelRow = r + 1;
             if (tongHang > MAX_DONG) {
-                thatBai++;
                 var quaHan = DongKetQuaNhapExcelDatPhongDto.builder()
-                        .soDongExcel(r + 1)
+                        .soDongExcel(excelRow)
                         .thanhCong(false)
-                        .loi("Vượt quá " + MAX_DONG + " dòng dữ liệu — dừng xử lý.");
+                        .loi("Vượt quá " + MAX_DONG + " dòng dữ liệu trong một lần tải lên.");
                 dienTomTatTuHang(quaHan, row, laLeTan);
                 chiTiet.add(quaHan.build());
-                break;
+                return ketQuaThatBaiNhom(tongHang, chiTiet, laLeTan);
             }
 
-            int excelRow = r + 1;
             String hoTenDong = "—";
             String lienHeDong = "—";
             String yeuCauPhongNgayDong = "—";
@@ -379,36 +454,24 @@ public class DatPhongExcelService {
                     email = rongLaNull(layChuoi(row, 5));
                 }
 
-                String loaiPhongRaw = layChuoi(row, colLoaiPhong);
-                Long idPhong = giaiQuyetIdPhong(rawSoPhong, loaiPhongRaw, nhan, tra);
-
-                YeuCauTaoDatPhong yc = new YeuCauTaoDatPhong();
-                yc.setIdKhachHang(idKh);
-                yc.setNgayNhanPhong(nhan);
-                yc.setNgayTraPhong(tra);
-                yc.setIdPhong(List.of(idPhong));
-                yc.setTenKhach(hoTen);
-                yc.setSdtKhach(sdt);
-                yc.setEmailKhach(email);
-
-                var dto = datPhongService.tao(yc);
-                thanhCong++;
-                chiTiet.add(DongKetQuaNhapExcelDatPhongDto.builder()
-                        .soDongExcel(excelRow)
-                        .thanhCong(true)
-                        .loi(null)
-                        .idDatPhong(dto.getId())
-                        .hoTenDong(hoTenDong)
-                        .lienHeDong(lienHeDong)
-                        .yeuCauPhongNgayDong(yeuCauPhongNgayDong)
-                        .soPhongDaGan(laySoPhongDaGanTuDto(dto))
-                        .build());
+                Long idPhong = giaiQuyetIdPhong(
+                        rawSoPhong, layChuoi(row, colLoaiPhong), nhan, tra, idPhongDaGanTrongLuot);
+                hangHopLe.add(new HangChuanBi(
+                        excelRow, row, nhan, tra, idKh, hoTen, sdt, email, idPhong,
+                        hoTenDong, lienHeDong, yeuCauPhongNgayDong));
             } catch (RuntimeException ex) {
-                thatBai++;
+                String msg = ex.getMessage() != null ? ex.getMessage() : "Lỗi";
+                String goiY = null;
+                LocalDate nhan = layNgay(row, 1);
+                LocalDate tra = layNgay(row, 2);
+                if (nhan != null && tra != null && laLoiThieuPhong(msg)) {
+                    goiY = goiYLoaiPhongConTrong(nhan, tra);
+                }
                 chiTiet.add(DongKetQuaNhapExcelDatPhongDto.builder()
                         .soDongExcel(excelRow)
                         .thanhCong(false)
-                        .loi(ex.getMessage() != null ? ex.getMessage() : "Lỗi")
+                        .loi(msg)
+                        .goiYLoaiPhong(goiY)
                         .hoTenDong(hoTenDong)
                         .lienHeDong(lienHeDong)
                         .yeuCauPhongNgayDong(yeuCauPhongNgayDong)
@@ -416,10 +479,142 @@ public class DatPhongExcelService {
             }
         }
 
+        if (tongHang == 0) {
+            return KetQuaNhapExcelDatPhongDto.builder()
+                    .tongHang(0)
+                    .soThanhCong(0)
+                    .soThatBai(0)
+                    .thongDiepTong("File không có dòng dữ liệu (chỉ có tiêu đề).")
+                    .chiTiet(chiTiet)
+                    .build();
+        }
+
+        if (chiTiet.size() > 0) {
+            return ketQuaThatBaiNhom(tongHang, chiTiet, laLeTan);
+        }
+
+        if (!laLeTan) {
+            LocalDate nhanChung = hangHopLe.get(0).nhan();
+            LocalDate traChung = hangHopLe.get(0).tra();
+            for (HangChuanBi h : hangHopLe) {
+                if (!h.nhan().equals(nhanChung) || !h.tra().equals(traChung)) {
+                    return KetQuaNhapExcelDatPhongDto.builder()
+                            .tongHang(tongHang)
+                            .soThanhCong(0)
+                            .soThatBai(tongHang)
+                            .thongDiepTong(
+                                    "Đặt nhóm qua Excel cần cùng ngày nhận và ngày trả trên mọi dòng. "
+                                            + "Hãy chỉnh file hoặc đặt từng đợt riêng trên trang Đặt phòng.")
+                            .chiTiet(hangHopLe.stream()
+                                    .map(h -> DongKetQuaNhapExcelDatPhongDto.builder()
+                                            .soDongExcel(h.soDongExcel())
+                                            .thanhCong(false)
+                                            .loi("Ngày nhận/trả khác các dòng khác trong file.")
+                                            .hoTenDong(h.hoTenDong())
+                                            .lienHeDong(h.lienHeDong())
+                                            .yeuCauPhongNgayDong(h.yeuCauPhongNgayDong())
+                                            .build())
+                                    .toList())
+                            .build();
+                }
+            }
+        }
+
+        try {
+            if (laLeTan) {
+                for (HangChuanBi h : hangHopLe) {
+                    YeuCauTaoDatPhong yc = new YeuCauTaoDatPhong();
+                    yc.setIdKhachHang(h.idKhachHang());
+                    yc.setNgayNhanPhong(h.nhan());
+                    yc.setNgayTraPhong(h.tra());
+                    yc.setIdPhong(List.of(h.idPhong()));
+                    yc.setTenKhach(h.hoTen());
+                    yc.setSdtKhach(h.sdt());
+                    yc.setEmailKhach(h.email());
+                    DatPhongDto dto = datPhongService.tao(yc);
+                    chiTiet.add(DongKetQuaNhapExcelDatPhongDto.builder()
+                            .soDongExcel(h.soDongExcel())
+                            .thanhCong(true)
+                            .idDatPhong(dto.getId())
+                            .hoTenDong(h.hoTenDong())
+                            .lienHeDong(h.lienHeDong())
+                            .yeuCauPhongNgayDong(h.yeuCauPhongNgayDong())
+                            .soPhongDaGan(laySoPhongDaGanTuDto(dto))
+                            .build());
+                }
+                return KetQuaNhapExcelDatPhongDto.builder()
+                        .tongHang(tongHang)
+                        .soThanhCong(tongHang)
+                        .soThatBai(0)
+                        .chiTiet(chiTiet)
+                        .build();
+            }
+
+            HangChuanBi dau = hangHopLe.get(0);
+            List<Long> idPhongs = hangHopLe.stream().map(HangChuanBi::idPhong).toList();
+            YeuCauTaoDatPhong yc = new YeuCauTaoDatPhong();
+            yc.setIdKhachHang(dau.idKhachHang());
+            yc.setNgayNhanPhong(dau.nhan());
+            yc.setNgayTraPhong(dau.tra());
+            yc.setIdPhong(idPhongs);
+            yc.setTenKhach(dau.hoTen());
+            yc.setSdtKhach(dau.sdt());
+            yc.setEmailKhach(dau.email());
+            DatPhongDto donNhom = datPhongService.tao(yc);
+
+            for (HangChuanBi h : hangHopLe) {
+                chiTiet.add(DongKetQuaNhapExcelDatPhongDto.builder()
+                        .soDongExcel(h.soDongExcel())
+                        .thanhCong(true)
+                        .idDatPhong(donNhom.getId())
+                        .hoTenDong(h.hoTenDong())
+                        .lienHeDong(h.lienHeDong())
+                        .yeuCauPhongNgayDong(h.yeuCauPhongNgayDong())
+                        .soPhongDaGan(laySoPhongTheoId(donNhom, h.idPhong()))
+                        .build());
+            }
+            return KetQuaNhapExcelDatPhongDto.builder()
+                    .tongHang(tongHang)
+                    .soThanhCong(tongHang)
+                    .soThatBai(0)
+                    .datTheoNhom(true)
+                    .idDatPhongNhom(donNhom.getId())
+                    .chiTiet(chiTiet)
+                    .build();
+        } catch (RuntimeException ex) {
+            throw ex;
+        }
+    }
+
+    private String laySoPhongTheoId(DatPhongDto dto, Long idPhong) {
+        if (dto.getChiTiet() == null) {
+            return null;
+        }
+        return dto.getChiTiet().stream()
+                .filter(ct -> idPhong.equals(ct.getIdPhong()))
+                .map(ct -> ct.getSoPhong())
+                .findFirst()
+                .orElse(null);
+    }
+
+    private KetQuaNhapExcelDatPhongDto ketQuaThatBaiNhom(
+            int tongHang, List<DongKetQuaNhapExcelDatPhongDto> chiTiet, boolean laLeTan) {
+        String goiYChung = chiTiet.stream()
+                .map(DongKetQuaNhapExcelDatPhongDto::getGoiYLoaiPhong)
+                .filter(g -> g != null && !g.isBlank())
+                .distinct()
+                .collect(Collectors.joining(" · "));
+        String thongDiep = laLeTan
+                ? "Chưa thể tạo đơn cho toàn bộ file — không có đơn nào được lưu. "
+                        + "Vui lòng chỉnh các dòng lỗi (hoặc chọn loại phòng còn trống) rồi tải lại."
+                : "Chúng tôi chưa thể giữ phòng cho cả nhóm trong một lần — không có đơn nào được tạo. "
+                        + "Bạn có thể chỉnh lại file theo gợi ý loại phòng còn trống bên dưới, hoặc đặt ít phòng hơn trên trang Đặt phòng.";
         return KetQuaNhapExcelDatPhongDto.builder()
                 .tongHang(tongHang)
-                .soThanhCong(thanhCong)
-                .soThatBai(thatBai)
+                .soThanhCong(0)
+                .soThatBai(tongHang)
+                .thongDiepTong(thongDiep)
+                .goiYChung(goiYChung.isBlank() ? null : goiYChung)
                 .chiTiet(chiTiet)
                 .build();
     }

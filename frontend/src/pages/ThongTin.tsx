@@ -7,7 +7,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { dungXacThuc } from "../context/NguCanhXacThuc";
 
 const DIA_CHI_DAY_DU =
   "120 Đường Võ Nguyên Giáp, Phường Phước Mỹ, Quận Sơn Trà, TP. Đà Nẵng";
@@ -92,7 +92,7 @@ const TIEN_ICH = [
 ];
 
 export default function ThongTin() {
-  const { isKhachHang, user } = useAuth();
+  const { isKhachHang, user } = dungXacThuc();
 
   return (
     <div className="info-page">

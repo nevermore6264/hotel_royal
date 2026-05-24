@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { KeyRound, Save } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../api/client";
-import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
+import { dungXacThuc } from "../context/NguCanhXacThuc";
+import { dungThongBao } from "../context/NguCanhThongBao";
 
 type HoSo = {
   id: number;
@@ -117,8 +117,8 @@ function IconSpark() {
 }
 
 export default function HoSo() {
-  const { refreshSession, user, isKhachHang } = useAuth();
-  const { toast } = useToast();
+  const { refreshSession, user, isKhachHang } = dungXacThuc();
+  const { toast } = dungThongBao();
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<HoSo | null>(null);
   const [profileErrors, setProfileErrors] = useState<ProfileFieldErrors>({});

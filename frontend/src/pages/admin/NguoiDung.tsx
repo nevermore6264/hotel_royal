@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Lock, LockOpen, Pencil, Plus, Save, X } from "lucide-react";
 import api from "../../api/client";
-import PaginationBar from "../../components/PaginationBar";
-import { useToast } from "../../context/ToastContext";
+import ThanhPhanTrang from "../../components/ThanhPhanTrang";
+import { dungThongBao } from "../../context/NguCanhThongBao";
 
 type NguoiDung = {
   id: number;
@@ -60,7 +60,7 @@ function normalizeEmail(v: string): string {
 }
 
 export default function AdminNguoiDung() {
-  const { toast } = useToast();
+  const { toast } = dungThongBao();
   const [page, setPage] = useState(0);
   const [q, setQ] = useState("");
   const [trangThaiLoc, setTrangThaiLoc] = useState("");
@@ -399,7 +399,7 @@ export default function AdminNguoiDung() {
           </tbody>
         </table>
         </div>
-        <PaginationBar
+        <ThanhPhanTrang
           page={page}
           totalPages={list.totalPages}
           onPageChange={setPage}

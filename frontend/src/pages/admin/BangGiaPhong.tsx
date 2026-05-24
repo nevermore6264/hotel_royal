@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import api from "../../api/client";
-import ConfirmDialog from "../../components/ConfirmDialog";
-import PaginationBar from "../../components/PaginationBar";
-import { useToast } from "../../context/ToastContext";
+import HopThoaiXacNhan from "../../components/HopThoaiXacNhan";
+import ThanhPhanTrang from "../../components/ThanhPhanTrang";
+import { dungThongBao } from "../../context/NguCanhThongBao";
 import { apiErrorMessage } from "../../lib/apiError";
 import { formatNgayVN } from "../../lib/ngayGio";
 import {
@@ -56,7 +56,7 @@ const emptyForm = {
 };
 
 export default function AdminBangGiaPhong() {
-  const { toast } = useToast();
+  const { toast } = dungThongBao();
   const [page, setPage] = useState(0);
   const [q, setQ] = useState("");
   const [idLoaiLoc, setIdLoaiLoc] = useState<number | "">("");
@@ -366,7 +366,7 @@ export default function AdminBangGiaPhong() {
             </tbody>
           </table>
         </div>
-        <PaginationBar
+        <ThanhPhanTrang
           page={page}
           totalPages={list.totalPages}
           onPageChange={setPage}
@@ -695,7 +695,7 @@ export default function AdminBangGiaPhong() {
         </div>
       ) : null}
 
-      <ConfirmDialog
+      <HopThoaiXacNhan
         open={pendingDeleteId != null}
         title="Xóa bảng giá"
         message="Bạn có chắc muốn xóa dòng bảng giá này? Thao tác không thể hoàn tác."

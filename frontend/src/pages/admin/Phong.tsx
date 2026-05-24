@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Image, Pencil, Plus, Save, Trash2, Upload, X } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import api from "../../api/client";
-import ConfirmDialog from "../../components/ConfirmDialog";
-import PaginationBar from "../../components/PaginationBar";
-import { useToast } from "../../context/ToastContext";
+import HopThoaiXacNhan from "../../components/HopThoaiXacNhan";
+import ThanhPhanTrang from "../../components/ThanhPhanTrang";
+import { dungThongBao } from "../../context/NguCanhThongBao";
 import { apiErrorMessage } from "../../lib/apiError";
 import { classBadgePhong, tenTrangThaiPhong } from "../../lib/trangThai";
 
@@ -35,7 +35,7 @@ function chuanHoaSoPhong(v: string): string {
 }
 
 export default function AdminPhong() {
-  const { toast } = useToast();
+  const { toast } = dungThongBao();
   const [searchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dangTaiAnh, setDangTaiAnh] = useState(false);
@@ -389,7 +389,7 @@ export default function AdminPhong() {
           </tbody>
         </table>
         </div>
-        <PaginationBar
+        <ThanhPhanTrang
           page={page}
           totalPages={danhSachPhong.totalPages}
           onPageChange={setPage}
@@ -799,7 +799,7 @@ export default function AdminPhong() {
         </div>
       ) : null}
 
-      <ConfirmDialog
+      <HopThoaiXacNhan
         open={idChoXoa != null}
         title="Xóa phòng"
         message="Bạn có chắc muốn xóa phòng này? Thao tác không thể hoàn tác."

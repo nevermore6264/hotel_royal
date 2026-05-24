@@ -8,7 +8,7 @@ export type NguoiDungSession = {
   vaiTro: string[];
 };
 
-type AuthContextType = {
+type KieuNguCanhXacThuc = {
   user: NguoiDungSession | null;
   refreshSession: () => Promise<void>;
   login: (tenDangNhap: string, matKhau: string) => Promise<void>;
@@ -28,9 +28,9 @@ type AuthContextType = {
   isKhachHang: boolean;
 };
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const NguCanhXacThuc = createContext<KieuNguCanhXacThuc | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function NhaCungCapXacThuc({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<NguoiDungSession | null>(() => {
     try {
       const t = localStorage.getItem("tokenTruyCap");
@@ -114,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isKhachHang = !!user?.vaiTro?.includes("ROLE_KHACH_HANG");
 
   return (
-    <AuthContext.Provider
+    <NguCanhXacThuc.Provider
       value={{
         user,
         refreshSession,
@@ -129,12 +129,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
-    </AuthContext.Provider>
+    </NguCanhXacThuc.Provider>
   );
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth phai nam trong AuthProvider");
+export function dungXacThuc() {
+  const ctx = useContext(NguCanhXacThuc);
+  if (!ctx) throw new Error("dungXacThuc phải nằm trong NhaCungCapXacThuc");
   return ctx;
 }

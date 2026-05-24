@@ -2,16 +2,16 @@ import { ClipboardList, Home, LayoutList, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import api from "../api/client";
-import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
+import { dungXacThuc } from "../context/NguCanhXacThuc";
+import { dungThongBao } from "../context/NguCanhThongBao";
 import { apiErrorMessage } from "../lib/apiError";
 
 type SyncState = "idle" | "syncing" | "done" | "skipped" | "thatBai";
 
 export default function DatPhongThanhCong() {
   const [params] = useSearchParams();
-  const { user, isKhachHang, isLeTan } = useAuth();
-  const { toast } = useToast();
+  const { user, isKhachHang, isLeTan } = dungXacThuc();
+  const { toast } = dungThongBao();
   const idDatPhong = params.get("idDatPhong");
   const [syncState, setSyncState] = useState<SyncState>("idle");
 

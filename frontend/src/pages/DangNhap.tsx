@@ -1,12 +1,12 @@
-import LoginForm from "../components/LoginForm";
-import AuthSplitLayout from "../components/AuthSplitLayout";
+import FormDangNhap from "../components/FormDangNhap";
+import BoCucChiaXacThuc from "../components/BoCucChiaXacThuc";
 
 export default function DangNhap() {
   return (
-    <AuthSplitLayout>
+    <BoCucChiaXacThuc>
       <div className="auth-split-card animate-scale-in">
-        <LoginForm />
+        <FormDangNhap />
       </div>
-    </AuthSplitLayout>
+    </BoCucChiaXacThuc>
   );
 }
