@@ -506,13 +506,13 @@ public class DatPhongExcelService {
                                     "Đặt nhóm qua Excel cần cùng ngày nhận và ngày trả trên mọi dòng. "
                                             + "Hãy chỉnh file hoặc đặt từng đợt riêng trên trang Đặt phòng.")
                             .chiTiet(hangHopLe.stream()
-                                    .map(h -> DongKetQuaNhapExcelDatPhongDto.builder()
-                                            .soDongExcel(h.soDongExcel())
+                                    .map(hangChuanBi -> DongKetQuaNhapExcelDatPhongDto.builder()
+                                            .soDongExcel(hangChuanBi.soDongExcel())
                                             .thanhCong(false)
                                             .loi("Ngày nhận/trả khác các dòng khác trong file.")
-                                            .hoTenDong(h.hoTenDong())
-                                            .lienHeDong(h.lienHeDong())
-                                            .yeuCauPhongNgayDong(h.yeuCauPhongNgayDong())
+                                            .hoTenDong(hangChuanBi.hoTenDong())
+                                            .lienHeDong(hangChuanBi.lienHeDong())
+                                            .yeuCauPhongNgayDong(hangChuanBi.yeuCauPhongNgayDong())
                                             .build())
                                     .toList())
                             .build();
